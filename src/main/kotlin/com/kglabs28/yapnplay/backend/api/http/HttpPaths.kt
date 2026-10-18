@@ -19,9 +19,16 @@ object HttpPaths {
     const val REQUEST_ID_PARAM = "requestId"
     const val ROOM_VOICE_TOKEN = "/rooms/{roomId}/voice-token"
     const val MATCH_VOICE_TOKEN = "/matches/{matchId}/voice-token"
+    const val ACTIVE_MATCH = "/matches/active"
     const val CLEAR_PENALTY_WITH_AD = "/penalties/clear-with-ad"
     const val USER_ID_PARAM = "userId"
     const val ROOM_ID_PARAM = "roomId"
     const val MATCH_ID_PARAM = "matchId"
     const val CODE_PARAM = "code"
+    /** Operator-only, not part of the app contract. */
+    const val ADMIN_PAGE = "/admin"
+    const val ADMIN_STATS = "/admin/stats"
+    const val ADMIN_TEST_ERROR = "/admin/test-error"
+    /** Public: only when the server process started (the sign-in page clock). */
+    const val ADMIN_UPTIME = "/admin/uptime"
 }

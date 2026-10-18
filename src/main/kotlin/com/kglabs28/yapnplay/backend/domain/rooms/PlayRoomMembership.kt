@@ -6,4 +6,5 @@ data class PlayRoomMembership(
     val userId: String,
     val displayName: String,
     val joinedAt: Long,
+    val avatarId: String = "",
 )

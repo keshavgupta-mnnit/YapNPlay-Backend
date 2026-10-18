@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
+import kotlinx.serialization.Serializable
+
 import com.kglabs28.yapnplay.backend.games.base.identity.GameId
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
 import com.kglabs28.yapnplay.backend.games.base.match.GameState
@@ -12,6 +14,7 @@ import com.kglabs28.yapnplay.backend.games.base.rules.GameRules
  * jail; [jailTriesLeft] rolls left this turn for the current seat;
  * [halfRent] seats collecting half rent until their next turn.
  */
+@Serializable
 data class CityBazaarState(
     override val gameId: GameId,
     val cbRules: CityBazaarRules,

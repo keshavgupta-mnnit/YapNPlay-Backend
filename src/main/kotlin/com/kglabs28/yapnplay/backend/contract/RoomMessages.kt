@@ -200,6 +200,8 @@ data class RoomMember(
     val isFriend: Boolean = false,
     /** When this member came online in the current session (epoch millis); leader succession uses it. */
     val onlineSince: Long? = null,
+    /** Their preset avatar ("" = default); match tables look players up here by user id too. */
+    val avatarId: String = "",
 )
 
 enum class Presence {

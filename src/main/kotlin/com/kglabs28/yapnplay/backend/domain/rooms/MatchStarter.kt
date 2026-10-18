@@ -7,4 +7,7 @@ package com.kglabs28.yapnplay.backend.domain.rooms
 fun interface MatchStarter {
     /** Starts the match and returns its id. */
     suspend fun start(roomId: String, plan: SeatPlan): String
+
+    /** The unfinished match of [roomId], if one is running (one brought back after a restart, too). */
+    fun runningMatchIn(roomId: String): String? = null
 }

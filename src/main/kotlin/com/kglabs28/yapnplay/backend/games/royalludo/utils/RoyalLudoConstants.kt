@@ -18,7 +18,7 @@ const val ROYAL_LUDO_PLAYERS = 4
 const val ROYAL_LUDO_QUICK_PLAY_SEATS = ROYAL_LUDO_PLAYERS
 
 /** Quick Play search window before empty seats fill with CPU players. */
-const val ROYAL_LUDO_SEARCH_SECONDS = 30L
+const val ROYAL_LUDO_SEARCH_SECONDS = 15L
 
 /** Seconds per turn before the bot plays it. */
 const val ROYAL_LUDO_TURN_SECONDS = 10L

@@ -27,7 +27,7 @@ class PlayRoomState(
 ) {
     /** Members in joining order. */
     val members = LinkedHashMap<String, LiveMember>().apply {
-        memberships.sortedBy { it.joinedAt }.forEach { put(it.userId, LiveMember(it.userId, it.displayName, it.joinedAt)) }
+        memberships.sortedBy { it.joinedAt }.forEach { put(it.userId, LiveMember(it.userId, it.displayName, it.joinedAt, avatarId = it.avatarId)) }
     }
     var version = 0L
     var countdownDeadline: Long? = null
@@ -95,5 +95,6 @@ class PlayRoomState(
         speakerOn = speakerOn,
         isFriend = isFriend,
         onlineSince = onlineSince,
+        avatarId = avatarId,
     )
 }

@@ -63,6 +63,7 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
                     roomId = roomId,
                     userId = it[PlayRoomMembersTable.userId].toString(),
                     displayName = it[UsersTable.displayName],
+                    avatarId = it[UsersTable.avatarId],
                     joinedAt = it[PlayRoomMembersTable.joinedAt],
                 )
             }

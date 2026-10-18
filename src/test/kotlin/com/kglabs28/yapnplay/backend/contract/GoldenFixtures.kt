@@ -31,7 +31,7 @@ object GoldenFixtures {
         description = null,
         icon = "group",
         members = listOf(
-            RoomMember(USER, "Keshav", Presence.ONLINE, ready = false, micOn = true, speakerOn = true, onlineSince = 1_760_000_000_000),
+            RoomMember(USER, "Keshav", Presence.ONLINE, ready = false, micOn = true, speakerOn = true, onlineSince = 1_760_000_000_000, avatarId = "a03"),
             RoomMember(FRIEND, "Asha", Presence.OFFLINE, ready = false, isFriend = true),
         ),
         selectedGame = "royal-ludo",

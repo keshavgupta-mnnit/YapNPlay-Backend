@@ -3,7 +3,7 @@ package com.kglabs28.yapnplay.backend.application.rooms.actor
 /** Everything a user can ask a room to do. Small hierarchy, kept together. */
 sealed interface RoomAction {
     /** A member enters; anyone else is put on the admin's Waiting List. */
-    data class Join(val displayName: String) : RoomAction
+    data class Join(val displayName: String, val avatarId: String = "") : RoomAction
 
     /**
      * Stop being present. With [force] false it is refused while the user
@@ -24,7 +24,8 @@ sealed interface RoomAction {
     data class TransferAdmin(val userId: String) : RoomAction
     data class RemoveMember(val userId: String) : RoomAction
     data object Snapshot : RoomAction
-    data class Rename(val displayName: String) : RoomAction
+    /** The member changed their name and/or avatar (null = unchanged). */
+    data class UpdateProfile(val displayName: String?, val avatarId: String?) : RoomAction
     data class ApproveJoin(val userId: String) : RoomAction
     data class DeclineJoin(val userId: String) : RoomAction
 

@@ -70,4 +70,10 @@ object BackendStrings {
     const val INVALID_USERNAME = "Usernames are 3-20 letters, digits, _ or ."
     const val INVALID_AVATAR = "Unknown avatar."
     const val NO_FRIEND_REQUEST = "This friend request no longer exists."
+
+    // ── Match outcomes (match_outcomes.reason, for the admin dashboard) ──
+    const val NOT_RESTORED = "Server restarted; the match had no saved state to come back from."
+    const val FINISHED_BEFORE_RESTART = "Server restarted just as the match ended; its result was not recorded."
+    fun restoreFailed(detail: String?): String = "Server restarted; the saved match could not be read back: $detail"
+    fun matchBroke(error: String?, detail: String?): String = "The match kept failing ($error): $detail"
 }

@@ -1,6 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.match.games
 
 import com.kglabs28.yapnplay.backend.games.base.Game
+import kotlinx.serialization.json.JsonObject
 
 /** Starts sessions of one game. One factory per game the server offers. */
 interface GameSessionFactory {
@@ -14,4 +15,7 @@ interface GameSessionFactory {
      * public match: the game's traditional rules, nothing changed.
      */
     fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession
+
+    /** The session [GameSession.save] wrote, as it was (timers the game runs itself restart). */
+    fun restore(saved: JsonObject): GameSession
 }

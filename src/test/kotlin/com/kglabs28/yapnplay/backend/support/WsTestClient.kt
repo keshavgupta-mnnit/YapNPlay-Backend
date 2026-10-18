@@ -34,9 +34,9 @@ class WsTestClient(private val session: DefaultClientWebSocketSession) {
     suspend fun reply(requestId: String): Envelope = next { it.requestId == requestId }
 
     /** The next message of [type], skipping others. */
-    suspend fun next(type: String): Envelope = next { it.type == type }
+    suspend fun next(type: String, timeoutMs: Long = TIMEOUT_MS): Envelope = next(timeoutMs) { it.type == type }
 
-    suspend fun next(match: (Envelope) -> Boolean): Envelope = withTimeout(TIMEOUT_MS) {
+    suspend fun next(timeoutMs: Long = TIMEOUT_MS, match: (Envelope) -> Boolean): Envelope = withTimeout(timeoutMs) {
         seen.firstOrNull(match)?.let { seen.remove(it); return@withTimeout it }
         while (true) {
             val frame = session.incoming.receive()

@@ -1,6 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
+import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStatus
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
 import com.kglabs28.yapnplay.backend.domain.match.FinishedSeat
 import com.kglabs28.yapnplay.backend.application.match.games.BotMode
@@ -30,6 +31,8 @@ import org.slf4j.LoggerFactory
  * moves, timers and handovers never race. The server is the referee: it
  * rolls, validates, plays bots and timed-out turns, and sends every
  * viewer their own snapshot (with the events to animate) after each change.
+ * Each change is also saved ([MatchCheckpoint]) so a restart can bring
+ * the match back.
  */
 class MatchActor(
     private val state: MatchState,
@@ -40,6 +43,8 @@ class MatchActor(
 ) {
     val matchId: String = state.matchId
     val roomId: String? = state.roomId
+    val gameId: String = state.setup.gameId
+    val title: String = state.setup.title
     val isFinished: Boolean get() = state.ended
 
     private val inbox = Inbox<MatchCommand>(Inbox.UNLIMITED)
@@ -48,6 +53,11 @@ class MatchActor(
     private var wakeToken = 0L
     /** Something changed since the last wake was planned (set by publish, cleared by scheduleWake). */
     private var rescheduleNeeded = true
+    /** Timer runs (ticks, wakes) in a row that threw; too many and the match is aborted. */
+    private var failuresInARow = 0
+    /** The latest checkpoint to save; null means the match is over and its row goes. Older ones are skipped. */
+    private val checkpoints = Inbox<MatchCheckpoint?>(Inbox.CONFLATED)
+    private val saver: Job = scope.launch { for (checkpoint in checkpoints) persist(checkpoint) }
     private val worker: Job = scope.launch { for (command in inbox) process(command) }
     private val ticker: Job = scope.launch {
         while (isActive) {
@@ -57,6 +67,8 @@ class MatchActor(
     }
 
     init {
+        // Saved from the start, so even a match nobody has moved in yet survives a restart.
+        checkpoints.trySend(MatchCheckpoint.of(state))
         // The first tick sends nothing new but starts the first turn's timer.
         inbox.trySend(MatchCommand.Tick)
     }
@@ -81,17 +93,55 @@ class MatchActor(
     var presentUsers: Set<String> = seatedUsers
         private set
 
+    /** Stops play; the last checkpoint is still written ([awaitSaved]). */
     fun stop() {
         ticker.cancel()
         inbox.close()
         worker.cancel()
+        checkpoints.close()
     }
+
+    /** Waits until every checkpoint handed over before [stop] is written. */
+    suspend fun awaitSaved() = saver.join()
 
     private suspend fun process(command: MatchCommand) {
         when (command) {
             is MatchCommand.Request -> command.reply.complete(handle(command.userId, command.action))
-            is MatchCommand.Wake -> if (command.token == wakeToken) playDueTurn()
-            MatchCommand.Tick -> tick()
+            is MatchCommand.Wake -> runTimer(command) { if (command.token == wakeToken) playDueTurn() }
+            MatchCommand.Tick -> runTimer(command) { tick() }
+        }
+    }
+
+    /** A tick or wake that throws is counted; when they keep failing, play cannot go on. */
+    private fun runTimer(command: MatchCommand, block: () -> Unit) {
+        try {
+            block()
+            failuresInARow = 0
+        } catch (e: Exception) {
+            log.error("Match $matchId failed on ${command::class.simpleName}", e)
+            recordError()
+            if (++failuresInARow >= BackendConstants.MATCH_FAILURES_BEFORE_ABORT && !state.ended) abort(e)
+        }
+    }
+
+    private fun recordError() {
+        scope.launch { runCatching { deps.outcomes.errorSeen(matchId) }.onFailure { log.warn("Match $matchId: counting the error failed", it) } }
+    }
+
+    /** The match is broken: it ends without a result and the room is freed. Players' next request finds no match. */
+    private fun abort(cause: Exception) {
+        state.ended = true
+        state.offer = null
+        ticker.cancel()
+        checkpoints.trySend(null)
+        checkpoints.close()
+        val reason = BackendStrings.matchBroke(cause::class.simpleName, cause.message)
+        scope.launch {
+            runCatching { deps.outcomes.ended(matchId, MatchOutcomeStatus.ABORTED_ERROR, deps.clock.nowMillis(), reason) }
+                .onFailure { log.warn("Match $matchId: recording the abort failed", it) }
+            roomId?.let { room -> runCatching { deps.rooms.matchEnded(room, matchId) } }
+            onClosed(matchId)
+            stop()
         }
     }
 
@@ -99,7 +149,7 @@ class MatchActor(
         if (state.ended && action !is MatchAction.RequestSnapshot) throw ServiceException(ErrorCode.MATCH_ENDED, BackendStrings.MATCH_ENDED)
         when (action) {
             is MatchAction.Play -> play(userId, action)
-            is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName))
+            is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId))
             is MatchAction.SetAutoplay -> setAutoplay(userId, action.enabled)
             is MatchAction.SetMic -> setMic(userId, action.on)
             is MatchAction.SetPresence -> handover.setAway(ownSeat(userId).seat, action.away)
@@ -117,6 +167,7 @@ class MatchActor(
         MatchResult.Failed(e.code, e.message)
     } catch (e: Exception) {
         log.error("Match $matchId failed on ${action::class.simpleName}", e)
+        recordError()
         MatchResult.Failed(ErrorCode.BAD_REQUEST, BackendStrings.INTERNAL_ERROR)
     }
 
@@ -138,7 +189,7 @@ class MatchActor(
     }
 
     /** A player's snapshot; a room member without a seat becomes a spectator. */
-    private fun snapshotFor(userId: String, displayName: String): MatchSnapshot {
+    private fun snapshotFor(userId: String, displayName: String, avatarId: String = ""): MatchSnapshot {
         val seat = state.seatOf(userId)
         if (seat != null) {
             if (!seat.connected) {
@@ -150,7 +201,7 @@ class MatchActor(
             if (state.ended || roomId == null || !deps.rooms.isPresent(userId, roomId)) {
                 throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
             }
-            state.spectators[userId] = MatchSpectator(userId, displayName, deps.clock.nowMillis())
+            state.spectators[userId] = MatchSpectator(userId, displayName, deps.clock.nowMillis(), avatarId = avatarId)
             publish(emptyList())
         }
         return snapshots.build(userId, deps.clock.nowMillis(), emptyList())
@@ -256,7 +307,13 @@ class MatchActor(
             val snapshot = snapshots.build(viewer, now, wire)
             deps.notifier.send(viewer, deps.codec.push(Channel.MATCH, MessageType.MATCH_SNAPSHOT, MatchSnapshot.serializer(), snapshot))
         }
-        if (session.isFinished && !state.ended) finish(now)
+        if (session.isFinished && !state.ended) finish(now) else if (!state.ended) checkpoints.trySend(MatchCheckpoint.of(state))
+    }
+
+    private suspend fun persist(checkpoint: MatchCheckpoint?) {
+        runCatching {
+            if (checkpoint == null) deps.checkpoints.delete(matchId) else deps.checkpoints.save(checkpoint, deps.clock.nowMillis())
+        }.onFailure { log.warn("Match $matchId: saving the checkpoint failed", it) }
     }
 
     /**
@@ -287,6 +344,8 @@ class MatchActor(
         state.ended = true
         state.offer = null
         ticker.cancel()
+        checkpoints.trySend(null)
+        checkpoints.close()
         val ranking = state.session.ranking
         val ended = MatchEnded(
             ranking.mapIndexed { index, seat ->
@@ -306,6 +365,8 @@ class MatchActor(
             },
         )
         scope.launch {
+            runCatching { deps.outcomes.ended(matchId, MatchOutcomeStatus.COMPLETED, now) }
+                .onFailure { log.warn("Match $matchId: recording the outcome failed", it) }
             runCatching { deps.listener.onFinished(record) }.onFailure { log.error("Match $matchId: saving results failed", it) }
             delay(BackendConstants.FINISHED_MATCH_KEEP_MS)
             onClosed(matchId)

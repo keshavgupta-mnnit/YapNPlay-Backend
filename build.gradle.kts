@@ -52,6 +52,8 @@ dependencies {
     // itself when DB_URL is not set, so no Docker is needed on the laptop.
     implementation(libs.embedded.postgres)
     implementation(libs.logback.classic)
+    implementation(libs.sentry)
+    implementation(libs.sentry.logback)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.junit.jupiter)

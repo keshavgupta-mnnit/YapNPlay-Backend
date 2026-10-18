@@ -20,7 +20,7 @@ val identityModule = module {
     single { ProfilePolicy() }
     single { UserCodeGenerator(get()) }
     single { UserCodeAssigner(get(), get()) }
-    single { CreateGuestUseCase(get(), get(), get(), get(), get(), get(), get()) }
+    single { CreateGuestUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
     single { AuthenticateUseCase(get(), get()) }
     single { GetMeUseCase(get(), get(), get()) }
     single { UpdateProfileUseCase(get(), get(), get(), get(), get(), get()) }

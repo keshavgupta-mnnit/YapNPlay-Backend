@@ -19,7 +19,8 @@
             "displayName": "Keshav",
             "level": 3,
             "micOn": true,
-            "presence": "PLAYING"
+            "presence": "PLAYING",
+            "avatarId": ""
         },
         {
             "seat": 2,
@@ -33,7 +34,8 @@
             "displayName": "CPU 1",
             "level": 1,
             "micOn": false,
-            "presence": "PLAYING"
+            "presence": "PLAYING",
+            "avatarId": ""
         }
     ],
     "publicState": {

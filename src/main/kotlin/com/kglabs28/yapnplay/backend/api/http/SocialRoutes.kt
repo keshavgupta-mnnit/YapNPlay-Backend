@@ -31,7 +31,8 @@ fun Route.socialRoutes(
     get(HttpPaths.FRIENDS) { call.respond(friends.list(call.userId)) }
     get(HttpPaths.FRIEND_REQUESTS) { call.respond(friends.incoming(call.userId)) }
     post(HttpPaths.FRIEND_REQUESTS) {
-        val outcome = friends.send(call.userId, call.receive<SendFriendRequestBody>().userCode)
+        val body = call.receive<SendFriendRequestBody>()
+        val outcome = friends.send(call.userId, body.userCode, body.userId)
         call.respond(SendFriendRequestReply(outcome))
     }
     post(HttpPaths.FRIEND_REQUEST_ACCEPT) {

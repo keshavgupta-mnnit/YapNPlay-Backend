@@ -110,6 +110,8 @@ class RoyalLudoSession(
         }?.let { json.encodeToJsonElement(RoyalLudoWireEvent.serializer(), it).jsonObject }
     }
 
+    override fun save(): JsonObject = json.encodeToJsonElement(RoyalLudoState.serializer(), state).jsonObject
+
     private fun take(result: ApplyResult): List<GameEvent>? {
         if (result !is ApplyResult.Success) return null
         state = result.state as RoyalLudoState

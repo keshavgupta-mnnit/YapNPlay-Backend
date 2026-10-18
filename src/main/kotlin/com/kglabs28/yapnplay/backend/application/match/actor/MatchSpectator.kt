@@ -7,4 +7,5 @@ data class MatchSpectator(
     val since: Long,
     val micOn: Boolean = false,
     val level: Int = 1,
+    val avatarId: String = "",
 )

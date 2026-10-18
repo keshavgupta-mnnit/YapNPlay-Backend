@@ -18,4 +18,8 @@ data class BackendConfig(
     val voice: VoiceConfig? = null,
     /** Firebase service-account JSON; null: pushes are only logged. */
     val firebaseServiceAccountJson: String? = null,
+    /** Token for the read-only /admin dashboard; null: the dashboard refuses everyone. */
+    val adminToken: String? = null,
+    /** Sentry project DSN for server error tracking; null: errors only go to the log. */
+    val sentryDsn: String? = null,
 )

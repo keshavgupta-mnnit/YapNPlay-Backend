@@ -1,6 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.match
 
+import kotlinx.serialization.Serializable
+
 /** Everything needed to open a match. [houseRules] null: a public match with traditional rules. */
+@Serializable
 data class MatchSetup(
     val matchId: String,
     val gameId: String,
@@ -12,8 +15,10 @@ data class MatchSetup(
 )
 
 /** A human taking a seat. */
+@Serializable
 data class SeatHolder(
     val userId: String,
     val displayName: String,
     val level: Int,
+    val avatarId: String = "",
 )

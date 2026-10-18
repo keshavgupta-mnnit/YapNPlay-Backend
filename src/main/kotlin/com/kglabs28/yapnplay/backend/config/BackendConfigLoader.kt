@@ -21,6 +21,8 @@ class BackendConfigLoader(private val env: (String) -> String? = System::getenv)
                 .split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet(),
             voice = voice(),
             firebaseServiceAccountJson = env(EnvKeys.FIREBASE_SERVICE_ACCOUNT_JSON)?.takeIf { it.isNotBlank() },
+            adminToken = env(EnvKeys.ADMIN_TOKEN)?.trim()?.takeIf { it.isNotEmpty() },
+            sentryDsn = env(EnvKeys.SENTRY_DSN)?.trim()?.takeIf { it.isNotEmpty() },
         )
     }
 

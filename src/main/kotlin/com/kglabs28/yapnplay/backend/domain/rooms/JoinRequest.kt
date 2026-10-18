@@ -6,4 +6,5 @@ data class JoinRequest(
     val userId: String,
     val displayName: String,
     val requestedAt: Long,
+    val avatarId: String = "",
 )

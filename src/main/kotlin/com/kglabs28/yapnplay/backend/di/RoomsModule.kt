@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import org.slf4j.LoggerFactory
+import kotlinx.coroutines.CoroutineExceptionHandler
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.application.match.RoomGateway
 import com.kglabs28.yapnplay.backend.application.match.games.GameSessionFactory
@@ -36,7 +38,12 @@ fun roomsModule(config: BackendConfig) = module {
     single { RolePolicy() }
     single { StartPolicy() }
     single { RoomPresence() }
-    single<CoroutineScope>(ROOMS_SCOPE) { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
+    single<CoroutineScope>(ROOMS_SCOPE) {
+        val log = LoggerFactory.getLogger(BACKGROUND_LOGGER)
+        // Anything that crashes in background work (timers, actors) is logged at ERROR, so it reaches Sentry.
+        val onCrash = CoroutineExceptionHandler { _, e -> log.error(BACKGROUND_CRASH, e) }
+        CoroutineScope(SupervisorJob() + Dispatchers.Default + onCrash)
+    }
     single {
         PlayRoomDeps(
             repository = get(),
@@ -66,3 +73,6 @@ fun roomsModule(config: BackendConfig) = module {
     single { GetMyRoomsUseCase(get(), get()) }
     single { PreviewPlayRoomUseCase(get(), get(), get()) }
 }
+
+private const val BACKGROUND_LOGGER = "Background"
+private const val BACKGROUND_CRASH = "Background work crashed"

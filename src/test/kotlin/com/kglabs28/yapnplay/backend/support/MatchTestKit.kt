@@ -38,7 +38,8 @@ class MatchTestKit(scope: TestScope, seed: Int = SEED) {
         override fun isPresent(userId: String, roomId: String): Boolean = present[userId] == roomId
         override suspend fun matchEnded(roomId: String, matchId: String) = Unit
     }
-    val deps = MatchDeps(notifier, codec, clock, rooms) { finished += it }
+    val outcomes = InMemoryMatchOutcomeStore()
+    val deps = MatchDeps(notifier, codec, clock, rooms, outcomes = outcomes) { finished += it }
     val service = MatchService(
         factories = listOf(
             RoyalLudoSessionFactory(RoyalLudoEngine(), gameRandom, testJson),

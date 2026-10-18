@@ -45,6 +45,7 @@ object GoldenSamples {
         GoldenCase("Friends", Friends.serializer(), Friends(listOf(asha))),
         GoldenCase("FriendRequests", FriendRequests.serializer(), FriendRequests(listOf(FriendRequestSummary("fr-1", asha)))),
         GoldenCase("SendFriendRequestBody", SendFriendRequestBody.serializer(), SendFriendRequestBody("K7Q2M9")),
+        GoldenCase("ActiveMatch", ActiveMatch.serializer(), ActiveMatch("m-42", "royal-ludo", "Quick Play")),
         GoldenCase("SendFriendRequestReply", SendFriendRequestReply.serializer(), SendFriendRequestReply(FriendRequestOutcomeCode.SENT)),
         GoldenCase("BlockUserBody", BlockUserBody.serializer(), BlockUserBody(FRIEND)),
         GoldenCase("BlockedUsers", BlockedUsers.serializer(), BlockedUsers(listOf(BlockedUserSummary(FRIEND, "Asha", "asha.k", "a07", 1_760_000_200_000)))),

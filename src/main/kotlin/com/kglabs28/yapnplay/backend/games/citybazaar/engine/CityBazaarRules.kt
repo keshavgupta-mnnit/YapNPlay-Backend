@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
+import kotlinx.serialization.Serializable
+
 import com.kglabs28.yapnplay.backend.games.base.rules.GameRules
 import com.kglabs28.yapnplay.backend.games.base.rules.HouseRules
 import com.kglabs28.yapnplay.backend.games.base.rules.MandatoryRules
@@ -10,6 +12,7 @@ import com.kglabs28.yapnplay.backend.games.citybazaar.utils.STARTING_CASH
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.TIME_LIMIT_MINUTES
 
 /** Mandatory rules — the identity of City Bazaar. [startingCash] comes from AppManager. */
+@Serializable
 data class CityBazaarMandatoryRules(
     val startingCash: Int = STARTING_CASH,
     val startBonus: Int = START_BONUS,
@@ -19,6 +22,7 @@ data class CityBazaarMandatoryRules(
  * House rules — a room leader may change these. [roundLimit] /
  * [timeLimitMinutes] null = off; their values come from AppManager.
  */
+@Serializable
 data class CityBazaarHouseRules(
     val setDoubleRent: Boolean = true,
     val restHouseSkips: Boolean = true,
@@ -27,6 +31,7 @@ data class CityBazaarHouseRules(
     val timeLimitMinutes: Int? = TIME_LIMIT_MINUTES,
 ) : HouseRules
 
+@Serializable
 data class CityBazaarRules(
     override val mandatory: CityBazaarMandatoryRules = CityBazaarMandatoryRules(),
     override val house: CityBazaarHouseRules = CityBazaarHouseRules(),

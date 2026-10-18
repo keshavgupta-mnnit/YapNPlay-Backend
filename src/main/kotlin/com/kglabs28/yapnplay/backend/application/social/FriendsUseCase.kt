@@ -51,8 +51,10 @@ class FriendsUseCase(
         },
     )
 
-    suspend fun send(userId: String, rawCode: String): FriendRequestOutcomeCode {
-        val target = users.findByCode(codes.normalize(rawCode)) ?: return FriendRequestOutcomeCode.NOT_FOUND
+    /** Asks by friend ID ([rawCode]) or, from a room member card, by [targetUserId]. */
+    suspend fun send(userId: String, rawCode: String, targetUserId: String? = null): FriendRequestOutcomeCode {
+        val target = (targetUserId?.let { users.findById(it) } ?: users.findByCode(codes.normalize(rawCode)))
+            ?: return FriendRequestOutcomeCode.NOT_FOUND
         return when {
             target.id == userId -> FriendRequestOutcomeCode.SELF
             // Someone who blocked the user does not exist for them.

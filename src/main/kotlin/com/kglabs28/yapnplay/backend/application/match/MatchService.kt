@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match
 
+import com.kglabs28.yapnplay.backend.domain.identity.Avatars
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchActor
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchDeps
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchSeatState
@@ -15,6 +16,7 @@ import com.kglabs28.yapnplay.backend.domain.rooms.MatchStarter
 import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
 import com.kglabs28.yapnplay.backend.domain.rooms.SeatPlan
 import kotlinx.coroutines.CoroutineScope
+import org.slf4j.LoggerFactory
 
 /**
  * Opens matches: from a room countdown ([MatchStarter]) or from Quick
@@ -65,7 +67,48 @@ class MatchService(
 
     fun isPlaying(userId: String): Boolean = registry.activeMatchOf(userId) != null
 
-    private fun open(setup: MatchSetup): String {
+    override fun runningMatchIn(roomId: String): String? =
+        registry.all().firstOrNull { !it.isFinished && it.roomId == roomId }?.matchId
+
+    /**
+     * At startup: brings back every match that was running when the server
+     * stopped. Players count as disconnected until they ask for a snapshot,
+     * so the usual away and bot rules apply. Returns how many came back.
+     */
+    suspend fun restoreSaved(): Int {
+        val now = clock.nowMillis()
+        val restored = mutableSetOf<String>()
+        val reasons = mutableMapOf<String, String>()
+        deps.checkpoints.loadAll().forEach { saved ->
+            val matchId = saved.setup.matchId
+            val session = runCatching { factories.first { it.game.id.value == saved.setup.gameId }.restore(saved.game) }
+                .onFailure {
+                    log.warn("Saved match $matchId could not be restored; dropping it", it)
+                    reasons[matchId] = BackendStrings.restoreFailed(it.message)
+                }
+                .getOrNull()
+            when {
+                session == null -> deps.checkpoints.delete(matchId)
+                session.isFinished -> {
+                    deps.checkpoints.delete(matchId)
+                    reasons[matchId] = BackendStrings.FINISHED_BEFORE_RESTART
+                }
+                else -> {
+                    registry.add(MatchActor(saved.restore(session, now), deps, scope, onClosed = registry::remove))
+                    restored += matchId
+                }
+            }
+        }
+        // Whatever was still running and did not come back is lost to the restart.
+        runCatching {
+            deps.outcomes.running().filter { it !in restored }.forEach { matchId ->
+                deps.outcomes.ended(matchId, MatchOutcomeStatus.ABORTED_SERVER, now, reasons[matchId] ?: BackendStrings.NOT_RESTORED)
+            }
+        }.onFailure { log.warn("Recording matches lost to the restart failed", it) }
+        return restored.size
+    }
+
+    private suspend fun open(setup: MatchSetup): String {
         val factory = factories.first { it.game.id.value == setup.gameId }
         val seatCount = setup.players.size + setup.cpuCount
         val session = factory.start(seatCount, setup.houseRules)
@@ -80,18 +123,25 @@ class MatchService(
                 level = holder?.level ?: BackendConstants.CPU_LEVEL,
                 colour = session.colourOf(seat),
                 cpu = holder == null,
+                avatarId = holder?.avatarId ?: Avatars.forCpu(cpuNumber),
             )
         }
         val now = clock.nowMillis()
         val state = MatchState(setup, session, seats.toMutableList(), now)
         // The first turn's timer runs from the start, even when a human moves first.
         state.deadline = now + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        runCatching { deps.outcomes.started(setup.matchId, setup.gameId, setup.roomId, now) }
+            .onFailure { log.warn("Match ${setup.matchId}: recording the start failed", it) }
         registry.add(MatchActor(state, deps, scope, onClosed = registry::remove))
         return setup.matchId
     }
 
     private suspend fun holders(userIds: List<String>): List<SeatHolder> = userIds.map { id ->
         val user = users.findById(id)
-        SeatHolder(id, user?.displayName ?: id, progression.levelFor(user?.xp ?: 0))
+        SeatHolder(id, user?.displayName ?: id, progression.levelFor(user?.xp ?: 0), user?.avatarId.orEmpty())
+    }
+
+    private companion object {
+        val log = LoggerFactory.getLogger(MatchService::class.java)
     }
 }

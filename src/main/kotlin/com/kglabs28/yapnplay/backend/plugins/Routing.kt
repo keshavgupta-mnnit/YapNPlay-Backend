@@ -1,6 +1,7 @@
 package com.kglabs28.yapnplay.backend.plugins
 
 import com.kglabs28.yapnplay.backend.api.auth.BearerUserAuthProvider
+import com.kglabs28.yapnplay.backend.api.http.adminRoutes
 import com.kglabs28.yapnplay.backend.api.http.publicRoutes
 import com.kglabs28.yapnplay.backend.api.http.socialRoutes
 import com.kglabs28.yapnplay.backend.api.http.userRoutes
@@ -14,8 +15,9 @@ import org.koin.core.Koin
 fun Application.configureRouting(koin: Koin) {
     routing {
         publicRoutes(koin.get(), GUEST_RATE_LIMIT)
+        adminRoutes(koin.get(), koin.get())
         authenticate(BearerUserAuthProvider.NAME) {
-            userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
+            userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
             socialRoutes(koin.get(), koin.get(), koin.get(), koin.get())
             webSocketRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         }

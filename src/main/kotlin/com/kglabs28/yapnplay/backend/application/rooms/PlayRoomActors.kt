@@ -40,6 +40,8 @@ class PlayRoomActors(
             houseRules = deps.games.defaultHouseRules(room.selectedGame),
             waiting = deps.joinRequests.listFor(roomId).toMutableList(),
         )
+        // A match brought back after a restart still holds the room.
+        state.matchInProgress = deps.matchStarter.runningMatchIn(roomId)
         return PlayRoomActor(state, deps, scope, onDeleted = { actors.remove(it) })
     }
 }

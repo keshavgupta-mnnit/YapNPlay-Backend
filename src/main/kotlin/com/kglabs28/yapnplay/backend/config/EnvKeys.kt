@@ -23,4 +23,7 @@ object EnvKeys {
     const val LIVEKIT_API_SECRET = "LIVEKIT_API_SECRET"
     /** The Firebase service-account JSON (its whole content). Pushes are only logged when unset. */
     const val FIREBASE_SERVICE_ACCOUNT_JSON = "FIREBASE_SERVICE_ACCOUNT_JSON"
+    /** Secret for the read-only /admin dashboard. The dashboard is closed when unset. */
+    const val ADMIN_TOKEN = "ADMIN_TOKEN"
+    const val SENTRY_DSN = "SENTRY_DSN"
 }

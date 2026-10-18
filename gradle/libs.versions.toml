@@ -12,6 +12,7 @@ hikari = "6.2.1"
 logback = "1.5.12"
 embeddedPostgres = "2.0.7"
 junitJupiter = "5.11.2"
+sentry = "7.18.1"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
@@ -44,6 +45,8 @@ postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" 
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
 embedded-postgres = { module = "io.zonky.test:embedded-postgres", version.ref = "embeddedPostgres" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+sentry = { module = "io.sentry:sentry", version.ref = "sentry" }
+sentry-logback = { module = "io.sentry:sentry-logback", version.ref = "sentry" }
 
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junitJupiter" }
 

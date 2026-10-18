@@ -66,9 +66,14 @@ started for the test run. Report: `build\reports\tests\test\index.html`.
 | `COUNTDOWN_SECONDS` | 10 | Room start countdown. |
 | `GUEST_CREATIONS_PER_HOUR` | 20 | New guests per IP address per hour. |
 | `DISABLED_GAMES` | empty | Comma-separated game ids switched off (`royal-ludo,city-bazaar`). |
+| `ADMIN_TOKEN` | none | Secret for the read-only `/admin` dashboard. Unset: every `/admin/stats` call gets 401. **Secret.** |
 | `EMBEDDED_DB_DIR`, `EMBEDDED_DB_PORT` | `data/postgres`, 54329 | DEV_MODE database only. |
 
-See `.env.example`. A real `.env` is git-ignored.
+**Secrets on the laptop:** copy `.env.example` to `.env` (same folder) and
+fill it in with Notepad. `.env` is git-ignored, so it never reaches GitHub.
+The backend reads it at start-up; real environment variables win over it.
+**Secrets in the cloud:** the same names go into the hosting service's
+environment-variable settings (never into code or GitHub).
 
 ## HTTP
 
@@ -93,6 +98,11 @@ Errors are `{"code": "<ErrorCode>", "message": "…"}`.
 | `POST /devices` `RegisterDevice` | 204 (Firebase push token) |
 | `POST /rooms/{roomId}/voice-token` · `/matches/{matchId}/voice-token` | `VoiceToken` (10 min; `VOICE_UNAVAILABLE` without LiveKit) |
 | `POST /penalties/clear-with-ad` | 204 |
+
+**Admin (operator only, not in the app contract):** `GET /admin` serves a
+self-contained dashboard page (no data in it); `GET /admin/stats` needs
+`Authorization: Bearer <ADMIN_TOKEN>` and returns users, rooms, live
+players, matches per game and moderation totals as JSON. Read-only.
 
 Matches, Quick Play and moderation run on the WebSocket; see
 `CONTRACT-0.4.0.md` for every message added since 0.3.1.
@@ -156,3 +166,7 @@ src/main/kotlin/com/kglabs28/yapnplay/backend/
 - `isFriend` is always false (friends are post-POC); `POST /devices`,
   voice tokens, matches and matchmaking come in later phases.
 - Room actors stay in memory until the room is deleted.
+- Running matches are saved after every change (`active_matches`) and come
+  back after a restart or deploy, with every player counted as disconnected
+  until they reconnect. Quick Play queues, room countdowns and spectators
+  reset.

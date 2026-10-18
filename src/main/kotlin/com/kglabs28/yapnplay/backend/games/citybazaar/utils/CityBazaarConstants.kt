@@ -11,7 +11,7 @@ val CITY_BAZAAR_TAGLINES = listOf("Buy", "Build", "Boss")
 const val CITY_BAZAAR_MIN_PLAYERS = 3
 const val CITY_BAZAAR_MAX_PLAYERS = 6
 const val CITY_BAZAAR_QUICK_PLAY_SEATS = 4
-const val CITY_BAZAAR_SEARCH_SECONDS = 30L
+const val CITY_BAZAAR_SEARCH_SECONDS = 15L
 /** Seconds per decision before the turn plays itself. */
 const val CITY_BAZAAR_TURN_SECONDS = 20L
 

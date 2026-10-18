@@ -36,8 +36,9 @@ class MatchChannelHandler(
     suspend fun handle(userId: String, request: Envelope): Envelope = when (request.type) {
         MessageType.MATCH_REQUEST_SNAPSHOT -> {
             val body = codec.payload(request, MatchRequestSnapshot.serializer())
-            val name = users.findById(userId)?.displayName.orEmpty()
-            val result = send(userId, body.matchId, MatchAction.RequestSnapshot(name)) as MatchResult.Snapshot
+            val user = users.findById(userId)
+            val action = MatchAction.RequestSnapshot(user?.displayName.orEmpty(), user?.avatarId.orEmpty())
+            val result = send(userId, body.matchId, action) as MatchResult.Snapshot
             codec.reply(request, MessageType.MATCH_SNAPSHOT, MatchSnapshot.serializer(), result.snapshot)
         }
         MessageType.ROLL_DICE, MessageType.MOVE_PIECE, MessageType.GAME_ACTION -> {

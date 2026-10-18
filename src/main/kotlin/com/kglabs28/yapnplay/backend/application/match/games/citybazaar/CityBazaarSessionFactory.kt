@@ -10,7 +10,10 @@ import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarRules
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarState
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.ROUND_LIMIT
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.TIME_LIMIT_MINUTES
+import com.kglabs28.yapnplay.backend.config.BackendConstants
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.AUCTION_SECONDS
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 /** Starts City Bazaar sessions; a room's toggles switch the house rules and the round/time limits. */
 class CityBazaarSessionFactory(
@@ -24,6 +27,16 @@ class CityBazaarSessionFactory(
         val rules = houseRules?.let(::rulesFrom) ?: CityBazaarRules.STANDARD
         val state = game.start(rules, seatCount, random) as CityBazaarState
         return CityBazaarSession(game, state, random, json, clock)
+    }
+
+    /** A running auction gets its full bidding window again: nobody could bid while the server was down. */
+    override fun restore(saved: JsonObject): GameSession {
+        val session = json.decodeFromJsonElement(CityBazaarSaved.serializer(), saved)
+        val now = clock.nowMillis()
+        val bidding = session.engine.auction != null
+        val auctionEndsAt = if (bidding) now + AUCTION_SECONDS * BackendConstants.MILLIS_PER_SECOND else session.auctionEndsAt
+        val lastBidAt = if (bidding) now else session.lastBidAt
+        return CityBazaarSession(game, session.engine, random, json, clock, session.startedAt, auctionEndsAt, lastBidAt)
     }
 
     private fun rulesFrom(toggles: Map<String, Boolean>): CityBazaarRules {

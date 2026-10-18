@@ -105,6 +105,8 @@ data class SeatInfo(
     val level: Int = 1,
     val micOn: Boolean = false,
     val presence: SeatPresence = SeatPresence.PLAYING,
+    /** Preset avatar of whoever sits here (a CPU's robot avatar); "" = default icon. */
+    val avatarId: String = "",
 )
 
 enum class Colour {

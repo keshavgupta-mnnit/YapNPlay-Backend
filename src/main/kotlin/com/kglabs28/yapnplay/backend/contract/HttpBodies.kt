@@ -158,7 +158,9 @@ data class FriendRequestSummary(
 /** `POST /friends/requests`: ask the person whose ID is [userCode] to be friends. */
 @Serializable
 data class SendFriendRequestBody(
-    val userCode: String,
+    val userCode: String = "",
+    /** Instead of the ID: someone the user can see by id (a room member card). */
+    val userId: String? = null,
 )
 
 @Serializable
@@ -194,4 +196,18 @@ data class BlockedUserSummary(
     val avatarId: String = "",
     /** When the user blocked them (epoch millis). */
     val blockedAt: Long,
+)
+
+/**
+ * `GET /matches/active`: the unfinished match the caller still holds a seat
+ * in (they closed the app or lost the connection), so the app can offer to
+ * rejoin. 204 No Content when there is none (or they chose Leave).
+ */
+@Serializable
+data class ActiveMatch(
+    val matchId: String,
+    val gameId: String,
+    /** Room name, or "Quick Play". */
+    val title: String,
+    val roomId: String? = null,
 )

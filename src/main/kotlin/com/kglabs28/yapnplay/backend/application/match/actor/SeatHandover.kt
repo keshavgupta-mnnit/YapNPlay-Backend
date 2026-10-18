@@ -66,7 +66,7 @@ class SeatHandover(
         state.update(seat) { copy(left = true, autoplay = false, presence = SeatPresence.AWAY) }
         state.idleTurns.remove(seat)
         if (isRoomMatch) {
-            state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level)
+            state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level, leaver.avatarId)
         }
         val pick = giveTo?.let { state.spectators[it] }?.takeIf { it.userId != leaver.userId }
         if (pick != null && isRoomMatch) offerTo(seat, leaver.displayName, pick, round = 1) else toBot(seat)
@@ -194,13 +194,14 @@ class SeatHandover(
         val joiner = state.spectators.remove(userId) ?: return toBot(seat)
         val replaced = state.seat(seat)
         if (isRoomMatch && !replaced.cpu && !replaced.left) {
-            state.spectators[replaced.userId] = MatchSpectator(replaced.userId, replaced.displayName, deps.clock.nowMillis(), replaced.micOn, replaced.level)
+            state.spectators[replaced.userId] = MatchSpectator(replaced.userId, replaced.displayName, deps.clock.nowMillis(), replaced.micOn, replaced.level, replaced.avatarId)
         }
         state.update(seat) {
             copy(
                 userId = joiner.userId,
                 displayName = joiner.displayName,
                 level = joiner.level,
+                avatarId = joiner.avatarId,
                 cpu = false,
                 micOn = joiner.micOn,
                 autoplay = false,

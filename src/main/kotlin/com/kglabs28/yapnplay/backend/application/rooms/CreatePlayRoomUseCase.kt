@@ -38,7 +38,7 @@ class CreatePlayRoomUseCase(
         exitCurrentRoom(userId, force = false)
         val room = insertWithFreeCode(userId, name)
         val actor = checkNotNull(actors.get(room.id))
-        actor.ask(userId, RoomAction.Join(user.displayName)).orThrow()
+        actor.ask(userId, RoomAction.Join(user.displayName, user.avatarId)).orThrow()
         return (actor.ask(userId, RoomAction.Snapshot).orThrow() as RoomResult.Snapshot).snapshot
     }
 

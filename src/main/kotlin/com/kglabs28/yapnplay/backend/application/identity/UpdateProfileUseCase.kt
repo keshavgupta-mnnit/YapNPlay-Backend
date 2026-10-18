@@ -14,7 +14,7 @@ import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 
 /**
  * `PATCH /me`: only the fields sent change (name, @username, avatar).
- * A new name shows at once in the room the user is in.
+ * A new name or avatar shows at once in the room the user is in.
  */
 class UpdateProfileUseCase(
     private val users: UserRepository,
@@ -36,7 +36,9 @@ class UpdateProfileUseCase(
         }
         users.findById(userId) ?: throw ServiceException(ErrorCode.NOT_AUTHENTICATED, BackendStrings.NOT_AUTHENTICATED)
         users.updateProfile(userId, name, username, avatar)
-        if (name != null) presence.roomOf(userId)?.let { actors.get(it)?.ask(userId, RoomAction.Rename(name)) }
+        if (name != null || avatar != null) {
+            presence.roomOf(userId)?.let { actors.get(it)?.ask(userId, RoomAction.UpdateProfile(name, avatar)) }
+        }
         return getMe(userId)
     }
 }

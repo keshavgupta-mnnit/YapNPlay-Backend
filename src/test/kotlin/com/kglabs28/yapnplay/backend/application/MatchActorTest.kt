@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application
 
+import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStatus
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchAction
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchResult
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
@@ -43,6 +44,10 @@ class MatchActorTest {
         val result = kit.finished.single()
         assertEquals(4, result.seats.size)
         assertEquals(setOf(1, 2, 3, 4), result.seats.map { it.place }.toSet())
+        val outcome = kit.outcomes.rows.getValue(result.matchId)
+        assertEquals(MatchOutcomeStatus.COMPLETED, outcome.status)
+        assertEquals(result.endedAt, outcome.endedAt)
+        assertEquals(null, outcome.roomId)
     }
 
     @Test

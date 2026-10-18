@@ -22,8 +22,21 @@ object TestDatabase {
         }
     }
 
+    /** Runs one SQL statement (to simulate what a crash leaves behind). */
+    fun execute(sql: String) {
+        DriverManager.getConnection(url, USER, "").use { connection -> connection.createStatement().use { it.execute(sql) } }
+    }
+
+    /** The first column of the first row of [sql], as text; null when there is no row. */
+    fun queryText(sql: String): String? =
+        DriverManager.getConnection(url, USER, "").use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery(sql).use { if (it.next()) it.getString(1) else null }
+            }
+        }
+
     private const val USER = "postgres"
     private const val DATABASE = "postgres"
     private const val POOL_SIZE = 5
-    private const val TRUNCATE = "TRUNCATE play_room_members, play_rooms, users CASCADE"
+    private const val TRUNCATE = "TRUNCATE match_outcomes, active_matches, play_room_members, play_rooms, users CASCADE"
 }

@@ -26,13 +26,13 @@ class MembershipHandler(
      * A member enters the room. Anyone else asks to join: the request goes
      * on the admin's Waiting List and the answer is PENDING_APPROVAL.
      */
-    suspend fun join(userId: String, displayName: String): JoinRoomResult {
+    suspend fun join(userId: String, displayName: String, avatarId: String = ""): JoinRoomResult {
         if (userId !in state.members) {
             checkRoomFor(userId)
             if (state.waiting.none { it.userId == userId }) {
                 val now = deps.clock.nowMillis()
                 deps.joinRequests.add(state.room.id, userId, now)
-                state.waiting += JoinRequest(state.room.id, userId, displayName, now)
+                state.waiting += JoinRequest(state.room.id, userId, displayName, now, avatarId)
             }
             return JoinRoomResult(JoinStatus.PENDING_APPROVAL, state.room.name)
         }
@@ -50,7 +50,7 @@ class MembershipHandler(
         deps.repository.addMember(state.room.id, userId, now)
         deps.joinRequests.remove(state.room.id, userId)
         state.waiting.remove(request)
-        state.members[userId] = LiveMember(userId, request.displayName, now)
+        state.members[userId] = LiveMember(userId, request.displayName, now, avatarId = request.avatarId)
         val approved = deps.codec.push(Channel.ROOM, MessageType.JOIN_APPROVED, JoinApproved.serializer(), JoinApproved(state.room.id, state.room.name))
         deps.notifier.send(userId, approved)
         deps.activity.joinApproved(userId, state.room.id, state.room.name)
@@ -113,8 +113,8 @@ class MembershipHandler(
         return removeMembership(targetId)
     }
 
-    fun rename(userId: String, displayName: String) {
-        state.update(userId) { copy(displayName = displayName) }
+    fun updateProfile(userId: String, displayName: String?, avatarId: String?) {
+        state.update(userId) { copy(displayName = displayName ?: this.displayName, avatarId = avatarId ?: this.avatarId) }
     }
 
     private suspend fun removeMembership(userId: String): Boolean {

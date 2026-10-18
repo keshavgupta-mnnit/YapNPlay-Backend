@@ -72,11 +72,11 @@ class PlayRoomActor(
     private suspend fun handle(userId: String, action: RoomAction): RoomResult = try {
         var deleted = false
         val result: RoomResult = when (action) {
-            is RoomAction.Join -> RoomResult.Joined(membership.join(userId, action.displayName))
+            is RoomAction.Join -> RoomResult.Joined(membership.join(userId, action.displayName, action.avatarId))
             is RoomAction.Exit -> done { membership.exit(userId, action.force) }
             RoomAction.Leave -> done { deleted = membership.leave(userId) }
             is RoomAction.RemoveMember -> done { deleted = membership.remove(userId, action.userId) }
-            is RoomAction.Rename -> done { membership.rename(userId, action.displayName) }
+            is RoomAction.UpdateProfile -> done { membership.updateProfile(userId, action.displayName, action.avatarId) }
             is RoomAction.SelectGame -> done { lobby.selectGame(userId, action.gameId) }
             is RoomAction.SetBotFill -> done { lobby.setBotFill(userId, action.enabled) }
             is RoomAction.SetHouseRule -> done { lobby.setHouseRule(userId, action.key, action.enabled) }

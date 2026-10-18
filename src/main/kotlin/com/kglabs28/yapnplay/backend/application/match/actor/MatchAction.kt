@@ -8,7 +8,7 @@ sealed interface MatchAction {
     data class Play(val type: String, val payload: JsonObject) : MatchAction
 
     /** Snapshot for a player, or start watching (room members only). */
-    data class RequestSnapshot(val displayName: String) : MatchAction
+    data class RequestSnapshot(val displayName: String, val avatarId: String = "") : MatchAction
 
     data class SetAutoplay(val enabled: Boolean) : MatchAction
     data class SetMic(val on: Boolean) : MatchAction

@@ -55,4 +55,7 @@ interface GameSession {
 
     /** Engine events as wire JSON (each with `"type"`), dropping internal ones. */
     fun wireEvents(events: List<GameEvent>): List<JsonObject>
+
+    /** Everything needed to rebuild this session after a restart ([GameSessionFactory.restore]). */
+    fun save(): JsonObject
 }

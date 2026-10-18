@@ -22,6 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Quick Play (contract "MATCHMAKING channel"): one forming table per game.
@@ -40,6 +42,8 @@ class MatchmakingService(
 ) {
     private val lock = Mutex()
     private val forming = mutableMapOf<String, FormingTable>()
+    /** Successful queue joins per game since the server started (admin dashboard only). */
+    private val joinsByGame = ConcurrentHashMap<String, AtomicInteger>()
 
     suspend fun join(userId: String, gameId: String) {
         val game = games.findEnabled(gameId) ?: throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
@@ -52,6 +56,7 @@ class MatchmakingService(
                 FormingTable(gameId, deadline).also { it.timer = scheduleDeadline(it) }
             }
             table.players += userId
+            joinsByGame.getOrPut(gameId) { AtomicInteger() }.incrementAndGet()
             if (table.players.size >= game.matchmaking.seats) start(table, cpuCount = 0) else sendStatus(table)
         }
     }
@@ -68,9 +73,21 @@ class MatchmakingService(
         }
     }
 
+    /** Queue joins per game since the server started. */
+    fun joinsSinceStart(): Map<String, Int> = joinsByGame.mapValues { it.value.get() }
+
+    /** Players searching right now, per game. */
+    suspend fun waitingNow(): Map<String, Int> = lock.withLock { forming.mapValues { it.value.players.size } }
+
     private fun scheduleDeadline(table: FormingTable): Job = scope.launch {
         delay((table.deadline - clock.nowMillis()).coerceAtLeast(0))
-        lock.withLock { if (forming[table.gameId] === table) deadlineReached(table) }
+        lock.withLock {
+            if (forming[table.gameId] === table) {
+                // This coroutine is the timer: drop it first so start/cancel do not cancel themselves mid-way.
+                table.timer = null
+                deadlineReached(table)
+            }
+        }
     }
 
     private suspend fun deadlineReached(table: FormingTable) {

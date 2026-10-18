@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>YapNPlay Admin</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #1b1f24; --muted: #687384;
+    --line: #e3e6eb; --accent: #5b4bdb; --good: #1f8a4c; --bad: #c2362f; --bar: #d9d4fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111317; --card: #1b1e24; --text: #e9ecf1; --muted: #9aa3b2;
+      --line: #2c313a; --accent: #9d92ff; --good: #4cc27f; --bad: #ff6b62; --bar: #3a3470;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+           padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
+  header h1 { font-size: 17px; margin: 0; }
+  #status { color: var(--muted); font-size: 12px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 8px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card .v { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .card .l { color: var(--muted); font-size: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: 0; }
+  .bar { height: 8px; background: var(--bar); border-radius: 4px; min-width: 2px; }
+  .empty { color: var(--muted); padding: 12px; }
+  .good { color: var(--good); } .bad { color: var(--bad); }
+  #signin { max-width: 360px; margin: 12vh auto 0; background: var(--card); border: 1px solid var(--line);
+            border-radius: 12px; padding: 20px; }
+  #signin h2 { margin-top: 0; }
+  input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+          background: var(--bg); color: var(--text); font: inherit; }
+  button { margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 8px; background: var(--accent);
+           color: #fff; font: inherit; cursor: pointer; }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); margin: 0; }
+  .pw { position: relative; }
+  .pw input { padding-right: 42px; }
+  .pw button.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); margin: 0;
+                   width: 34px; height: 30px; padding: 0; background: transparent; color: var(--muted);
+                   display: grid; place-items: center; border-radius: 6px; }
+  .pw button.eye:hover { color: var(--text); }
+  .pw button.eye svg { width: 18px; height: 18px; }
+  #uptime { margin: -4px 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+  #uptime .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  #uptime .l { color: var(--muted); font-size: 12px; }
+  #error { color: var(--bad); min-height: 1.4em; margin-top: 8px; font-size: 13px; }
+  .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>YapNPlay Admin</h1>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span id="status"></span>
+    <button id="signout" class="ghost" hidden>Sign out</button>
+  </div>
+</header>
+
+<form id="signin" hidden>
+  <h2>Sign in</h2>
+  <div id="uptime">
+    <div class="l">Server running for</div>
+    <div class="v" id="uptimeValue">…</div>
+    <div class="l" id="uptimeSince"></div>
+  </div>
+  <div class="pw">
+    <input id="token" type="password" autocomplete="off" placeholder="Admin token" aria-label="Admin token">
+    <button id="eye" class="eye" type="button" aria-label="Show token" aria-pressed="false" title="Show token">
+      <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.4 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+    </button>
+  </div>
+  <button type="submit">Open dashboard</button>
+  <div id="error"></div>
+  <div class="note">The token is the server's ADMIN_TOKEN. It is kept only for this browser tab.</div>
+</form>
+
+<main id="dash" hidden>
+  <h2>Right now</h2>
+  <div class="cards" id="liveCards"></div>
+  <div class="note">Live numbers are in memory and reset when the server restarts.</div>
+
+  <h2>Totals</h2>
+  <div class="cards" id="totalCards"></div>
+
+  <h2>Games</h2>
+  <div class="panel"><table id="games"></table></div>
+  <div class="note">Finished matches come from the database. Quick Play joins count since the last server start.</div>
+
+  <div class="grid2">
+    <div><h2>New guest players per day</h2><div class="panel"><table id="usersPerDay"></table></div></div>
+    <div><h2>Rooms created per day</h2><div class="panel"><table id="roomsPerDay"></table></div></div>
+  </div>
+
+  <h2>Moderation</h2>
+  <div class="cards" id="modCards"></div>
+  <h2>Most reported users</h2>
+  <div class="panel"><table id="reported"></table></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "yapnplay-admin-token";
+  var REFRESH_MS = 10000;
+  var timer = null;
+  var uptimeTick = null, uptimeSync = null;
+  var startedAt = null, skew = 0;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function storedToken() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }
+  function saveToken(t) { try { sessionStorage.setItem(KEY, t); } catch (e) {} }
+  function clearToken() { try { sessionStorage.removeItem(KEY); } catch (e) {} }
+
+  // Every value goes in with textContent: display names are user input.
+  function el(tag, text, cls) {
+    var e = document.createElement(tag);
+    if (text !== undefined && text !== null) e.textContent = String(text);
+    if (cls) e.className = cls;
+    return e;
+  }
+  function fmt(n) { return Number(n).toLocaleString(); }
+
+  function cards(id, items) {
+    var box = $(id); box.replaceChildren();
+    items.forEach(function (it) {
+      var c = el("div", null, "card");
+      c.appendChild(el("div", fmt(it[1]), "v" + (it[2] ? " " + it[2] : "")));
+      c.appendChild(el("div", it[0], "l"));
+      box.appendChild(c);
+    });
+  }
+
+  function table(id, headers, rows, emptyText) {
+    var t = $(id); t.replaceChildren();
+    if (!rows.length) { var r = t.insertRow(); var c = r.insertCell(); c.className = "empty"; c.textContent = emptyText; return; }
+    var head = t.createTHead().insertRow();
+    headers.forEach(function (h) { head.appendChild(el("th", h[0], h[1] ? "n" : "")); });
+    var body = t.createTBody();
+    rows.forEach(function (row) {
+      var tr = body.insertRow();
+      row.forEach(function (v, i) {
+        var td = tr.insertCell();
+        if (v instanceof Node) td.appendChild(v); else td.textContent = (headers[i][1] ? fmt(v) : (v == null ? "" : v));
+        if (headers[i][1]) td.className = "n";
+      });
+    });
+  }
+
+  function perDay(id, days) {
+    var max = days.reduce(function (m, d) { return Math.max(m, d.count); }, 0) || 1;
+    var rows = days.slice().reverse().map(function (d) {
+      var bar = el("div", null, "bar"); bar.style.width = Math.round(d.count / max * 160) + "px";
+      return [d.day, d.count, bar];
+    });
+    table(id, [["Day"], ["Count", true], [""]], rows, "None in the last 14 days");
+  }
+
+  // Sign-in types the server may report; an unknown one shows its raw name.
+  var ACCOUNT_LABELS = { guest: "Guest players" };
+  function accountLabel(type) { return ACCOUNT_LABELS[type] || type + " players"; }
+
+  function render(s) {
+    var L = s.live, M = s.moderation;
+    cards("liveCards", [
+      ["Online now", L.onlineNow], ["In a match", L.playersInMatchNow], ["Live matches", L.liveMatches],
+      ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow]
+    ]);
+    cards("totalCards", [
+      // Only worth a card once there is more than one sign-in type.
+    ].concat(s.users.byType.length > 1 ? [["All players", s.users.total]] : [])
+     .concat(s.users.byType.length ? s.users.byType.map(function (t) { return [accountLabel(t.type), t.count]; })
+                                   : [[accountLabel("guest"), 0]]).concat([
+      ["Rooms (existing)", s.rooms.total],
+      ["Matches finished", s.games.reduce(function (a, g) { return a + g.matchesFinished; }, 0)],
+      ["Reports filed", M.reportsFiled]
+    ]));
+    table("games",
+      [["Game"], ["Finished", true], ["Quick Play", true], ["In rooms", true], ["Human seats", true],
+       ["Live now", true], ["QP joins", true], ["Searching", true]],
+      s.games.map(function (g) {
+        return [g.displayName, g.matchesFinished, g.quickPlayMatches, g.roomMatches, g.humanSeats,
+                g.liveMatches, g.quickPlayJoinsSinceStart, g.searchingNow];
+      }), "No games");
+    perDay("usersPerDay", s.users.newPerDay);
+    perDay("roomsPerDay", s.rooms.createdPerDay);
+    cards("modCards", [
+      ["Reports filed", M.reportsFiled], ["Upheld", M.upheld, "bad"], ["Rejected", M.rejected, "good"],
+      ["Pending", M.pending], ["Penalties issued", M.penaltiesIssued], ["Penalties active", M.penaltiesActive]
+    ]);
+    table("reported", [["Name"], ["Code"], ["Reports", true], ["Upheld", true]],
+      M.mostReported.map(function (u) { return [u.displayName, u.userCode || "—", u.reports, u.upheld]; }),
+      "No reports yet");
+    $("status").textContent = "Updated " + new Date(s.generatedAt).toLocaleTimeString() + " · days in " + s.timeZone;
+  }
+
+  // ── Sign-in page: show/hide the token, and how long the server has been up ──
+  function setTokenVisible(visible) {
+    $("token").type = visible ? "text" : "password";
+    $("eyeOpen").hidden = visible; $("eyeClosed").hidden = !visible;
+    var label = visible ? "Hide token" : "Show token";
+    $("eye").setAttribute("aria-label", label); $("eye").title = label;
+    $("eye").setAttribute("aria-pressed", String(visible));
+  }
+
+  function formatUptime(ms) {
+    var s = Math.max(0, Math.floor(ms / 1000));
+    var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+    var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+    return (d ? d + "d " : "") + (d || h ? h + "h " : "") + pad(m) + "m " + pad(sec) + "s";
+  }
+
+  function drawUptime() {
+    if (startedAt == null) return;
+    $("uptimeValue").textContent = formatUptime(Date.now() + skew - startedAt);
+  }
+
+  function syncUptime() {
+    fetch("/admin/uptime", { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+      .then(function (u) {
+        // Server clock minus ours, so a wrong laptop clock doesn't skew the count.
+        skew = u.serverTime - Date.now();
+        startedAt = u.startedAt;
+        $("uptimeSince").textContent = "since " + new Date(u.startedAt).toLocaleString();
+        drawUptime();
+      })
+      .catch(function () { startedAt = null; $("uptimeValue").textContent = "Server not reachable"; $("uptimeSince").textContent = ""; });
+  }
+
+  function startUptime() {
+    if (uptimeTick) return;
+    syncUptime();
+    uptimeTick = setInterval(drawUptime, 1000);
+    uptimeSync = setInterval(syncUptime, REFRESH_MS);
+  }
+
+  function stopUptime() {
+    clearInterval(uptimeTick); clearInterval(uptimeSync);
+    uptimeTick = uptimeSync = null;
+  }
+
+  function showSignIn(message) {
+    if (timer) { clearInterval(timer); timer = null; }
+    $("dash").hidden = true; $("signout").hidden = true; $("signin").hidden = false;
+    // Wipe any numbers from an earlier session.
+    ["liveCards", "totalCards", "games", "usersPerDay", "roomsPerDay", "modCards", "reported"]
+      .forEach(function (id) { $(id).replaceChildren(); });
+    $("status").textContent = "";
+    $("error").textContent = message || "";
+    setTokenVisible(false);
+    startUptime();
+    $("token").focus();
+  }
+
+  function load() {
+    var token = storedToken();
+    if (!token) { showSignIn(); return; }
+    fetch("/admin/stats", { headers: { "Authorization": "Bearer " + token }, cache: "no-store" })
+      .then(function (r) {
+        if (r.status === 401) { clearToken(); showSignIn("That token was not accepted."); return null; }
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (s) {
+        if (!s) return;
+        stopUptime();
+        $("signin").hidden = true; $("dash").hidden = false; $("signout").hidden = false;
+        render(s);
+        if (!timer) timer = setInterval(load, REFRESH_MS);
+      })
+      .catch(function (e) { $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
+  }
+
+  $("signin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var t = $("token").value.trim();
+    $("token").value = "";
+    setTokenVisible(false);
+    if (!t) return;
+    saveToken(t); load();
+  });
+  $("eye").addEventListener("click", function () {
+    setTokenVisible($("token").type === "password");
+    $("token").focus();
+  });
+  $("signout").addEventListener("click", function () { clearToken(); showSignIn(); });
+  load();
+})();
+</script>
+</body>
+</html>

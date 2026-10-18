@@ -19,7 +19,8 @@
                 "micOn": true,
                 "speakerOn": true,
                 "isFriend": false,
-                "onlineSince": 1760000000000
+                "onlineSince": 1760000000000,
+                "avatarId": "a03"
             },
             {
                 "userId": "5d2f1e44-0c1b-4b8e-9a51-3f7c2d8e6a10",
@@ -30,7 +31,8 @@
                 "micOn": false,
                 "speakerOn": false,
                 "isFriend": true,
-                "onlineSince": null
+                "onlineSince": null,
+                "avatarId": ""
             }
         ],
         "selectedGame": "royal-ludo",

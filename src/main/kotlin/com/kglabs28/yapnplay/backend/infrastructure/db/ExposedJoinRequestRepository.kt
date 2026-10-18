@@ -37,6 +37,14 @@ class ExposedJoinRequestRepository(private val db: DbQuery) : JoinRequestReposit
             .selectAll()
             .where { JoinRequestsTable.roomId eq roomId.toUuid() }
             .orderBy(JoinRequestsTable.requestedAt)
-            .map { JoinRequest(roomId, it[JoinRequestsTable.userId].toString(), it[UsersTable.displayName], it[JoinRequestsTable.requestedAt]) }
+            .map {
+                JoinRequest(
+                    roomId,
+                    it[JoinRequestsTable.userId].toString(),
+                    it[UsersTable.displayName],
+                    it[JoinRequestsTable.requestedAt],
+                    it[UsersTable.avatarId],
+                )
+            }
     }
 }

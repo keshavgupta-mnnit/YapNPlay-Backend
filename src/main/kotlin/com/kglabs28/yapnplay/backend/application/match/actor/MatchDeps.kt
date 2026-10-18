@@ -1,6 +1,8 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
 import com.kglabs28.yapnplay.backend.application.match.MatchLifecycleListener
+import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStore
 import com.kglabs28.yapnplay.backend.application.match.RoomGateway
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
@@ -12,5 +14,9 @@ class MatchDeps(
     val codec: EnvelopeCodec,
     val clock: Clock,
     val rooms: RoomGateway,
+    /** Where running matches are saved for a restart. */
+    val checkpoints: MatchCheckpointStore = MatchCheckpointStore.None,
+    /** Every match's outcome (completed or aborted), for counting unfinished games. */
+    val outcomes: MatchOutcomeStore = MatchOutcomeStore.None,
     val listener: MatchLifecycleListener,
 )

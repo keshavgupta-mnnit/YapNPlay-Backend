@@ -1,9 +1,12 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
 import com.kglabs28.yapnplay.backend.application.match.MatchLifecycleListener
+import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStore
 import com.kglabs28.yapnplay.backend.application.match.MatchPresenceUseCase
 import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.match.MatchResultRecorder
+import com.kglabs28.yapnplay.backend.application.match.GetActiveMatchUseCase
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.application.match.SendMatchActionUseCase
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchDeps
@@ -14,6 +17,8 @@ import com.kglabs28.yapnplay.backend.application.matchmaking.MatchmakingService
 import com.kglabs28.yapnplay.backend.games.base.play.GameRandom
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarEngine
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoEngine
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedMatchCheckpointStore
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedMatchOutcomeStore
 import com.kglabs28.yapnplay.backend.infrastructure.security.SecureGameRandom
 import org.koin.dsl.module
 
@@ -28,7 +33,12 @@ val matchModule = module {
     }
     single { MatchRegistry() }
     single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get()) }
-    single { MatchDeps(get(), get(), get(), get(), get()) }
+    single<MatchCheckpointStore> { ExposedMatchCheckpointStore(get(), get()) }
+    single<MatchOutcomeStore> { ExposedMatchOutcomeStore(get()) }
+    single {
+        MatchDeps(notifier = get(), codec = get(), clock = get(), rooms = get(), checkpoints = get(), outcomes = get(), listener = get())
+    }
+    factory { GetActiveMatchUseCase(get()) }
     single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }
     single { SendMatchActionUseCase(get()) }
     single { MatchPresenceUseCase(get()) }

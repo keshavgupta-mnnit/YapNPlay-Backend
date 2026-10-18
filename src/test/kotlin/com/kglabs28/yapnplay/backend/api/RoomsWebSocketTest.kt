@@ -23,7 +23,10 @@ import com.kglabs28.yapnplay.backend.contract.SetBotFill
 import com.kglabs28.yapnplay.backend.contract.SetReady
 import com.kglabs28.yapnplay.backend.contract.StartCountdown
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
+import com.kglabs28.yapnplay.backend.config.BackendStrings
+import com.kglabs28.yapnplay.backend.support.TestDatabase
 import com.kglabs28.yapnplay.backend.support.WsTestClient
+import io.ktor.http.HttpStatusCode
 import com.kglabs28.yapnplay.backend.support.newGuestToken
 import com.kglabs28.yapnplay.backend.support.serverTest
 import com.kglabs28.yapnplay.backend.support.testConfig
@@ -34,6 +37,13 @@ import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.websocket.CloseReason
+import com.kglabs28.yapnplay.backend.contract.ActiveMatch
+import com.kglabs28.yapnplay.backend.contract.RequestSnapshot
+import com.kglabs28.yapnplay.backend.games.elements.board.protocol.LegalMove
+import com.kglabs28.yapnplay.backend.games.elements.board.protocol.MovePiece
+import com.kglabs28.yapnplay.backend.games.elements.board.protocol.RollDice
+import kotlinx.serialization.json.JsonObject
+import kotlin.test.assertFalse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -244,7 +254,100 @@ class RoomsWebSocketTest {
         }
     }
 
+    /** A room match between a host and a friend (plus two CPUs), on a server that then stops. */
+    private class RoomMatch(val host: String, val friend: String, val code: String, val before: MatchSnapshot)
+
+    private fun startRoomMatchThenStop(): RoomMatch {
+        lateinit var match: RoomMatch
+        serverTest { client ->
+            val host = client.newGuestToken()
+            val friend = client.newGuestToken()
+            client.connect(host) {
+                val hostWs = this
+                val code = createRoom().room.code
+                client.connect(friend) {
+                    askAndGetApproved(hostWs, code, friend.userIdOfToken())
+                    hostWs.reply(hostWs.send(MessageType.SELECT_GAME, SelectGame.serializer(), SelectGame(ROYAL_LUDO_ID)))
+                    hostWs.reply(hostWs.send(MessageType.SET_BOT_FILL, SetBotFill.serializer(), SetBotFill(true)))
+                    reply(send(MessageType.SET_READY, SetReady.serializer(), SetReady(true)))
+                    hostWs.reply(hostWs.send(MessageType.START_COUNTDOWN, StartCountdown.serializer(), StartCountdown))
+                    val matchId = decode(next(MessageType.MATCH_STARTING), MatchStarting.serializer()).matchId
+                    match = RoomMatch(host, friend, code, hostWs.matchSnapshot(matchId))
+                }
+            }
+        }
+        return match
+    }
+
+    private fun outcomeOf(matchId: String, column: String): String? =
+        TestDatabase.queryText("SELECT $column FROM match_outcomes WHERE match_id = '$matchId'")
+
+    @Test
+    fun `a match that cannot come back after a restart is recorded as ABORTED_SERVER`() {
+        val match = startRoomMatchThenStop()
+        val matchId = match.before.matchId
+        assertEquals("RUNNING", outcomeOf(matchId, "status"))
+        // A crash that lost the saved state: only the RUNNING outcome row is left.
+        TestDatabase.execute("DELETE FROM active_matches")
+        serverTest(resetDatabase = false) { client ->
+            assertEquals(HttpStatusCode.NoContent, client.get("/matches/active") { bearerAuth(match.host) }.status)
+            assertEquals("ABORTED_SERVER", outcomeOf(matchId, "status"))
+            assertEquals(BackendStrings.NOT_RESTORED, outcomeOf(matchId, "reason"))
+            assertTrue(outcomeOf(matchId, "ended_at") != null)
+        }
+    }
+
+    @Test
+    fun `a running match survives a server restart and play goes on`() {
+        val match = startRoomMatchThenStop()
+        val host = match.host
+        val friend = match.friend
+        val code = match.code
+        val before = match.before
+        // A new server on the same database: the match is brought back, not lost.
+        serverTest(resetDatabase = false) { client ->
+            val matchId = before.matchId
+            assertEquals(matchId, client.get("/matches/active") { bearerAuth(host) }.body<ActiveMatch>().matchId)
+            client.connect(host) {
+                val back = matchSnapshot(matchId)
+                assertEquals(ViewerRole.PLAYER, back.viewer.role)
+                assertEquals(before.viewer.seat, back.viewer.seat)
+                assertEquals(before.seats.map { it.controllerUserId to it.colour }, back.seats.map { it.controllerUserId to it.colour })
+                assertTrue(back.version > before.version, "the version carries on from the saved one")
+                assertEquals((before.publicState["pieces"] as JsonObject).keys, (back.publicState["pieces"] as JsonObject).keys)
+                // The friend has not come back yet: their seat waits as disconnected.
+                assertFalse(back.seats.single { it.controllerUserId == friend.userIdOfToken() }.connected)
+
+                // The room still knows its match, so no second countdown can start.
+                join(code)
+                val room = decode(reply(send(MessageType.REQUEST_SNAPSHOT, RequestSnapshot.serializer(), RequestSnapshot(0))), RoomSnapshot.serializer())
+                assertEquals(matchId, room.room.matchInProgress)
+                // Brought back, so it still counts as running, not aborted.
+                assertEquals("RUNNING", outcomeOf(matchId, "status"))
+
+                // Play goes on: the host plays if it is their turn; CPUs and the away rules move the rest.
+                if (back.turn.seat == back.viewer.seat) {
+                    val move = when (val legal = back.legalMoves.firstOrNull()) {
+                        is LegalMove.MovePiece -> sendOn(Channel.MATCH, MessageType.MOVE_PIECE, MovePiece.serializer(), MovePiece(matchId, legal.pieceId))
+                        else -> sendOn(Channel.MATCH, MessageType.ROLL_DICE, RollDice.serializer(), RollDice(matchId))
+                    }
+                    assertEquals(MessageType.ACK, reply(move).type)
+                }
+                val later = next(PLAY_ON_WAIT_MS) { it.type == MessageType.MATCH_SNAPSHOT && decode(it, MatchSnapshot.serializer()).version > back.version }
+                assertEquals(matchId, decode(later, MatchSnapshot.serializer()).matchId)
+            }
+        }
+    }
+
+    private suspend fun WsTestClient.matchSnapshot(matchId: String): MatchSnapshot =
+        decode(reply(sendOn(Channel.MATCH, MessageType.MATCH_REQUEST_SNAPSHOT, MatchRequestSnapshot.serializer(), MatchRequestSnapshot(matchId, 0))), MatchSnapshot.serializer())
+
     private object BackendTypes {
         const val JOIN_RESULT = "JoinRoomResult"
+    }
+
+    private companion object {
+        /** Long enough for a CPU turn, or for the absent friend's grace to run out. */
+        const val PLAY_ON_WAIT_MS = 20_000L
     }
 }

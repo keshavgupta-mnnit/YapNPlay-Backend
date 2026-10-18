@@ -53,6 +53,7 @@ class MatchSnapshotBuilder(private val state: MatchState) {
         level = level,
         micOn = micOn,
         presence = presence,
+        avatarId = avatarId,
     )
 
     private fun SeatOfferState.toWire(): SeatOfferInfo = when (val s = stage) {

@@ -30,6 +30,6 @@ class JoinPlayRoomUseCase(
         // Only a member moves rooms; anyone else just asks to join (and stays where they are).
         if (rooms.members(room.id).any { it.userId == userId }) exitCurrentRoom(userId, force = false, exceptRoomId = room.id)
         val actor = actors.get(room.id) ?: throw ServiceException(ErrorCode.NOT_FOUND, BackendStrings.ROOM_NOT_FOUND)
-        return (actor.ask(userId, RoomAction.Join(user.displayName)).orThrow() as RoomResult.Joined).result
+        return (actor.ask(userId, RoomAction.Join(user.displayName, user.avatarId)).orThrow() as RoomResult.Joined).result
     }
 }

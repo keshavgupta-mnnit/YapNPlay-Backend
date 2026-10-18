@@ -8,6 +8,7 @@ import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoHouseRules
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoRules
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoState
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 /** Starts Royal Ludo sessions; a room's house-rule toggles map onto the engine's house rules. */
 class RoyalLudoSessionFactory(
@@ -21,6 +22,9 @@ class RoyalLudoSessionFactory(
         val state = game.start(rules, seatCount, random) as RoyalLudoState
         return RoyalLudoSession(game, state, random, json)
     }
+
+    override fun restore(saved: JsonObject): GameSession =
+        RoyalLudoSession(game, json.decodeFromJsonElement(RoyalLudoState.serializer(), saved), random, json)
 
     private fun rulesFrom(toggles: Map<String, Boolean>): RoyalLudoRules {
         val defaults = RoyalLudoHouseRules()

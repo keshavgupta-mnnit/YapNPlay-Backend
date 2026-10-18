@@ -43,6 +43,7 @@ import com.kglabs28.yapnplay.backend.games.citybazaar.utils.AUCTION_SECONDS
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BidSteps
 import com.kglabs28.yapnplay.backend.games.elements.board.protocol.LegalMove
 import com.kglabs28.yapnplay.backend.games.elements.dice.mechanics.RollDice
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -58,10 +59,10 @@ class CityBazaarSession(
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
+    private val startedAt: Long = clock.nowMillis(),
+    private var auctionEndsAt: Long = 0L,
+    private var lastBidAt: Long = 0L,
 ) : GameSession {
-    private val startedAt = clock.nowMillis()
-    private var auctionEndsAt = 0L
-    private var lastBidAt = 0L
     private val mapper = CityBazaarWireMapper(json)
 
     override val currentSeat: Int get() = state.currentSeat
@@ -160,6 +161,11 @@ class CityBazaarSession(
 
     override fun wireEvents(events: List<GameEvent>): List<JsonObject> = mapper.toWire(events)
 
+    override fun save(): JsonObject = json.encodeToJsonElement(
+        CityBazaarSaved.serializer(),
+        CityBazaarSaved(state, startedAt, auctionEndsAt, lastBidAt),
+    ).jsonObject
+
     private fun take(result: ApplyResult): List<GameEvent>? {
         if (result !is ApplyResult.Success) return null
         state = result.state as CityBazaarState
@@ -200,3 +206,12 @@ class CityBazaarSession(
         const val ACTION = "action"
     }
 }
+
+/** A saved City Bazaar session: the engine state plus the clocks the session keeps. */
+@Serializable
+data class CityBazaarSaved(
+    val engine: CityBazaarState,
+    val startedAt: Long,
+    val auctionEndsAt: Long,
+    val lastBidAt: Long,
+)

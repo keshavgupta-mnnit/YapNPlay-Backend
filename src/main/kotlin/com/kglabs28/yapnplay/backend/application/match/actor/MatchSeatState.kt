@@ -2,12 +2,14 @@ package com.kglabs28.yapnplay.backend.application.match.actor
 
 import com.kglabs28.yapnplay.backend.contract.Colour
 import com.kglabs28.yapnplay.backend.contract.SeatPresence
+import kotlinx.serialization.Serializable
 
 /**
  * One seat as the match actor sees it. [userId] stays the owner's while
  * the bot holds the seat ([SeatPresence.BOT]) so it is still theirs when
  * they come back; [left] means the owner gave it up.
  */
+@Serializable
 data class MatchSeatState(
     val seat: Int,
     val userId: String,
@@ -23,6 +25,8 @@ data class MatchSeatState(
     val removed: Boolean = false,
     /** When the connection dropped (epoch millis); away after the grace period. */
     val disconnectedAt: Long? = null,
+    /** Preset avatar (a CPU's robot avatar); "" = default icon. */
+    val avatarId: String = "",
 ) {
     /** The server plays this seat right away instead of waiting for the turn timer. */
     val playedByServer: Boolean get() = cpu || left || autoplay || presence != SeatPresence.PLAYING

@@ -23,6 +23,8 @@ object BackendConstants {
     const val AVATAR_DIGITS = 2
     /** Preset avatars a01..a18 (the app ships 18; the contract lists the first 12). */
     const val AVATAR_COUNT = 18
+    /** The robot avatars CPU seats use, in turn. */
+    val CPU_AVATARS = listOf("a09", "a18")
 
     // ── Rooms ────────────────────────────────────────────────────────────
     const val ROOM_CODE_LENGTH = 6
@@ -50,6 +52,8 @@ object BackendConstants {
     const val MATCH_TICK_MS = 500L
     /** A dropped connection counts as away after this grace (contract). */
     const val DISCONNECT_GRACE_MS = 5_000L
+    /** Ticks or turn wakes in a row that throw before the match is aborted (ABORTED_ERROR). */
+    const val MATCH_FAILURES_BEFORE_ABORT = 5
     const val OPEN_SEAT_AFTER_MS = 30_000L
     const val OPEN_SEAT_AFTER_MISSED_TURNS = 2
     const val SEAT_CLAIM_MS = 30_000L
