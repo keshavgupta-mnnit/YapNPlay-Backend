@@ -1,0 +1,73 @@
+package com.kglabs28.yapnplay.backend.config
+
+/**
+ * Every text the server writes. `Rejected.message` and error bodies are
+ * for developers and logs; the app shows its own sentence per error code.
+ */
+object BackendStrings {
+    const val MISSING_DB_URL = "DB_URL is not set. Set it, or set DEV_MODE=true to use the embedded database."
+    const val STATUS_OK = "ok"
+
+    fun defaultRoomName(ownerName: String): String = "$ownerName's Room"
+
+    const val QUICK_PLAY_TITLE = "Quick Play"
+
+    fun cpuName(number: Int): String = "CPU $number"
+
+    // ── Pushes ───────────────────────────────────────────────────────────
+    fun pushEntered(name: String, room: String): String = "$name entered $room"
+    fun pushPlayersIn(count: Int, room: String): String = "$count players are in $room"
+    fun pushApprovedTitle(room: String): String = "You're in $room"
+    const val PUSH_APPROVED_BODY = "The admin let you in. Tap to open the room."
+
+    // ── Errors ───────────────────────────────────────────────────────────
+    const val NOT_AUTHENTICATED = "Missing or invalid credentials."
+    const val BAD_REQUEST = "The request could not be read."
+    const val INTERNAL_ERROR = "Something went wrong on the server."
+    const val NOT_FOUND = "Not found."
+    const val INVALID_NAME = "Display name must be 1-24 visible characters."
+    const val INVALID_ROOM_NAME = "Room name must be at most 30 visible characters."
+    const val INVALID_CODE = "Room codes are 6 digits."
+    const val ROOM_NOT_FOUND = "No room has this code."
+    const val ROOM_FULL = "This room is full."
+    const val ROOM_LIMIT_REACHED = "You are already in the maximum number of rooms."
+    const val CODE_SPACE_EXHAUSTED = "Could not find a free room code. Try again."
+    const val NOT_IN_A_ROOM = "Enter a room first."
+    const val NOT_MEMBER = "You are not a member of this room."
+    const val TARGET_NOT_MEMBER = "That person is not a member of this room."
+    const val TARGET_OFFLINE = "Only someone online can become leader."
+    const val NOT_LEADER = "Only the leader can do this."
+    const val NOT_ADMIN = "Only the admin can do this."
+    const val NO_GAME_SELECTED = "Pick a game first."
+    const val GAME_UNAVAILABLE = "This game is not available."
+    const val UNKNOWN_HOUSE_RULE = "This game has no such house rule."
+    const val NOT_ENOUGH_READY = "Not enough ready players to start."
+    const val NOT_READY_TO_CANCEL = "Only ready players can cancel the countdown."
+    const val CANNOT_REMOVE_SELF = "Use Leave Room to leave yourself."
+    const val BUSY_IN_COUNTDOWN = "You are in a countdown in another room."
+    const val MESSAGE_TOO_LARGE = "Message is larger than 8 KB."
+    const val RATE_LIMITED = "Too many messages. Slow down."
+    const val UNKNOWN_TYPE = "Unknown message type."
+    const val CHANNEL_NOT_READY = "This channel is not available yet."
+    const val SESSION_REPLACED = "SessionReplaced"
+    const val NO_SUCH_MATCH = "No such match."
+    const val NOT_IN_MATCH = "You are not in this match."
+    const val NOT_YOUR_TURN = "It is not your turn."
+    const val ILLEGAL_MOVE = "That move is not allowed now."
+    const val MATCH_ON_HOLD = "Play is paused while a seat changes hands."
+    const val MATCH_ENDED = "This match is over."
+    const val NO_SEAT_OFFER = "There is no seat offer for you."
+    const val SEAT_TAKEN = "Someone else took that seat."
+    const val UNKNOWN_ACTION = "This game has no such action."
+    const val ALREADY_BUSY = "You are already in a queue, a countdown or a match."
+    const val BLOCKED = "You are blocked from new matches for a while."
+    const val NO_JOIN_REQUEST = "This person has not asked to join."
+    const val MATCH_RUNNING = "A match is already running in this room."
+    const val VOICE_UNAVAILABLE = "Voice is not set up on this server."
+    const val CANNOT_REPORT = "At least two other people must be present to confirm a report."
+    const val NO_SUCH_REPORT = "This vote is closed."
+    const val CANNOT_FRIEND_SELF = "You cannot add yourself."
+    const val INVALID_USERNAME = "Usernames are 3-20 letters, digits, _ or ."
+    const val INVALID_AVATAR = "Unknown avatar."
+    const val NO_FRIEND_REQUEST = "This friend request no longer exists."
+}

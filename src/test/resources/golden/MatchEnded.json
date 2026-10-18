@@ -1,0 +1,14 @@
+{
+    "ranking": [
+        {
+            "seat": 2,
+            "status": "ACTIVE",
+            "place": 1
+        },
+        {
+            "seat": 1,
+            "status": "ACTIVE",
+            "place": 2
+        }
+    ]
+}

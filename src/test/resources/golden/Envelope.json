@@ -1,0 +1,8 @@
+{
+    "requestId": "req-1",
+    "channel": "ROOM",
+    "type": "JoinRoom",
+    "payload": {
+        "code": "482193"
+    }
+}

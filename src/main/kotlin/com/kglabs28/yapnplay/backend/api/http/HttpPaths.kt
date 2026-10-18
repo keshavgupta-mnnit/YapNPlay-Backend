@@ -1,0 +1,27 @@
+package com.kglabs28.yapnplay.backend.api.http
+
+/** Every HTTP path, from the contract. */
+object HttpPaths {
+    const val HEALTH = "/health"
+    const val GUEST = "/auth/guest"
+    const val ME = "/me"
+    const val MY_ROOMS = "/rooms/mine"
+    const val ROOM_PREVIEW = "/rooms/preview/{code}"
+    const val ONLINE_STATS = "/stats/online"
+    const val DEVICES = "/devices"
+    const val FRIENDS = "/friends"
+    const val FRIEND = "/friends/{userId}"
+    const val FRIEND_REQUESTS = "/friends/requests"
+    const val FRIEND_REQUEST_ACCEPT = "/friends/requests/{requestId}/accept"
+    const val FRIEND_REQUEST_DECLINE = "/friends/requests/{requestId}/decline"
+    const val BLOCKS = "/blocks"
+    const val BLOCK = "/blocks/{userId}"
+    const val REQUEST_ID_PARAM = "requestId"
+    const val ROOM_VOICE_TOKEN = "/rooms/{roomId}/voice-token"
+    const val MATCH_VOICE_TOKEN = "/matches/{matchId}/voice-token"
+    const val CLEAR_PENALTY_WITH_AD = "/penalties/clear-with-ad"
+    const val USER_ID_PARAM = "userId"
+    const val ROOM_ID_PARAM = "roomId"
+    const val MATCH_ID_PARAM = "matchId"
+    const val CODE_PARAM = "code"
+}

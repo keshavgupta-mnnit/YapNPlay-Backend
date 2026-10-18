@@ -1,0 +1,22 @@
+[
+    {
+        "type": "RollDice"
+    },
+    {
+        "type": "BuyTile"
+    },
+    {
+        "type": "BuildOnTile",
+        "tile": 7
+    },
+    {
+        "type": "StartAuction",
+        "tile": 9
+    },
+    {
+        "type": "PlaceBid"
+    },
+    {
+        "type": "DeclareBankruptcy"
+    }
+]

@@ -1,0 +1,36 @@
+[
+    {
+        "type": "Rolled",
+        "seat": 1,
+        "value": 6
+    },
+    {
+        "type": "Moved",
+        "seat": 1,
+        "piece": 1,
+        "from": 5,
+        "to": 11
+    },
+    {
+        "type": "Captured",
+        "seat": 1,
+        "victimSeat": 2,
+        "victimPiece": 0
+    },
+    {
+        "type": "TurnPassed",
+        "seat": 1
+    },
+    {
+        "type": "Reverted",
+        "seat": 1,
+        "pieces": {
+            "1": [
+                -1,
+                5,
+                56,
+                52
+            ]
+        }
+    }
+]

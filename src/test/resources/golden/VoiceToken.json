@@ -1,0 +1,5 @@
+{
+    "url": "wss://example.livekit.cloud",
+    "token": "eyJhbGciOiJIUzI1NiJ9.example.sig",
+    "expiresAt": 1760000600000
+}

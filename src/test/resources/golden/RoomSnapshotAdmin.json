@@ -1,0 +1,51 @@
+{
+    "version": 9,
+    "serverTime": 1760000000600,
+    "room": {
+        "id": "8b3a9c61-2f4d-4e7a-b1c5-6d9e0f1a2b3c",
+        "code": "482193",
+        "name": "College Crew",
+        "leaderId": "10ab793c-9faf-47a5-81ec-82076ca8713f",
+        "adminId": "10ab793c-9faf-47a5-81ec-82076ca8713f",
+        "description": null,
+        "icon": "group",
+        "members": [
+            {
+                "userId": "10ab793c-9faf-47a5-81ec-82076ca8713f",
+                "displayName": "Keshav",
+                "presence": "ONLINE",
+                "ready": false,
+                "watching": false,
+                "micOn": true,
+                "speakerOn": true,
+                "isFriend": false,
+                "onlineSince": 1760000000000
+            },
+            {
+                "userId": "5d2f1e44-0c1b-4b8e-9a51-3f7c2d8e6a10",
+                "displayName": "Asha",
+                "presence": "OFFLINE",
+                "ready": false,
+                "watching": false,
+                "micOn": false,
+                "speakerOn": false,
+                "isFriend": true,
+                "onlineSince": null
+            }
+        ],
+        "selectedGame": "royal-ludo",
+        "botFill": true,
+        "houseRules": {
+            "extra_turn_on_six": true
+        },
+        "countdownDeadline": 1760000010000,
+        "matchInProgress": null,
+        "waitingList": [
+            {
+                "userId": "5d2f1e44-0c1b-4b8e-9a51-3f7c2d8e6a10",
+                "displayName": "Asha",
+                "requestedAt": 1760000000100
+            }
+        ]
+    }
+}

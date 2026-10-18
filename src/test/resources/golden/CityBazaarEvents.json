@@ -1,0 +1,36 @@
+[
+    {
+        "type": "Rolled",
+        "seat": 1,
+        "die1": 3,
+        "die2": 4
+    },
+    {
+        "type": "Moved",
+        "seat": 1,
+        "from": 0,
+        "to": 7,
+        "steps": 7,
+        "jump": false
+    },
+    {
+        "type": "Money",
+        "from": 1,
+        "to": 2,
+        "amount": 300,
+        "reason": "RENT",
+        "tile": 7
+    },
+    {
+        "type": "Card",
+        "seat": 1,
+        "cardId": "card-tax-refund"
+    },
+    {
+        "type": "AuctionEnded",
+        "seller": 2,
+        "tile": 9,
+        "winner": null,
+        "amount": 1000
+    }
+]

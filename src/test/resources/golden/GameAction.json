@@ -1,0 +1,7 @@
+{
+    "matchId": "3e1d2c4b-5a69-4788-9abc-def012345678",
+    "action": {
+        "type": "BuildOnTile",
+        "tile": 7
+    }
+}

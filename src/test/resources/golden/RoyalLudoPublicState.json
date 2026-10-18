@@ -1,0 +1,24 @@
+{
+    "pieces": {
+        "1": [
+            -1,
+            5,
+            56,
+            52
+        ],
+        "2": [
+            13,
+            -1,
+            -1,
+            -1
+        ]
+    },
+    "phase": "MOVE",
+    "lastRoll": 6,
+    "legalPieces": [
+        0,
+        1
+    ],
+    "finishedSeats": [],
+    "ranking": []
+}

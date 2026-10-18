@@ -1,0 +1,5 @@
+{
+    "requestId": "req-1",
+    "code": "INVALID_CODE",
+    "message": "Room codes are 6 digits."
+}

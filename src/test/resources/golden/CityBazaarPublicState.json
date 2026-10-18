@@ -1,0 +1,52 @@
+{
+    "players": [
+        {
+            "seat": 1,
+            "cash": 14500,
+            "position": 7,
+            "inJail": false,
+            "halfRent": false,
+            "bankrupt": false
+        },
+        {
+            "seat": 2,
+            "cash": 0,
+            "position": 10,
+            "inJail": true,
+            "halfRent": true,
+            "bankrupt": false
+        }
+    ],
+    "owners": {
+        "7": 1
+    },
+    "levels": {
+        "7": 2
+    },
+    "phase": "AUCTION",
+    "die1": 3,
+    "die2": 4,
+    "pendingTile": null,
+    "debt": {
+        "amount": 1200,
+        "reason": "RENT",
+        "tile": 7
+    },
+    "jailTriesLeft": 2,
+    "auction": {
+        "tile": 9,
+        "sellerSeat": 2,
+        "bid": 1000,
+        "leaderSeat": 1,
+        "nextBid": 1100,
+        "endsAt": 1760000105000
+    },
+    "timeEndsAt": 1760001800000,
+    "round": 4,
+    "roundLimit": 30,
+    "netWorth": {
+        "1": 21000,
+        "2": 6500
+    },
+    "ranking": []
+}
