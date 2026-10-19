@@ -42,6 +42,11 @@ object BackendConstants {
     const val WS_MAX_MESSAGE_BYTES = 8 * 1024
     const val WS_MAX_FRAME_BYTES = 64 * 1024L
     const val WS_MESSAGES_PER_SECOND = 20
+    /** Signed-in HTTP calls per minute from one address (the WebSocket has its own limit). */
+    const val HTTP_CALLS_PER_MINUTE = 300
+    const val SECONDS_PER_MINUTE = 60L
+    /** A block can be lifted with an ad at most once in this long (ads are not verified yet). */
+    const val AD_CLEAR_COOLDOWN_MS = 24 * 60 * 60 * 1_000L
     const val WS_RECENT_REPLIES = 128
     const val WS_OUTGOING_BUFFER = 256
     const val WS_DEV_TOKEN_QUERY = "token"

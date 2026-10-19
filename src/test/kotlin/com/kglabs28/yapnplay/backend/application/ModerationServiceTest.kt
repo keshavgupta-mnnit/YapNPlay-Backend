@@ -3,6 +3,7 @@ package com.kglabs28.yapnplay.backend.application
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.moderation.ModerationService
 import com.kglabs28.yapnplay.backend.application.rooms.RoomPresence
+import com.kglabs28.yapnplay.backend.config.BackendConstants.AD_CLEAR_COOLDOWN_MS
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.ReportPlayer
 import com.kglabs28.yapnplay.backend.contract.ReportResolved
@@ -37,6 +38,18 @@ class ModerationServiceTest {
         notifier.sent.last { it.second.type == MessageType.REPORT_RESOLVED }.let { testJson.decodeFromJsonElement(ReportResolved.serializer(), it.second.payload) }
 
     private fun room(vararg users: String) = users.forEach { presence.enter(it, ROOM) }
+
+    @Test
+    fun `an ad lifts a block at most once a day`() = runTest {
+        val kit = MatchTestKit(this)
+        val moderation = service(kit)
+        moderation.clearWithAd("p1")
+        val again = assertFailsWith<ServiceException> { moderation.clearWithAd("p1") }
+        assertEquals(ErrorCode.RATE_LIMITED, again.code)
+        moderation.clearWithAd("p2")
+        advanceTimeBy(AD_CLEAR_COOLDOWN_MS)
+        moderation.clearWithAd("p1")
+    }
 
     @Test
     fun `two agreements uphold the report and penalise the reported person`() = runTest {

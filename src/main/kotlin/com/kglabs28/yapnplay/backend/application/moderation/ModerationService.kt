@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.moderation
 
+import java.util.concurrent.ConcurrentHashMap
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
@@ -89,8 +90,22 @@ class ModerationService(
         if (complete) resolve(reportId)
     }
 
-    /** A rewarded ad was watched: the block is lifted (ad verification is a later security item). */
-    suspend fun clearWithAd(userId: String) = repository.clearBlocks(userId, clock.nowMillis())
+    /** When each player last lifted a block with an ad (kept in memory; resets on restart). */
+    private val lastAdClear = ConcurrentHashMap<String, Long>()
+
+    /**
+     * A rewarded ad was watched: the block is lifted. Ads are not verified
+     * yet, so this works at most once a day per player.
+     */
+    suspend fun clearWithAd(userId: String) {
+        val now = clock.nowMillis()
+        val last = lastAdClear[userId]
+        if (last != null && now - last < BackendConstants.AD_CLEAR_COOLDOWN_MS) {
+            throw ServiceException(ErrorCode.RATE_LIMITED, BackendStrings.AD_CLEAR_LIMIT)
+        }
+        lastAdClear[userId] = now
+        repository.clearBlocks(userId, now)
+    }
 
     /** On connecting: remind the user of a block still running. */
     suspend fun sendActiveBlock(userId: String) {

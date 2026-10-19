@@ -1,0 +1,13 @@
+# Never send local builds, IDE files, the laptop database or secrets to the image build.
+.git
+.gradle
+.kotlin
+.idea
+build
+out
+data
+.env
+.env.*
+!.env.example
+*.iml
+local.properties

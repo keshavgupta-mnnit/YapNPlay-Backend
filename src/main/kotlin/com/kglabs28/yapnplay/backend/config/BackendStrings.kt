@@ -47,6 +47,7 @@ object BackendStrings {
     const val BUSY_IN_COUNTDOWN = "You are in a countdown in another room."
     const val MESSAGE_TOO_LARGE = "Message is larger than 8 KB."
     const val RATE_LIMITED = "Too many messages. Slow down."
+    const val AD_CLEAR_LIMIT = "You can lift a block with an ad once a day."
     const val UNKNOWN_TYPE = "Unknown message type."
     const val CHANNEL_NOT_READY = "This channel is not available yet."
     const val SESSION_REPLACED = "SessionReplaced"

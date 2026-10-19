@@ -13,6 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 
 /** Name of the per-address limit on guest creation. */
 val GUEST_RATE_LIMIT = RateLimitName("guest-creation")
+val PLAYER_RATE_LIMIT = RateLimitName("player-calls")
 
 /** Bearer sign-in for every protected route, and the guest-creation rate limit. */
 fun Application.configureSecurity(authenticate: AuthenticateUseCase, devMode: Boolean, guestCreationsPerHour: Int) {
@@ -22,6 +23,11 @@ fun Application.configureSecurity(authenticate: AuthenticateUseCase, devMode: Bo
     install(RateLimit) {
         register(GUEST_RATE_LIMIT) {
             rateLimiter(limit = guestCreationsPerHour, refillPeriod = BackendConstants.SECONDS_PER_HOUR.seconds)
+            requestKey { call -> call.request.origin.remoteHost }
+        }
+        // Every signed-in HTTP call, per address: stops scripts hammering the server.
+        register(PLAYER_RATE_LIMIT) {
+            rateLimiter(limit = BackendConstants.HTTP_CALLS_PER_MINUTE, refillPeriod = BackendConstants.SECONDS_PER_MINUTE.seconds)
             requestKey { call -> call.request.origin.remoteHost }
         }
     }
