@@ -24,6 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The tag must match build.gradle.kts `version` (v0.1.2 ↔ version = "0.1.2"),
+      # so the admin dashboard shows exactly which tag is live.
+      - name: Check the tag matches the version
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' build.gradle.kts)
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match build.gradle.kts version ${VERSION}. Set version = \"${GITHUB_REF_NAME#v}\" and tag again."
+            exit 1
+          fi
+
       # Gradle runs on Java 25 (gradle/gradle-daemon-jvm.properties).
       - uses: actions/setup-java@v4
         with:

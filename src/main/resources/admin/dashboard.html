@@ -57,6 +57,7 @@
   #uptime { margin: -4px 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
   #uptime .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
   #uptime .l { color: var(--muted); font-size: 12px; }
+  #build { font-weight: 650; font-variant-numeric: tabular-nums; }
   #error { color: var(--bad); min-height: 1.4em; margin-top: 8px; font-size: 13px; }
   .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
   [hidden] { display: none !important; }
@@ -66,6 +67,7 @@
 <header>
   <h1>YapNPlay Admin</h1>
   <div style="display:flex;align-items:center;gap:12px">
+    <span id="build" title="Running build: version (git tag) · commit"></span>
     <span id="status"></span>
     <button id="signout" class="ghost" hidden>Sign out</button>
   </div>
@@ -206,6 +208,7 @@
     table("reported", [["Name"], ["Code"], ["Reports", true], ["Upheld", true]],
       M.mostReported.map(function (u) { return [u.displayName, u.userCode || "—", u.reports, u.upheld]; }),
       "No reports yet");
+    $("build").textContent = s.version ? "v" + s.version + " · " + s.commit : "";
     $("status").textContent = "Updated " + new Date(s.generatedAt).toLocaleTimeString() + " · days in " + s.timeZone;
   }
 

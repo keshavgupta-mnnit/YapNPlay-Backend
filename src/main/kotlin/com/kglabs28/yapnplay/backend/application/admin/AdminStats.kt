@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdminStats(
     val generatedAt: Long,
+    /** The running build: Gradle version (= the deployed git tag) and short commit. */
+    val version: String = "",
+    val commit: String = "",
     /** Calendar days below are counted in this time zone. */
     val timeZone: String,
     val live: LiveStats,

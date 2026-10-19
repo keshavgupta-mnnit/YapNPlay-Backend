@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.admin
 
+import com.kglabs28.yapnplay.backend.config.BuildInfo
 import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.matchmaking.MatchmakingService
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
@@ -25,6 +26,8 @@ class GetAdminStatsUseCase(
         val roomsActive = presence.activeRoomCount()
         return AdminStats(
             generatedAt = now,
+            version = BuildInfo.version,
+            commit = BuildInfo.commit,
             timeZone = TIME_ZONE,
             live = LiveStats(
                 onlineNow = notifier.onlineUserCount(),
