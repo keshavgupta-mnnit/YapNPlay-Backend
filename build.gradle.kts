@@ -69,12 +69,6 @@ tasks.test {
     systemProperty("golden.update", providers.systemProperty("golden.update").getOrElse("false"))
 }
 
-// Bakes the version into build-info.properties (shown on the admin dashboard).
-tasks.processResources {
-    val appVersion = project.version.toString()
-    inputs.property("appVersion", appVersion)
-    filesMatching("build-info.properties") { expand("version" to appVersion) }
-}
 
 // The deployed fat JAR: libraries register plugins in META-INF/services files
 // (Flyway core + its PostgreSQL module both do). Merge them instead of letting
