@@ -68,3 +68,10 @@ tasks.test {
     // `gradlew test -Dgolden.update=true` rewrites the golden JSON files (see GoldenContractTest).
     systemProperty("golden.update", providers.systemProperty("golden.update").getOrElse("false"))
 }
+
+// The deployed fat JAR: libraries register plugins in META-INF/services files
+// (Flyway core + its PostgreSQL module both do). Merge them instead of letting
+// one overwrite the other, or Flyway finds no SQL migrations in production.
+tasks.named("shadowJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
+    mergeServiceFiles()
+}
