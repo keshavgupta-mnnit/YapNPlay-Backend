@@ -1,0 +1,51 @@
+# Deploys the backend to Render only when a version tag is pushed
+# (git tag v0.1.0 && git push origin v0.1.0). Pushes to main never deploy.
+# The tests must pass first; then Render builds that exact commit from the
+# Dockerfile. RENDER_DEPLOY_HOOK_URL is a GitHub secret (Render → Settings →
+# Deploy Hook) and never appears in the repo or the logs.
+name: Deploy backend
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gradle runs on Java 25 (gradle/gradle-daemon-jvm.properties).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Run all backend tests
+        run: |
+          chmod +x gradlew
+          ./gradlew test --console=plain -Porg.gradle.java.installations.paths=
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ask Render to deploy this tag's commit
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "RENDER_DEPLOY_HOOK_URL secret is missing"; exit 1; fi
+          curl --fail --silent --show-error --request POST "${HOOK}&ref=${GITHUB_SHA}" > /dev/null
+          echo "Render is deploying ${GITHUB_REF_NAME} (${GITHUB_SHA})"
