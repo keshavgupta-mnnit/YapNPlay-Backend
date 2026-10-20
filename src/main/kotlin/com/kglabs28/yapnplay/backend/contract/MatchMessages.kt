@@ -76,6 +76,42 @@ data class MatchSnapshot(
     val seatOffer: SeatOfferInfo? = null,
     /** Game-specific events (each with `"type"`), oldest first. */
     val events: List<JsonObject> = emptyList(),
+    /** 0.4.4: the keep-playing vote while the game waits at its round or time limit; null otherwise. */
+    val extensionVote: ExtensionVoteInfo? = null,
+)
+
+/**
+ * 0.4.4, any game that ends on a round or time limit: with 2+ players still in
+ * there is no clear winner, so [voters] (humans the server isn't playing for)
+ * choose to play on. Closes at [endsAt] (epoch millis) or once everyone voted;
+ * continue when at least half say yes (a missing vote counts as "end").
+ * Going on adds [extraRounds] or [extraMinutes] (whichever limit was hit).
+ * The result arrives as the event `{"type":"ExtensionVoted","continued":…,"yes":…,"voters":…}`.
+ */
+@Serializable
+data class ExtensionVoteInfo(
+    val endsAt: Long,
+    val voters: List<Int>,
+    val yes: List<Int> = emptyList(),
+    val no: List<Int> = emptyList(),
+    val extraRounds: Int? = null,
+    val extraMinutes: Int? = null,
+)
+
+/** 0.4.4: a voter's choice at the limit: keep playing (true) or end now. Once per voter. */
+@Serializable
+data class VoteExtension(
+    val matchId: String,
+    val keepPlaying: Boolean,
+)
+
+/** 0.4.4: the generic event sent when the keep-playing vote is decided. */
+@Serializable
+data class ExtensionVoted(
+    val continued: Boolean,
+    val yes: Int,
+    val voters: Int,
+    val type: String = "ExtensionVoted",
 )
 
 @Serializable

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.application.economy.EntryFees
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
 import com.kglabs28.yapnplay.backend.application.rooms.GameCatalog
@@ -31,4 +32,6 @@ class PlayRoomDeps(
     val activity: RoomActivityNotifier,
     val maxRoomsPerUser: Int,
     val countdownSeconds: Int,
+    /** Group games' entry fee (free in tests). */
+    val fees: EntryFees = EntryFees.Free,
 )

@@ -48,6 +48,8 @@ object MessageType {
     const val ANSWER_SEAT_OFFER = "AnswerSeatOffer"
     const val CHOOSE_SEAT_TAKER = "ChooseSeatTaker"
     const val TAKE_SEAT = "TakeSeat"
+    /** 0.4.4: keep playing at the limit, or end. */
+    const val VOTE_EXTENSION = "VoteExtension"
 
     // ── Match channel: server to client ───────────────────────────────────
     const val MATCH_SNAPSHOT = "MatchSnapshot"

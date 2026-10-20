@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ExtendMatch
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ReachTimeLimit
 import com.kglabs28.yapnplay.backend.games.base.Game
 import com.kglabs28.yapnplay.backend.games.base.identity.GameId
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
@@ -97,6 +99,11 @@ class CityBazaarEngine : Game {
         val turn = CityBazaarTurn(s, random)
         // Any player may bid; everything else is the current seat's (or the server's on their behalf).
         if (action is PlaceBid) return if (s.phase == CityBazaarPhase.AUCTION && turn.bid(me)) turn.result() else reject("ILLEGAL_ACTION", "Can't bid now")
+        // At the limit the match layer runs the vote; the engine only extends or ends.
+        if (action is ExtendMatch) {
+            return if (s.phase == CityBazaarPhase.EXTENSION_VOTE) turn.apply { extend(action.extraRounds, action.extraMinutes) }.result() else reject("ILLEGAL_ACTION", "Not at the limit")
+        }
+        if (action is ReachTimeLimit) return if (s.phase == CityBazaarPhase.ROLL) turn.apply { reachTimeLimit() }.result() else reject("ILLEGAL_ACTION", "Mid-turn")
         if (me != s.currentSeat) return reject("NOT_YOUR_TURN", "Not your turn")
         val ok = when (action) {
             is RollDice -> when (s.phase) {
@@ -108,8 +115,8 @@ class CityBazaarEngine : Game {
             DeclineTile -> (s.phase == CityBazaarPhase.BUY).also { if (it) turn.decided() }
             is BuildOnTile -> (s.phase == CityBazaarPhase.BUILD && action.tile == s.pendingTile && turn.build(me, action.tile)).also { if (it) turn.decided() }
             SkipBuild -> (s.phase == CityBazaarPhase.BUILD).also { if (it) turn.decided() }
-            PayJailFine -> s.phase == CityBazaarPhase.JAIL_CHOICE && turn.payJailFine(me)
-            StayInJail -> (s.phase == CityBazaarPhase.JAIL_CHOICE).also { if (it) turn.stayInJail(me) }
+            PayJailFine -> s.phase in JAIL_DECISION && turn.payJailFine(me)
+            StayInJail -> (s.phase in JAIL_DECISION).also { if (it) turn.stayInJail(me) }
             is SellBuilding -> (s.phase == CityBazaarPhase.DEBT && turn.sellBuilding(me, action.tile)).also { if (it) turn.settleDebtIfPossible() }
             is SellTile -> (s.phase == CityBazaarPhase.DEBT && turn.sellTile(me, action.tile)).also { if (it) turn.settleDebtIfPossible() }
             is StartAuction -> s.phase == CityBazaarPhase.DEBT && turn.startAuction(me, action.tile)
@@ -181,3 +188,6 @@ class CityBazaarEngine : Game {
         }
     }
 }
+
+/** Just jailed: roll for doubles, or pay the fine / take half rent straight away. */
+private val JAIL_DECISION = setOf(CityBazaarPhase.JAIL_ROLL, CityBazaarPhase.JAIL_CHOICE)

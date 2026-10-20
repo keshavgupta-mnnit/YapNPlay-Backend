@@ -1,6 +1,7 @@
 package com.kglabs28.yapnplay.backend.application
 
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
+import com.kglabs28.yapnplay.backend.application.economy.EntryFees
 import com.kglabs28.yapnplay.backend.application.matchmaking.MatchmakingService
 import com.kglabs28.yapnplay.backend.application.moderation.BlockChecker
 import com.kglabs28.yapnplay.backend.application.rooms.GameCatalog
@@ -28,7 +29,7 @@ import kotlin.test.assertTrue
 class MatchmakingServiceTest {
     private val moderation = InMemoryModerationRepository()
 
-    private fun TestScope.setup(): Pair<MatchTestKit, MatchmakingService> {
+    private fun TestScope.setup(fees: EntryFees = EntryFees.Free): Pair<MatchTestKit, MatchmakingService> {
         val kit = MatchTestKit(this)
         val service = MatchmakingService(
             games = GameCatalog(GameRegistry(listOf(RoyalLudoEngine())), emptySet()),
@@ -38,6 +39,7 @@ class MatchmakingServiceTest {
             codec = kit.codec,
             clock = kit.clock,
             scope = backgroundScope,
+            fees = fees,
         )
         return kit to service
     }
@@ -84,6 +86,28 @@ class MatchmakingServiceTest {
         assertEquals(ErrorCode.GAME_UNAVAILABLE, assertFailsWith<ServiceException> { mm.join("b", "chess") }.code)
         moderation.blocked += "c"
         assertEquals(ErrorCode.BLOCKED, assertFailsWith<ServiceException> { mm.join("c", ROYAL_LUDO_ID) }.code)
+    }
+
+    @Test
+    fun `leagues - only matched within the same fee, need the coins, and pay at the start`() = runTest {
+        val charged = mutableListOf<Pair<String, Int>>()
+        val fees = object : EntryFees {
+            override suspend fun canEnter(userId: String, entryCoins: Int) = userId != "broke" || entryCoins == 0
+            override suspend fun charge(userIds: List<String>, matchId: String, entryCoins: Int): List<String> {
+                charged += userIds.map { it to entryCoins }
+                return userIds
+            }
+        }
+        val (kit, mm) = setup(fees)
+        assertEquals(ErrorCode.NOT_ENOUGH_COINS, assertFailsWith<ServiceException> { mm.join("broke", ROYAL_LUDO_ID, 500) }.code)
+        assertEquals(ErrorCode.BAD_REQUEST, assertFailsWith<ServiceException> { mm.join("a", ROYAL_LUDO_ID, 123) }.code)
+        mm.join("broke", ROYAL_LUDO_ID, 0)
+        listOf("a", "b", "c").forEach { mm.join(it, ROYAL_LUDO_ID, 500) }
+        assertEquals(null, kit.found("a"))
+        mm.join("d", ROYAL_LUDO_ID, 500)
+        assertEquals(500, kit.found("d")!!.entryCoins)
+        assertEquals(null, kit.found("broke"))
+        assertEquals(listOf("a", "b", "c", "d").map { it to 500 }, charged.sortedBy { it.first })
     }
 
     private companion object {

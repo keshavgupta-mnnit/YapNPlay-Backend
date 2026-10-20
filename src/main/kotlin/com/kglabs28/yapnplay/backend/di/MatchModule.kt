@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.economy.CoinsService
+import com.kglabs28.yapnplay.backend.config.BackendConfig
 import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
 import com.kglabs28.yapnplay.backend.application.match.MatchLifecycleListener
 import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStore
@@ -28,11 +30,13 @@ val matchModule = module {
     single<List<GameSessionFactory>> {
         listOf(
             RoyalLudoSessionFactory(RoyalLudoEngine(), get(), get()),
-            CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get()),
+            get<BackendConfig>().let { config ->
+                CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get(), config.cityBazaarRoundLimit, config.cityBazaarExtensionRounds, config.cityBazaarBankStart)
+            },
         )
     }
     single { MatchRegistry() }
-    single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get()) }
+    single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get(), get()) }
     single<MatchCheckpointStore> { ExposedMatchCheckpointStore(get(), get()) }
     single<MatchOutcomeStore> { ExposedMatchOutcomeStore(get()) }
     single {
@@ -42,5 +46,5 @@ val matchModule = module {
     single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }
     single { SendMatchActionUseCase(get()) }
     single { MatchPresenceUseCase(get()) }
-    single { MatchmakingService(get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }
+    single { MatchmakingService(get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>()) }
 }

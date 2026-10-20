@@ -11,6 +11,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CreateRoom(
     val name: String? = null,
+    /** Badge: group, dice, family or gamepad (unknown → group). */
+    val icon: String? = null,
+    /** Friends to invite; at least one is required (0.4.2). */
+    val inviteUserIds: List<String> = emptyList(),
 )
 
 /** Join a room by its six-character code. Also used to re-enter a room you already belong to. */

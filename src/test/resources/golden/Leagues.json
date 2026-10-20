@@ -1,0 +1,25 @@
+{
+    "coins": 600,
+    "leagues": [
+        {
+            "entryCoins": 0,
+            "name": "Starter",
+            "canEnter": true
+        },
+        {
+            "entryCoins": 100,
+            "name": "Bronze",
+            "canEnter": true
+        },
+        {
+            "entryCoins": 500,
+            "name": "Silver",
+            "canEnter": true
+        },
+        {
+            "entryCoins": 1000,
+            "name": "Gold",
+            "canEnter": false
+        }
+    ]
+}

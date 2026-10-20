@@ -64,7 +64,7 @@ class RoyalLudoSession(
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? =
         take(engine.autoplay(state, SeatNumber(seat), random))
 
-    override fun tick(now: Long, cpuSeats: Set<Int>): List<GameEvent>? = null
+    override fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int>): List<GameEvent>? = null
 
     override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
         when (event) {

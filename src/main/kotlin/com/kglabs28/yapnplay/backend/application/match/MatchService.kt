@@ -128,8 +128,15 @@ class MatchService(
         }
         val now = clock.nowMillis()
         val state = MatchState(setup, session, seats.toMutableList(), now)
-        // The first turn's timer runs from the start, even when a human moves first.
-        state.deadline = now + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        // Play waits until every human has opened the table (at most START_WAIT_MS);
+        // the first turn's timer starts then, even when a human moves first.
+        val humans = setup.players.map { it.userId }
+        if (humans.isEmpty()) {
+            state.deadline = now + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        } else {
+            state.waitingFor += humans
+            state.startHoldUntil = now + BackendConstants.START_WAIT_MS
+        }
         runCatching { deps.outcomes.started(setup.matchId, setup.gameId, setup.roomId, now) }
             .onFailure { log.warn("Match ${setup.matchId}: recording the start failed", it) }
         registry.add(MatchActor(state, deps, scope, onClosed = registry::remove))

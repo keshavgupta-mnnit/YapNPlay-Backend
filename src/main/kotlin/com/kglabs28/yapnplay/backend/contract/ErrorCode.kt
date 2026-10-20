@@ -29,4 +29,12 @@ enum class ErrorCode {
     SEAT_TAKEN,
     /** Voice is not set up on this server. */
     VOICE_UNAVAILABLE,
+    /** Only friends can be invited to a room. */
+    NOT_FRIEND,
+    /** CreateRoom: the creator already has a group with exactly these members; the message is its name. */
+    GROUP_EXISTS,
+    /** 0.4.3: Play Games sign-in is not set up on this server. */
+    PLAY_GAMES_UNAVAILABLE,
+    /** 0.4.5: Quick Play needs the entry fee in coins. */
+    NOT_ENOUGH_COINS,
 }

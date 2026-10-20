@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.contract.ExtensionVoteInfo
 import com.kglabs28.yapnplay.backend.contract.MatchSeatStatus
 import com.kglabs28.yapnplay.backend.contract.MatchSnapshot
 import com.kglabs28.yapnplay.backend.contract.SeatInfo
@@ -37,6 +38,10 @@ class MatchSnapshotBuilder(private val state: MatchState) {
             spectators = state.spectators.values.map { SpectatorInfo(it.userId, it.displayName, it.micOn) },
             seatOffer = if (session.isFinished) null else state.offer?.toWire(),
             events = events,
+            extensionVote = state.extensionVote?.let { vote ->
+                val offer = session.extension
+                ExtensionVoteInfo(vote.endsAt, vote.voters.sorted(), vote.yes.sorted(), vote.no.sorted(), offer.extraRounds, offer.extraMinutes)
+            },
         )
     }
 

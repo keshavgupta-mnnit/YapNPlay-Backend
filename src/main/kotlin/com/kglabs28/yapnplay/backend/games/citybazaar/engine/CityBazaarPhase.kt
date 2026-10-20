@@ -6,4 +6,4 @@ package com.kglabs28.yapnplay.backend.games.citybazaar.engine
  * building the tile landed on, raises money for a debt, or waits while
  * their property is auctioned; or nothing (finished).
  */
-enum class CityBazaarPhase { ROLL, JAIL_ROLL, JAIL_CHOICE, BUY, BUILD, DEBT, AUCTION, FINISHED }
+enum class CityBazaarPhase { ROLL, JAIL_ROLL, JAIL_CHOICE, BUY, BUILD, DEBT, AUCTION, EXTENSION_VOTE, FINISHED }

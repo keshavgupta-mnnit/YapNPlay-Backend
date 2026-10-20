@@ -1,0 +1,20 @@
+{
+    "invites": [
+        {
+            "inviteId": "inv-1",
+            "roomId": "room-1",
+            "roomName": "Hostel Night",
+            "roomIcon": "dice",
+            "memberCount": 3,
+            "invitedBy": {
+                "userId": "u-asha",
+                "displayName": "Asha",
+                "online": true,
+                "username": "asha",
+                "userCode": "K7Q2M9",
+                "avatarId": "a03"
+            },
+            "invitedAt": 1760000000000
+        }
+    ]
+}

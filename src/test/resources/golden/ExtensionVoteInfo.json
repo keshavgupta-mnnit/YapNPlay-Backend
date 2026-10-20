@@ -1,0 +1,13 @@
+{
+    "endsAt": 1760000110000,
+    "voters": [
+        1,
+        2
+    ],
+    "yes": [
+        1
+    ],
+    "no": [],
+    "extraRounds": 30,
+    "extraMinutes": null
+}

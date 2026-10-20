@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.League
+import com.kglabs28.yapnplay.backend.contract.Leagues
+import com.kglabs28.yapnplay.backend.contract.CoinsReward
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.api.http.HealthResponse
 import com.kglabs28.yapnplay.backend.contract.GoldenFixtures.FRIEND
@@ -34,7 +37,9 @@ object GoldenSamples {
         // ── HTTP ────────────────────────────────────────────────────────
         GoldenCase("HealthResponse", HealthResponse.serializer(), HealthResponse("ok", CONTRACT_VERSION)),
         GoldenCase("GuestCreated", GuestCreated.serializer(), GuestCreated(USER, "s3cr3t-example-not-real")),
-        GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 650, level = 2, username = "keshav_28", userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5)),
+        GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, username = "keshav_28", userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
+        GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 2_100, granted = 500, adsLeftToday = 4)),
+        GoldenCase("Leagues", Leagues.serializer(), Leagues(coins = 600, leagues = listOf(League(0, "Starter", true), League(100, "Bronze", true), League(500, "Silver", true), League(1_000, "Gold", false)))),
         GoldenCase("UpdateProfileBody", UpdateProfileBody.serializer(), UpdateProfileBody(username = "keshav_28", avatarId = "a03")),
         GoldenCase("UpdateName", UpdateName.serializer(), UpdateName("Keshav")),
         GoldenCase("MyRooms", MyRooms.serializer(), MyRooms(listOf(f.summary))),
@@ -59,7 +64,19 @@ object GoldenSamples {
         GoldenCase("Ack", Ack.serializer(), Ack(REQUEST)),
         GoldenCase("Rejected", Rejected.serializer(), Rejected(REQUEST, ErrorCode.INVALID_CODE, "Room codes are 6 digits.")),
         // ── ROOM channel ────────────────────────────────────────────────
-        GoldenCase("CreateRoom", CreateRoom.serializer(), CreateRoom("College Crew")),
+        GoldenCase("CreateRoom", CreateRoom.serializer(), CreateRoom("College Crew", "dice", listOf("u-friend-1", "u-friend-2"))),
+        GoldenCase("InviteToRoomBody", InviteToRoomBody.serializer(), InviteToRoomBody(listOf("u-friend-1"))),
+        GoldenCase("VoteExtension", VoteExtension.serializer(), VoteExtension("match-1", keepPlaying = true)),
+        GoldenCase("ExtensionVoteInfo", ExtensionVoteInfo.serializer(), ExtensionVoteInfo(1_760_000_110_000, listOf(1, 2), yes = listOf(1), extraRounds = 30)),
+        GoldenCase("ExtensionVoted", ExtensionVoted.serializer(), ExtensionVoted(continued = true, yes = 2, voters = 3)),
+        GoldenCase("PlayGamesSignInBody", PlayGamesSignInBody.serializer(), PlayGamesSignInBody("4/0AeanS0Z-server-auth-code")),
+        GoldenCase("PlayGamesSignedIn", PlayGamesSignedIn.serializer(), PlayGamesSignedIn("u-asha", "s3cr3t-from-server", restored = true)),
+        GoldenCase("InviteToRoomReply", InviteToRoomReply.serializer(), InviteToRoomReply(listOf("u-friend-1"), listOf("u-stranger"))),
+        GoldenCase(
+            "RoomInvites",
+            RoomInvites.serializer(),
+            RoomInvites(listOf(RoomInviteSummary("inv-1", "room-1", "Hostel Night", "dice", 3, FriendSummary("u-asha", "Asha", online = true, username = "asha", userCode = "K7Q2M9", avatarId = "a03"), 1_760_000_000_000))),
+        ),
         GoldenCase("JoinRoom", JoinRoom.serializer(), JoinRoom("482193")),
         GoldenCase("LeaveRoom", LeaveRoom.serializer(), LeaveRoom),
         GoldenCase("ExitLobby", ExitLobby.serializer(), ExitLobby),
@@ -112,10 +129,10 @@ object GoldenSamples {
         GoldenCase("CityBazaarEvents", ListSerializer(CityBazaarWireEvent.serializer()), f.bazaarEvents),
         GoldenCase("CityBazaarActions", ListSerializer(CityBazaarWireAction.serializer()), f.bazaarActions),
         // ── MATCHMAKING channel ─────────────────────────────────────────
-        GoldenCase("JoinQueue", JoinQueue.serializer(), JoinQueue("royal-ludo")),
+        GoldenCase("JoinQueue", JoinQueue.serializer(), JoinQueue("royal-ludo", entryCoins = 500)),
         GoldenCase("LeaveQueue", LeaveQueue.serializer(), LeaveQueue),
-        GoldenCase("QueueStatus", QueueStatus.serializer(), QueueStatus("royal-ludo", 2, 4, 1_760_000_030_000, 1_760_000_005_000)),
-        GoldenCase("MatchFound", MatchFound.serializer(), MatchFound(MATCH, "royal-ludo", 2, 2)),
+        GoldenCase("QueueStatus", QueueStatus.serializer(), QueueStatus("royal-ludo", 2, 4, 1_760_000_030_000, 1_760_000_005_000, entryCoins = 500)),
+        GoldenCase("MatchFound", MatchFound.serializer(), MatchFound(MATCH, "royal-ludo", 2, 2, entryCoins = 500)),
         GoldenCase("QueueCancelled", QueueCancelled.serializer(), QueueCancelled("city-bazaar", QueueCancelReason.NOT_ENOUGH_PLAYERS)),
         // ── MODERATION channel ──────────────────────────────────────────
         GoldenCase("ReportPlayer", ReportPlayer.serializer(), ReportPlayer(MATCH, FRIEND, "voice_chat")),

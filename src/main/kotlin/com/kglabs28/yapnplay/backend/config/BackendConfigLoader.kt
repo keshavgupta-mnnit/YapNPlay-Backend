@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.config
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BANK_START
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_ROUNDS
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.ROUND_LIMIT
+
 /**
  * Reads [BackendConfig] from environment variables, with safe defaults.
  * Without DB_URL the server only starts in DEV_MODE (embedded database);
@@ -23,6 +27,11 @@ class BackendConfigLoader(private val env: (String) -> String? = System::getenv)
             firebaseServiceAccountJson = env(EnvKeys.FIREBASE_SERVICE_ACCOUNT_JSON)?.takeIf { it.isNotBlank() },
             adminToken = env(EnvKeys.ADMIN_TOKEN)?.trim()?.takeIf { it.isNotEmpty() },
             sentryDsn = env(EnvKeys.SENTRY_DSN)?.trim()?.takeIf { it.isNotEmpty() },
+            cityBazaarRoundLimit = int(EnvKeys.CITY_BAZAAR_ROUND_LIMIT)?.takeIf { it > 0 } ?: ROUND_LIMIT,
+            cityBazaarExtensionRounds = int(EnvKeys.CITY_BAZAAR_EXTENSION_ROUNDS)?.takeIf { it > 0 } ?: EXTENSION_ROUNDS,
+            cityBazaarBankStart = int(EnvKeys.CITY_BAZAAR_BANK_START)?.takeIf { it > 0 } ?: BANK_START,
+            playGamesClientId = env(EnvKeys.PLAY_GAMES_CLIENT_ID)?.trim()?.takeIf { it.isNotEmpty() } ?: BackendConstants.PLAY_GAMES_CLIENT_ID,
+            playGamesClientSecret = env(EnvKeys.PLAY_GAMES_CLIENT_SECRET)?.trim()?.takeIf { it.isNotEmpty() },
         )
     }
 

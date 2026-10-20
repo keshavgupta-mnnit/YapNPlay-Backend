@@ -23,7 +23,7 @@ data class Me(
     val xp: Int = 0,
     /** Derived from [xp] by the server. */
     val level: Int = 1,
-    /** Provisional: economy not designed yet. */
+    /** 0.4.5: the player's coins (play money), kept by the server. */
     val coins: Int = 0,
     /** Provisional: economy not designed yet. */
     val gems: Int = 0,
@@ -35,6 +35,11 @@ data class Me(
     val avatarId: String = "",
     val gamesPlayed: Int = 0,
     val gamesWon: Int = 0,
+    /** 0.4.5: XP where the current level starts and where the next begins (progress bar). */
+    val levelXp: Int = 0,
+    val nextLevelXp: Int = 1_000,
+    /** 0.4.5: coins the daily bonus just added on this call (0 if already given today): show a "+100" toast. */
+    val dailyBonus: Int = 0,
 )
 
 /** Provisional (post-POC friends): the user's friends, online first. */
@@ -210,4 +215,76 @@ data class ActiveMatch(
     /** Room name, or "Quick Play". */
     val title: String,
     val roomId: String? = null,
+)
+
+/** `POST /rooms/{roomId}/invites`: friends to invite to the room. */
+@Serializable
+data class InviteToRoomBody(
+    val userIds: List<String>,
+)
+
+/** Who got an invite, and who was skipped (not a friend, blocked, already a member or invited, room full). */
+@Serializable
+data class InviteToRoomReply(
+    val invited: List<String>,
+    val skipped: List<String> = emptyList(),
+)
+
+/** `GET /rooms/invites`: room invites waiting for the user, newest first. */
+@Serializable
+data class RoomInvites(
+    val invites: List<RoomInviteSummary>,
+)
+
+@Serializable
+data class RoomInviteSummary(
+    val inviteId: String,
+    val roomId: String,
+    val roomName: String,
+    /** Room badge key, same as RoomSummary.icon. */
+    val roomIcon: String = "group",
+    val memberCount: Int,
+    val invitedBy: FriendSummary,
+    /** Epoch millis. */
+    val invitedAt: Long,
+)
+
+/** `POST /auth/play-games` (0.4.3): the Play Games server auth code from the app. */
+@Serializable
+data class PlayGamesSignInBody(
+    val serverAuthCode: String,
+)
+
+/**
+ * The account to use from now on (save it, replacing any guest). [restored]
+ * true: a different account, already linked to this Play Games player, came
+ * back (new phone or reinstall); its secret is new.
+ */
+@Serializable
+data class PlayGamesSignedIn(
+    val userId: String,
+    val secret: String,
+    val restored: Boolean,
+)
+
+/** 0.4.5 `POST /coins/ad-reward`: after a fully watched rewarded ad. [coins] is the new balance. */
+@Serializable
+data class CoinsReward(
+    val coins: Int,
+    val granted: Int,
+    val adsLeftToday: Int,
+)
+
+/** 0.4.5 `GET /coins/leagues`: Quick Play leagues; [canEnter] is false when [coins] are short of the fee. */
+@Serializable
+data class Leagues(
+    val coins: Int,
+    val leagues: List<League>,
+)
+
+@Serializable
+data class League(
+    val entryCoins: Int,
+    val name: String,
+    val canEnter: Boolean,
 )

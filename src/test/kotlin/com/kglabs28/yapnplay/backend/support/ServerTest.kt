@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.support
 
+import com.kglabs28.yapnplay.backend.domain.identity.PlayGamesVerifier
 import com.kglabs28.yapnplay.backend.contract.GuestCreated
 import com.kglabs28.yapnplay.backend.config.BackendConfig
 import com.kglabs28.yapnplay.backend.di.BackendOverrides
@@ -27,11 +28,13 @@ val testJson = Json {
 fun serverTest(
     config: BackendConfig = testConfig(),
     resetDatabase: Boolean = true,
+    /** Replaces Google's Play Games check (tests never call Google). */
+    playGames: PlayGamesVerifier? = null,
     block: suspend ApplicationTestBuilder.(HttpClient) -> Unit,
 ) {
     if (resetDatabase) TestDatabase.reset()
     testApplication {
-        application { module(config, BackendOverrides(database = TestDatabase.handle)) }
+        application { module(config, BackendOverrides(database = TestDatabase.handle, playGames = playGames)) }
         val client = createClient {
             install(ContentNegotiation) { json(testJson) }
             install(WebSockets)

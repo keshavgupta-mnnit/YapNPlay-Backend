@@ -1,13 +1,16 @@
 {
     "userId": "10ab793c-9faf-47a5-81ec-82076ca8713f",
     "displayName": "Keshav",
-    "xp": 650,
+    "xp": 1400,
     "level": 2,
-    "coins": 0,
+    "coins": 1600,
     "gems": 0,
     "username": "keshav_28",
     "userCode": "K7Q2M9",
     "avatarId": "a03",
     "gamesPlayed": 12,
-    "gamesWon": 5
+    "gamesWon": 5,
+    "levelXp": 1000,
+    "nextLevelXp": 2000,
+    "dailyBonus": 100
 }

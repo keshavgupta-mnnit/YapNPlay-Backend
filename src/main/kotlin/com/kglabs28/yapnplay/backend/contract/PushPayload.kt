@@ -15,6 +15,10 @@ object PushKeys {
     /** "Neha entered College Crew" / "5 players are in College Crew". */
     const val TYPE_ROOM_ACTIVITY = "room_activity"
 
+    /** "Keshav invited you to Hostel Night Squad": tap opens the pending invites. */
+    const val TYPE_ROOM_INVITE = "room_invite"
+    const val INVITE_ID = "inviteId"
+
     /** `RegisterDevice.platform` value for Android devices. */
     const val PLATFORM_ANDROID = "android"
 }

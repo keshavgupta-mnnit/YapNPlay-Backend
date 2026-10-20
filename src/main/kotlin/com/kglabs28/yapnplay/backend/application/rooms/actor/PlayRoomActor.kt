@@ -92,6 +92,7 @@ class PlayRoomActor(
                 RoomResult.Snapshot(state.snapshot(deps.clock.nowMillis(), userId, deps.friends.friendsOf(userId)))
             }
             is RoomAction.ApproveJoin -> done { membership.approve(userId, action.userId) }
+            is RoomAction.AcceptInvite -> done { membership.acceptInvite(userId, action.displayName, action.avatarId) }
             is RoomAction.DeclineJoin -> done { membership.decline(userId, action.userId) }
             is RoomAction.MatchEnded -> done { if (state.matchInProgress == action.matchId) state.matchInProgress = null }
             RoomAction.Resend -> {

@@ -11,5 +11,6 @@ fun ErrorCode.httpStatus(): HttpStatusCode = when (this) {
     ErrorCode.ROOM_FULL, ErrorCode.ALREADY_IN_ROOM, ErrorCode.ROOM_LIMIT_REACHED,
     ErrorCode.ALREADY_IN_QUEUE, ErrorCode.STALE_VERSION -> HttpStatusCode.Conflict
     ErrorCode.RATE_LIMITED -> HttpStatusCode.TooManyRequests
+    ErrorCode.PLAY_GAMES_UNAVAILABLE -> HttpStatusCode.ServiceUnavailable
     else -> HttpStatusCode.BadRequest
 }

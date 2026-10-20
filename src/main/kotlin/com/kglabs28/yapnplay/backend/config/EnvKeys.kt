@@ -26,4 +26,13 @@ object EnvKeys {
     /** Secret for the read-only /admin dashboard. The dashboard is closed when unset. */
     const val ADMIN_TOKEN = "ADMIN_TOKEN"
     const val SENTRY_DSN = "SENTRY_DSN"
+    /** Play Games server sign-in: the game server (web) OAuth client. The secret is a real secret. */
+    const val PLAY_GAMES_CLIENT_ID = "PLAY_GAMES_CLIENT_ID"
+    const val PLAY_GAMES_CLIENT_SECRET = "PLAY_GAMES_CLIENT_SECRET"
+    /** City Bazaar rounds before the richest player wins (when the room keeps the round limit on). */
+    const val CITY_BAZAAR_ROUND_LIMIT = "CITY_BAZAAR_ROUND_LIMIT"
+    /** Rounds added when City Bazaar players vote to keep going. */
+    const val CITY_BAZAAR_EXTENSION_ROUNDS = "CITY_BAZAAR_EXTENSION_ROUNDS"
+    /** The City Bazaar bank's starting reserve (₹). */
+    const val CITY_BAZAAR_BANK_START = "CITY_BAZAAR_BANK_START"
 }

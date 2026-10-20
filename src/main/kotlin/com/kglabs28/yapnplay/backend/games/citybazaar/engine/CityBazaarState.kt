@@ -38,6 +38,16 @@ data class CityBazaarState(
     val bankruptOrder: List<Int> = emptyList(),
     val round: Int = 1,
     val turnCounter: Long = 0,
+    /** Rent each seat has collected this match (seat → ₹). */
+    val rentBySeat: Map<Int, Int> = emptyMap(),
+    /** Rent each tile has earned its owners this match (tile → ₹). */
+    val rentByTile: Map<Int, Int> = emptyMap(),
+    /** Which limit paused play (phase EXTENSION_VOTE) until the players decide to go on or end. */
+    val limitHit: CityBazaarLimit? = null,
+    /** Everything paid to the bank this match (₹). */
+    val bankReceived: Long = 0,
+    /** Everything the bank paid out this match (₹). */
+    val bankPaid: Long = 0,
 ) : GameState {
     override val rules: GameRules get() = cbRules
     override val turn: TurnState get() = CityBazaarTurnState(SeatNumber(currentSeat), phase.name)

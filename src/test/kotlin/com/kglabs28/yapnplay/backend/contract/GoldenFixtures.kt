@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarBank
 import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarAuction
 import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarDebt
 import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarPublicState
@@ -79,7 +80,7 @@ object GoldenFixtures {
 
     val bazaarState = CityBazaarPublicState(
         players = listOf(
-            CityBazaarSeatState(1, 14_500, 7, inJail = false, halfRent = false, bankrupt = false),
+            CityBazaarSeatState(1, 14_500, 7, inJail = false, halfRent = false, bankrupt = false, rentCollected = 300),
             CityBazaarSeatState(2, 0, 10, inJail = true, halfRent = true, bankrupt = false),
         ),
         owners = mapOf(7 to 1),
@@ -94,6 +95,8 @@ object GoldenFixtures {
         round = 4,
         roundLimit = 30,
         netWorth = mapOf(1 to 21_000, 2 to 6_500),
+        rentCollected = mapOf(7 to 300),
+        bank = CityBazaarBank(cash = 298_500, received = 2_000, paid = 3_500),
     )
 
     val bazaarEvents = listOf(
@@ -102,6 +105,7 @@ object GoldenFixtures {
         CityBazaarWireEvent.Money(1, 2, 300, "RENT", 7),
         CityBazaarWireEvent.Card(1, "card-tax-refund"),
         CityBazaarWireEvent.AuctionEnded(2, 9, null, 1_000),
+        CityBazaarWireEvent.Rested(2),
     )
 
     val bazaarActions = listOf(

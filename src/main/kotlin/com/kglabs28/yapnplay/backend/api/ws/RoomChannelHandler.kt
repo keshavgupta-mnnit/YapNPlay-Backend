@@ -43,7 +43,7 @@ class RoomChannelHandler(
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope = when (request.type) {
         MessageType.CREATE_ROOM -> {
-            val snapshot = createRoom(userId, codec.payload(request, CreateRoom.serializer()).name)
+            val snapshot = createRoom(userId, codec.payload(request, CreateRoom.serializer()))
             codec.reply(request, MessageType.ROOM_SNAPSHOT, RoomSnapshot.serializer(), snapshot)
         }
         MessageType.JOIN_ROOM -> {

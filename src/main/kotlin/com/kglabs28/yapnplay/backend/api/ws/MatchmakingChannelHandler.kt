@@ -16,7 +16,7 @@ class MatchmakingChannelHandler(
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope {
         when (request.type) {
-            MessageType.JOIN_QUEUE -> matchmaking.join(userId, codec.payload(request, JoinQueue.serializer()).gameId)
+            MessageType.JOIN_QUEUE -> codec.payload(request, JoinQueue.serializer()).let { matchmaking.join(userId, it.gameId, it.entryCoins) }
             MessageType.LEAVE_QUEUE -> matchmaking.leave(userId)
             else -> throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_TYPE)
         }

@@ -58,6 +58,10 @@ sealed interface CityBazaarWireEvent {
     @Serializable @SerialName("Skipped")
     data class Skipped(val seat: Int) : CityBazaarWireEvent
 
+    /** 0.4.2: landed on Rest House; their next turn will be skipped. */
+    @Serializable @SerialName("Rested")
+    data class Rested(val seat: Int) : CityBazaarWireEvent
+
     @Serializable @SerialName("TurnPassed")
     data class TurnPassed(val seat: Int) : CityBazaarWireEvent
 }

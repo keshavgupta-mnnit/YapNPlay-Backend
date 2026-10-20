@@ -26,6 +26,18 @@ data class CityBazaarPublicState(
     val netWorth: Map<Int, Int>,
     /** Seats from first to last once the match is over. */
     val ranking: List<Int> = emptyList(),
+    /** 0.4.2: rent each tile has earned its owners this match (tile → ₹). */
+    val rentCollected: Map<Int, Int> = emptyMap(),
+    /** 0.4.4: the bank's balance and its totals this match. */
+    val bank: CityBazaarBank? = null,
+)
+
+/** 0.4.4: the bank's [cash] = starting reserve + [received] − [paid] (₹). */
+@Serializable
+data class CityBazaarBank(
+    val cash: Long,
+    val received: Long,
+    val paid: Long,
 )
 
 /** One seat's money and position. */
@@ -37,6 +49,8 @@ data class CityBazaarSeatState(
     val inJail: Boolean,
     val halfRent: Boolean,
     val bankrupt: Boolean,
+    /** 0.4.2: rent this player has collected this match (₹). */
+    val rentCollected: Int = 0,
 )
 
 /** What the current player owes but can't pay yet. [reason] is a MoneyReason name. */

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.matchmaking
 
+import com.kglabs28.yapnplay.backend.application.economy.EntryFees
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.application.moderation.BlockChecker
@@ -26,7 +27,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Quick Play (contract "MATCHMAKING channel"): one forming table per game.
+ * Quick Play (contract "MATCHMAKING channel"): one forming table per game
+ * and league (entry fee), so players only meet others who paid the same.
  * The search window opens with the first player; the match starts early
  * when every seat has a human, otherwise at the deadline with CPU seats
  * (or is cancelled when the game does not fill with CPUs and too few came).
@@ -39,21 +41,25 @@ class MatchmakingService(
     private val codec: EnvelopeCodec,
     private val clock: Clock,
     private val scope: CoroutineScope,
+    /** League entry fees in coins (free in tests). */
+    private val fees: EntryFees = EntryFees.Free,
 ) {
     private val lock = Mutex()
     private val forming = mutableMapOf<String, FormingTable>()
     /** Successful queue joins per game since the server started (admin dashboard only). */
     private val joinsByGame = ConcurrentHashMap<String, AtomicInteger>()
 
-    suspend fun join(userId: String, gameId: String) {
+    suspend fun join(userId: String, gameId: String, entryCoins: Int = BackendConstants.QUICK_PLAY_ENTRY_COINS) {
         val game = games.findEnabled(gameId) ?: throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
         blocks.requireNotBlocked(userId)
+        if (BackendConstants.LEAGUES.none { it.second == entryCoins }) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SUCH_LEAGUE)
+        if (!fees.canEnter(userId, entryCoins)) throw ServiceException(ErrorCode.NOT_ENOUGH_COINS, BackendStrings.NOT_ENOUGH_COINS)
         if (matches.isPlaying(userId)) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
         lock.withLock {
             if (forming.values.any { userId in it.players }) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
-            val table = forming.getOrPut(gameId) {
+            val table = forming.getOrPut(keyOf(gameId, entryCoins)) {
                 val deadline = clock.nowMillis() + game.matchmaking.searchSeconds * BackendConstants.MILLIS_PER_SECOND
-                FormingTable(gameId, deadline).also { it.timer = scheduleDeadline(it) }
+                FormingTable(gameId, entryCoins, deadline).also { it.timer = scheduleDeadline(it) }
             }
             table.players += userId
             joinsByGame.getOrPut(gameId) { AtomicInteger() }.incrementAndGet()
@@ -67,7 +73,7 @@ class MatchmakingService(
         table.players -= userId
         if (table.players.isEmpty()) {
             table.timer?.cancel()
-            forming.remove(table.gameId)
+            forming.remove(table.key)
         } else {
             sendStatus(table)
         }
@@ -77,12 +83,14 @@ class MatchmakingService(
     fun joinsSinceStart(): Map<String, Int> = joinsByGame.mapValues { it.value.get() }
 
     /** Players searching right now, per game. */
-    suspend fun waitingNow(): Map<String, Int> = lock.withLock { forming.mapValues { it.value.players.size } }
+    suspend fun waitingNow(): Map<String, Int> = lock.withLock {
+        forming.values.groupBy { it.gameId }.mapValues { (_, tables) -> tables.sumOf { it.players.size } }
+    }
 
     private fun scheduleDeadline(table: FormingTable): Job = scope.launch {
         delay((table.deadline - clock.nowMillis()).coerceAtLeast(0))
         lock.withLock {
-            if (forming[table.gameId] === table) {
+            if (forming[table.key] === table) {
                 // This coroutine is the timer: drop it first so start/cancel do not cancel themselves mid-way.
                 table.timer = null
                 deadlineReached(table)
@@ -105,16 +113,18 @@ class MatchmakingService(
     }
 
     private suspend fun start(table: FormingTable, cpuCount: Int) {
-        forming.remove(table.gameId)
+        forming.remove(table.key)
         table.timer?.cancel()
         val players = table.players.toList()
         val matchId = matches.startQuickPlay(table.gameId, players, cpuCount)
-        val found = codec.push(Channel.MATCHMAKING, MessageType.MATCH_FOUND, MatchFound.serializer(), MatchFound(matchId, table.gameId, players.size, cpuCount))
+        // Everyone pays in at the start; the bank covers the CPU seats in the pot.
+        fees.charge(players, matchId, table.entryCoins)
+        val found = codec.push(Channel.MATCHMAKING, MessageType.MATCH_FOUND, MatchFound.serializer(), MatchFound(matchId, table.gameId, players.size, cpuCount, table.entryCoins))
         players.forEach { notifier.send(it, found) }
     }
 
     private fun cancel(table: FormingTable, reason: QueueCancelReason) {
-        forming.remove(table.gameId)
+        forming.remove(table.key)
         table.timer?.cancel()
         val message = codec.push(Channel.MATCHMAKING, MessageType.QUEUE_CANCELLED, QueueCancelled.serializer(), QueueCancelled(table.gameId, reason))
         table.players.forEach { notifier.send(it, message) }
@@ -122,13 +132,16 @@ class MatchmakingService(
 
     private fun sendStatus(table: FormingTable) {
         val seats = games.findEnabled(table.gameId)?.matchmaking?.seats ?: return
-        val status = QueueStatus(table.gameId, table.players.size, seats, table.deadline, clock.nowMillis())
+        val status = QueueStatus(table.gameId, table.players.size, seats, table.deadline, clock.nowMillis(), table.entryCoins)
         val message = codec.push(Channel.MATCHMAKING, MessageType.QUEUE_STATUS, QueueStatus.serializer(), status)
         table.players.forEach { notifier.send(it, message) }
     }
 
-    /** Players waiting for one game, in arrival order. */
-    private class FormingTable(val gameId: String, val deadline: Long) {
+    private fun keyOf(gameId: String, entryCoins: Int) = "$gameId:$entryCoins"
+
+    /** Players waiting for one game in one league, in arrival order. */
+    private inner class FormingTable(val gameId: String, val entryCoins: Int, val deadline: Long) {
+        val key = keyOf(gameId, entryCoins)
         val players = linkedSetOf<String>()
         var timer: Job? = null
     }

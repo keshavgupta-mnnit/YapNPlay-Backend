@@ -43,4 +43,19 @@ class InMemoryUserRepository : UserRepository {
     }
 
     override suspend fun statsOf(id: String): GameStats = GameStats(0, 0)
+
+    private val playGames = mutableMapOf<String, String>()
+
+    override suspend fun findByPlayGamesId(playerId: String): User? =
+        playGames.entries.firstOrNull { it.value == playerId }?.key?.let { users[it] }
+
+    override suspend fun linkPlayGames(id: String, playerId: String): Boolean {
+        if (id in playGames || playerId in playGames.values) return false
+        playGames[id] = playerId
+        return true
+    }
+
+    override suspend fun updateSecretHash(id: String, secretHash: String) {
+        users[id]?.let { users[id] = it.copy(secretHash = secretHash) }
+    }
 }

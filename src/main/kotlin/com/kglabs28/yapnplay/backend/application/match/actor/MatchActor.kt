@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.Json
+import com.kglabs28.yapnplay.backend.contract.ExtensionVoted
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStatus
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
@@ -158,6 +161,7 @@ class MatchActor(
             is MatchAction.AnswerOffer -> handover.answerOffer(userId, action.accept)
             is MatchAction.ChooseTaker -> handover.leaderChoice(userId, action.giveToUserId)
             is MatchAction.TakeSeat -> handover.takeSeat(userId, action.seat)
+            is MatchAction.VoteExtension -> voteExtension(userId, action.keepPlaying)
             MatchAction.Disconnected -> disconnected(userId)
             MatchAction.StopWatching -> if (state.spectators.remove(userId) != null) publish(emptyList())
         }
@@ -196,6 +200,8 @@ class MatchActor(
                 state.update(seat.seat) { copy(connected = true, disconnectedAt = null) }
                 publish(emptyList())
             }
+            // Opened the table: the match starts once every human has.
+            if (state.waitingFor.remove(userId) && state.waitingFor.isEmpty()) endStartHold()
         } else if (userId !in state.spectators) {
             val roomId = state.roomId
             if (state.ended || roomId == null || !deps.rooms.isPresent(userId, roomId)) {
@@ -240,6 +246,49 @@ class MatchActor(
     private fun ownSeat(userId: String): MatchSeatState =
         state.seatOf(userId) ?: throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
 
+    // ---------------- keep-playing vote at the game's limit (every game) ----------------
+
+    /** Opens the vote when the game reaches its limit, and closes it in time. */
+    private fun extensionTick(now: Long) {
+        val session = state.session
+        val vote = state.extensionVote
+        when {
+            vote != null -> if (now >= vote.endsAt) decideExtension()
+            session.atLimit -> {
+                // Only humans the server isn't playing for vote: CPUs, leavers and bot-held seats don't.
+                val voters = session.stillIn - state.botSeats()
+                state.extensionVote = ExtensionVoteState(voters, now + BackendConstants.EXTENSION_VOTE_MS)
+                if (voters.isEmpty()) decideExtension() else publish(emptyList())
+            }
+        }
+    }
+
+    private fun voteExtension(userId: String, keepPlaying: Boolean) {
+        val vote = state.extensionVote ?: throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.NO_VOTE_RUNNING)
+        val seat = ownSeat(userId).seat
+        if (!vote.vote(seat, keepPlaying)) throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.CANT_VOTE)
+        if (vote.allVoted) decideExtension() else publish(emptyList())
+    }
+
+    /** More rounds/minutes when at least half said yes, else the match ends as at its limit. */
+    private fun decideExtension() {
+        val vote = state.extensionVote ?: return
+        state.extensionVote = null
+        val continued = vote.continues
+        val events = (if (continued) state.session.extend() else state.session.endAtLimit()).orEmpty()
+        publish(events + ExtensionDecided(continued, vote.yes.size, vote.voters.size))
+        scheduleWake()
+    }
+
+    /** Everyone is at the table (or the wait is over): the first turn and its timer start. */
+    private fun endStartHold() {
+        state.startHoldUntil = null
+        state.waitingFor.clear()
+        state.deadline = null
+        publish(emptyList())
+        scheduleWake()
+    }
+
     /** The turn is due: the server plays it (bot, away, Autoplay, or the owner's timer ran out). */
     private fun playDueTurn() {
         if (state.ended || state.onHold || state.session.waitsForTick) return
@@ -265,8 +314,19 @@ class MatchActor(
     private fun tick() {
         if (state.ended) return
         val now = deps.clock.nowMillis()
-        state.session.tick(now, state.serverSeats())?.let { publish(it) }
+        val holdUntil = state.startHoldUntil
+        if (holdUntil != null && now >= holdUntil) {
+            // Still not here after the wait: they count as gone (soon away, the server plays for them).
+            state.waitingFor.forEach { userId ->
+                state.seatOf(userId)?.let { seat ->
+                    state.update(seat.seat) { copy(connected = false, disconnectedAt = now - BackendConstants.DISCONNECT_GRACE_MS) }
+                }
+            }
+            endStartHold()
+        }
+        state.session.tick(now, state.serverSeats(), state.botSeats())?.let { publish(it) }
         if (!state.ended) handover.tick(now)
+        if (!state.ended) extensionTick(now)
         // Only replan when something changed, or a pending wake would keep being pushed back.
         if (rescheduleNeeded) scheduleWake()
     }
@@ -302,7 +362,10 @@ class MatchActor(
         rescheduleNeeded = true
         seatedUsers = state.seats.filter { !it.cpu && !it.left }.map { it.userId }.toSet()
         presentUsers = state.seats.filter { !it.cpu && !it.left && it.connected }.map { it.userId }.toSet() + state.spectators.keys
-        val wire = session.wireEvents(events)
+        // The vote's result is the same for every game: added after the game's own events.
+        val wire = session.wireEvents(events) + events.filterIsInstance<ExtensionDecided>().map {
+            json.encodeToJsonElement(ExtensionVoted.serializer(), ExtensionVoted(it.continued, it.yes, it.voters)).jsonObject
+        }
         state.viewers().forEach { viewer ->
             val snapshot = snapshots.build(viewer, now, wire)
             deps.notifier.send(viewer, deps.codec.push(Channel.MATCH, MessageType.MATCH_SNAPSHOT, MatchSnapshot.serializer(), snapshot))
@@ -361,7 +424,7 @@ class MatchActor(
             startedAt = state.startedAt,
             endedAt = now,
             seats = state.seats.map { s ->
-                FinishedSeat(s.seat, s.userId.takeUnless { s.cpu }, ranking.indexOf(s.seat).let { if (it < 0) ranking.size + 1 else it + 1 })
+                FinishedSeat(s.seat, s.userId.takeUnless { s.cpu }, ranking.indexOf(s.seat).let { if (it < 0) ranking.size + 1 else it + 1 }, left = s.left)
             },
         )
         scope.launch {
@@ -378,3 +441,8 @@ class MatchActor(
         val log = LoggerFactory.getLogger(MatchActor::class.java)
     }
 }
+
+/** The keep-playing vote was decided (shared by every game; sent as an ExtensionVoted event). */
+data class ExtensionDecided(val continued: Boolean, val yes: Int, val voters: Int) : GameEvent
+
+private val json = Json { encodeDefaults = true }

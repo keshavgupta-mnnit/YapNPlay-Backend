@@ -17,6 +17,15 @@ interface UserRepository {
     /** Gives the user [code] if they have none yet; false when the code is taken. */
     suspend fun assignCode(id: String, code: String): Boolean
 
+    /** The account linked to Play Games player [playerId], if any. */
+    suspend fun findByPlayGamesId(playerId: String): User?
+
+    /** Links [playerId] to user [id]; false when that user already has a link or the player is taken. */
+    suspend fun linkPlayGames(id: String, playerId: String): Boolean
+
+    /** Replaces the user's secret (only its hash is stored). */
+    suspend fun updateSecretHash(id: String, secretHash: String)
+
     /** Matches played and won (1st place), from stored results. */
     suspend fun statsOf(id: String): GameStats
 }

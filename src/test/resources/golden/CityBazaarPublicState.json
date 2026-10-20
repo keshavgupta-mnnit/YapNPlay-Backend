@@ -6,7 +6,8 @@
             "position": 7,
             "inJail": false,
             "halfRent": false,
-            "bankrupt": false
+            "bankrupt": false,
+            "rentCollected": 300
         },
         {
             "seat": 2,
@@ -14,7 +15,8 @@
             "position": 10,
             "inJail": true,
             "halfRent": true,
-            "bankrupt": false
+            "bankrupt": false,
+            "rentCollected": 0
         }
     ],
     "owners": {
@@ -48,5 +50,13 @@
         "1": 21000,
         "2": 6500
     },
-    "ranking": []
+    "ranking": [],
+    "rentCollected": {
+        "7": 300
+    },
+    "bank": {
+        "cash": 298500,
+        "received": 2000,
+        "paid": 3500
+    }
 }

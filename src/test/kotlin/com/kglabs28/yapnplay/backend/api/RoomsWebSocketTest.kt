@@ -54,7 +54,7 @@ class RoomsWebSocketTest {
         webSocket("/ws", request = { bearerAuth(token) }) { WsTestClient(this).block() }
 
     private suspend fun WsTestClient.createRoom(name: String? = "College Crew"): RoomSnapshot {
-        val id = send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom(name))
+        val id = send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom(name, inviteUserIds = listOf(SOMEONE)))
         return decode(reply(id), RoomSnapshot.serializer())
     }
 
@@ -132,7 +132,7 @@ class RoomsWebSocketTest {
         client.connect(client.newGuestToken()) {
             createRoom()
             createRoom()
-            val id = send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Third"))
+            val id = send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Third", inviteUserIds = listOf(SOMEONE)))
             assertEquals(ErrorCode.ROOM_LIMIT_REACHED, rejectedCode(id))
         }
     }
@@ -218,8 +218,8 @@ class RoomsWebSocketTest {
     fun `a repeated requestId is processed once and gets the original answer`() = serverTest { client ->
         val token = client.newGuestToken()
         client.connect(token) {
-            val first = reply(send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Once"), requestId = "req-1"))
-            val again = reply(send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Once"), requestId = "req-1"))
+            val first = reply(send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Once", inviteUserIds = listOf(SOMEONE)), requestId = "req-1"))
+            val again = reply(send(MessageType.CREATE_ROOM, CreateRoom.serializer(), CreateRoom("Once", inviteUserIds = listOf(SOMEONE)), requestId = "req-1"))
             assertEquals(first.payload, again.payload)
         }
         assertEquals(1, client.get("/rooms/mine") { bearerAuth(token) }.body<MyRooms>().rooms.size)
@@ -351,3 +351,6 @@ class RoomsWebSocketTest {
         const val PLAY_ON_WAIT_MS = 20_000L
     }
 }
+
+/** An invitee that is nobody's friend: skipped, but satisfies "at least one invitee". */
+private const val SOMEONE = "00000000-0000-0000-0000-000000000001"

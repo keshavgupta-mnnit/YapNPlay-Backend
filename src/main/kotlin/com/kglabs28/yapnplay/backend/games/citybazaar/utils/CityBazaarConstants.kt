@@ -13,7 +13,7 @@ const val CITY_BAZAAR_MAX_PLAYERS = 6
 const val CITY_BAZAAR_QUICK_PLAY_SEATS = 4
 const val CITY_BAZAAR_SEARCH_SECONDS = 15L
 /** Seconds per decision before the turn plays itself. */
-const val CITY_BAZAAR_TURN_SECONDS = 20L
+const val CITY_BAZAAR_TURN_SECONDS = 10L
 
 // Money (₹). Starting cash and the limits are AppManager values; these are the defaults.
 const val STARTING_CASH = 20_000
@@ -30,8 +30,17 @@ const val LATE_ROLL_FINE = 50
 const val RESALE_DIVISOR = 2
 /** Owning this many tiles of one colour doubles their rent (whatever it is). */
 const val SET_FOR_DOUBLE = 3
-const val ROUND_LIMIT = 30
+/** Default round limit; the server setting CITY_BAZAAR_ROUND_LIMIT overrides it. */
+const val ROUND_LIMIT = 5
 const val TIME_LIMIT_MINUTES = 30
+/** Rounds added when the players vote to keep going (server setting CITY_BAZAAR_EXTENSION_ROUNDS). */
+const val EXTENSION_ROUNDS = 30
+/** Minutes added when the players vote to keep going after the time limit. */
+const val EXTENSION_MINUTES = 15
+/** Seconds the keep-playing vote stays open. */
+const val EXTENSION_VOTE_SECONDS = 10L
+/** The bank's starting reserve (server setting CITY_BAZAAR_BANK_START): large enough never to run dry. */
+const val BANK_START = 300_000
 /** Auction: seconds left after each bid before the property is sold. */
 const val AUCTION_SECONDS = 5L
 
@@ -68,7 +77,7 @@ val CITY_BAZAAR_FIXED_RULES = listOf(
     "Rooms 3–6 players, random tables 4",
     "₹1,500 every time you pass or land on START",
     "Land on your own city to build: up to 3 houses, then a hotel",
-    "Jail: 3 rolls for doubles, else pay ₹500 or take half rent",
+    "Jail: right away, roll for doubles (3 tries), pay ₹500 or take half rent",
     "Short of money: sell buildings, then sell or auction cities",
-    "20 seconds per decision; a missed roll costs ₹50",
+    "10 seconds per decision; a missed roll costs ₹50",
 )

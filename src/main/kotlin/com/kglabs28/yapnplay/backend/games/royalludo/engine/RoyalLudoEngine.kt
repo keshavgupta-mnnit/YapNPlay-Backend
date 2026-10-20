@@ -220,7 +220,10 @@ class RoyalLudoEngine : Game {
         val finished = newProgress == PROGRESS_FINISH
         if (finished) events.add(PieceFinished(s.currentSeat, piece))
 
+        val allFinished = newPieces[s.currentSeat]!!.all { it == PROGRESS_FINISH }
         val extraTurn = when {
+            // All pieces home: this seat is done, no extra turn.
+            allFinished -> false
             captured && s.ludoRules.house.extraTurnOnCapture -> true
             finished && s.ludoRules.house.extraTurnOnHome -> true
             roll == 6 && s.ludoRules.house.extraTurnOnSix -> true
@@ -228,14 +231,14 @@ class RoyalLudoEngine : Game {
         }
         if (extraTurn) events.add(ExtraTurn(s.currentSeat, when { captured -> "CAPTURE"; finished -> "HOME"; else -> "SIX" }))
 
-        val allFinished = newPieces[s.currentSeat]!!.all { it == PROGRESS_FINISH }
         val newFinishingOrder = if (allFinished && s.currentSeat !in s.finishingOrder) {
             events.add(SeatFinished(s.currentSeat, s.finishingOrder.size + 1))
             s.finishingOrder + s.currentSeat
         } else s.finishingOrder
 
         val activeSeats = s.seats.map { it.value }.filter { it !in newFinishingOrder }
-        val matchOver = activeSeats.size <= 1 && activeSeats.none { it !in s.removalOrder }
+        // Second-to-last finished: the one left takes last place and the match ends.
+        val matchOver = activeSeats.size <= 1
 
         val nextSeat = if (!extraTurn && !matchOver) nextActiveSeat(s, newFinishingOrder) else s.currentSeat
         val newState = s.copy(
@@ -249,7 +252,7 @@ class RoyalLudoEngine : Game {
             // A new seat's turn starts from this board.
             turnStartPieces = if (nextSeat != s.currentSeat) newPieces else s.turnStartPieces,
         )
-        val finalEvents = if (matchOver) events + MatchEnded(newFinishingOrder + s.removalOrder) else events
+        val finalEvents = if (matchOver) events + MatchEnded(newFinishingOrder + activeSeats + s.removalOrder.reversed()) else events
         return ApplyResult.Success(newState, finalEvents)
     }
 

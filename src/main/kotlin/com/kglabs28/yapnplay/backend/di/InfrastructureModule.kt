@@ -1,5 +1,12 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.economy.CoinsService
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedCoinStore
+import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
+import com.kglabs28.yapnplay.backend.infrastructure.identity.GooglePlayGamesVerifier
+import com.kglabs28.yapnplay.backend.domain.identity.PlayGamesVerifier
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedRoomInviteRepository
+import com.kglabs28.yapnplay.backend.domain.rooms.RoomInviteRepository
 import com.kglabs28.yapnplay.backend.config.BackendConfig
 import com.kglabs28.yapnplay.backend.domain.common.Clock
 import com.kglabs28.yapnplay.backend.domain.common.IdGenerator
@@ -38,6 +45,7 @@ import org.koin.dsl.module
 fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = module {
     single { config }
     single<Clock> { overrides.clock ?: SystemClock() }
+    single<PlayGamesVerifier> { overrides.playGames ?: GooglePlayGamesVerifier(config.playGamesClientId, config.playGamesClientSecret) }
     single<IdGenerator> { UuidIdGenerator() }
     single<RandomSource> { SecureRandomSource() }
     single<DatabaseHandle> { overrides.database ?: DatabaseFactory().open(config.database) }
@@ -50,6 +58,9 @@ fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = m
     single<BlockRepository> { ExposedBlockRepository(get()) }
     single<DeviceRepository> { ExposedDeviceRepository(get()) }
     single<JoinRequestRepository> { ExposedJoinRequestRepository(get()) }
+    single<RoomInviteRepository> { ExposedRoomInviteRepository(get()) }
+    single<CoinStore> { ExposedCoinStore(get()) }
+    single { CoinsService(get(), get()) }
     single<ModerationRepository> { ExposedModerationRepository(get()) }
     single<SecretHasher> { Sha256SecretHasher() }
     single<SecretGenerator> { SecureRandomSecretGenerator() }

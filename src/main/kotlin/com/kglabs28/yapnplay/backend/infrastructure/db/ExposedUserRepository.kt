@@ -72,6 +72,25 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
         if (e.sqlState == UNIQUE_VIOLATION) false else throw e
     }
 
+    override suspend fun findByPlayGamesId(playerId: String): User? =
+        db.run { UsersTable.selectAll().where { UsersTable.playGamesPlayerId eq playerId }.singleOrNull()?.toUser() }
+
+    override suspend fun linkPlayGames(id: String, playerId: String): Boolean = try {
+        val uuid = id.toUuidOrNull() ?: return false
+        db.run {
+            UsersTable.update({ (UsersTable.id eq uuid) and UsersTable.playGamesPlayerId.isNull() }) {
+                it[playGamesPlayerId] = playerId
+            } > 0
+        }
+    } catch (e: ExposedSQLException) {
+        if (e.sqlState == UNIQUE_VIOLATION) false else throw e
+    }
+
+    override suspend fun updateSecretHash(id: String, secretHash: String) {
+        val uuid = id.toUuidOrNull() ?: return
+        db.run { UsersTable.update({ UsersTable.id eq uuid }) { it[UsersTable.secretHash] = secretHash } }
+    }
+
     override suspend fun statsOf(id: String): GameStats {
         val uuid = id.toUuidOrNull() ?: return GameStats(0, 0)
         return db.run {

@@ -27,6 +27,8 @@ sealed interface RoomAction {
     /** The member changed their name and/or avatar (null = unchanged). */
     data class UpdateProfile(val displayName: String?, val avatarId: String?) : RoomAction
     data class ApproveJoin(val userId: String) : RoomAction
+    /** The asking user accepted an invite: a member at once (the invite was the approval). */
+    data class AcceptInvite(val displayName: String, val avatarId: String = "") : RoomAction
     data class DeclineJoin(val userId: String) : RoomAction
 
     /** The room's match ended (sent by the server, not a member). */

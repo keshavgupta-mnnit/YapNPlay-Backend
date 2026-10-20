@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BANK_START
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_ROUNDS
 import com.kglabs28.yapnplay.backend.application.match.games.GameSession
 import com.kglabs28.yapnplay.backend.application.match.games.GameSessionFactory
 import com.kglabs28.yapnplay.backend.domain.common.Clock
@@ -21,10 +23,18 @@ class CityBazaarSessionFactory(
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
+    /** Rounds before the richest player wins (server setting CITY_BAZAAR_ROUND_LIMIT). */
+    private val roundLimit: Int = ROUND_LIMIT,
+    /** Rounds added when the players vote to keep going (CITY_BAZAAR_EXTENSION_ROUNDS). */
+    private val extensionRounds: Int = EXTENSION_ROUNDS,
+    /** The bank's starting reserve (CITY_BAZAAR_BANK_START). */
+    private val bankStart: Int = BANK_START,
 ) : GameSessionFactory {
 
     override fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession {
-        val rules = houseRules?.let(::rulesFrom) ?: CityBazaarRules.STANDARD
+        // Quick Play: every rule on, with the server's round limit.
+        val rules = houseRules?.let(::rulesFrom)
+            ?: CityBazaarRules.STANDARD.copy(house = CityBazaarHouseRules(roundLimit = roundLimit, extensionRounds = extensionRounds, bankStart = bankStart))
         val state = game.start(rules, seatCount, random) as CityBazaarState
         return CityBazaarSession(game, state, random, json, clock)
     }
@@ -47,8 +57,10 @@ class CityBazaarSessionFactory(
                 setDoubleRent = on(SET_DOUBLE_RENT),
                 restHouseSkips = on(REST_HOUSE_SKIP),
                 clubFee = on(CLUB_FEE),
-                roundLimit = if (on(ROUND_LIMIT_KEY)) ROUND_LIMIT else null,
+                roundLimit = if (on(ROUND_LIMIT_KEY)) roundLimit else null,
                 timeLimitMinutes = if (on(TIME_LIMIT_KEY)) TIME_LIMIT_MINUTES else null,
+                extensionRounds = extensionRounds,
+                bankStart = bankStart,
             ),
         )
     }

@@ -41,7 +41,26 @@ interface GameSession {
      * The game's own clock, called every match tick: time limits, auction
      * closing, CPU bids. [cpuSeats] are seats the server plays fully.
      */
-    fun tick(now: Long, cpuSeats: Set<Int>): List<GameEvent>?
+    fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int> = cpuSeats): List<GameEvent>?
+
+    /**
+     * True while the game waits at its round or time limit with 2+ players
+     * still in (no clear winner): the match asks the humans whether to go on.
+     * A game that sets it must also report [waitsForTick] (no turn timer).
+     */
+    val atLimit: Boolean get() = false
+
+    /** Seats still in the game (not out or bankrupt): who may vote at the limit. */
+    val stillIn: Set<Int> get() = emptySet()
+
+    /** What "keep playing" adds at this limit. */
+    val extension: ExtensionOffer get() = ExtensionOffer()
+
+    /** They voted to go on: the extra rounds/minutes are added and play resumes. */
+    fun extend(): List<GameEvent>? = null
+
+    /** They voted to stop (or nobody voted yes): the match ends as at its limit. */
+    fun endAtLimit(): List<GameEvent>? = null
 
     /** How long the table needs to animate [events] before the next action. */
     fun pauseAfter(events: List<GameEvent>): Long

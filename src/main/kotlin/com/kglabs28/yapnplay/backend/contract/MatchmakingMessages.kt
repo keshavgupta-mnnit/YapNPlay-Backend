@@ -17,6 +17,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class JoinQueue(
     val gameId: String,
+    /** 0.4.5: the league's entry fee (GET /coins/leagues); players only meet others in the same league. */
+    val entryCoins: Int = 100,
 )
 
 /** Stop searching. Ignored if the match was already formed. */
@@ -35,6 +37,8 @@ data class QueueStatus(
     val playersNeeded: Int,
     val searchDeadline: Long,
     val serverTime: Long,
+    /** 0.4.5: the league being searched. */
+    val entryCoins: Int = 0,
 )
 
 /** The match is formed; open it and wait for its MatchSnapshot. */
@@ -44,6 +48,8 @@ data class MatchFound(
     val gameId: String,
     val humanPlayers: Int,
     val cpuPlayers: Int,
+    /** 0.4.5: the fee each player paid (already taken); the pot is this × seats. */
+    val entryCoins: Int = 0,
 )
 
 /** Searching ended without a match (e.g. too few humans and no CPU fill). */

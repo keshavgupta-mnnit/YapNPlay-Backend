@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.RestTaken
 import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarWireEvent
 import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.AuctionEnded
@@ -46,6 +47,7 @@ class CityBazaarWireMapper(private val json: Json) {
             is AuctionEnded -> CityBazaarWireEvent.AuctionEnded(event.seller, event.tile, event.winner, event.amount)
             is WentBankrupt -> CityBazaarWireEvent.Bankrupt(event.seat)
             is TurnSkipped -> CityBazaarWireEvent.Skipped(event.seat)
+            is RestTaken -> CityBazaarWireEvent.Rested(event.seat)
             is TurnPassed -> CityBazaarWireEvent.TurnPassed(event.seat)
             else -> null
         }?.let { json.encodeToJsonElement(CityBazaarWireEvent.serializer(), it).jsonObject }

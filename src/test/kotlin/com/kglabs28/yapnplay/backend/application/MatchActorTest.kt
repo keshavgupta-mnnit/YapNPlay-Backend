@@ -64,6 +64,8 @@ class MatchActorTest {
         val kit = MatchTestKit(this)
         val matchId = kit.service.startQuickPlay(ROYAL_LUDO_ID, listOf("a", "b"), cpuCount = 2)
         val actor = assertNotNull(kit.service.find(matchId))
+        // Play starts once both humans have opened the table.
+        actor.ask("b", MatchAction.RequestSnapshot("b"))
         val snapshotA = assertIs<MatchResult.Snapshot>(actor.ask("a", MatchAction.RequestSnapshot("a"))).snapshot
         val seatA = assertNotNull(snapshotA.viewer.seat)
         val current = snapshotA.turn.seat

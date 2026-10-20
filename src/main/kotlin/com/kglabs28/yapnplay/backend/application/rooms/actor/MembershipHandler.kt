@@ -56,6 +56,17 @@ class MembershipHandler(
         deps.activity.joinApproved(userId, state.room.id, state.room.name)
     }
 
+    /** An invited friend said yes: they are a member now (any Waiting List request goes). */
+    suspend fun acceptInvite(userId: String, displayName: String, avatarId: String) {
+        if (userId in state.members) return
+        checkRoomFor(userId)
+        val now = deps.clock.nowMillis()
+        deps.repository.addMember(state.room.id, userId, now)
+        deps.joinRequests.remove(state.room.id, userId)
+        state.waiting.removeAll { it.userId == userId }
+        state.members[userId] = LiveMember(userId, displayName, now, avatarId = avatarId)
+    }
+
     suspend fun decline(adminId: String, userId: String) {
         guards.requireAdmin(adminId)
         val request = state.waiting.firstOrNull { it.userId == userId }

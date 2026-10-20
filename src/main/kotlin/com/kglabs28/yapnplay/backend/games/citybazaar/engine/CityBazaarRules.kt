@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_MINUTES
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BANK_START
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_ROUNDS
 import kotlinx.serialization.Serializable
 
 import com.kglabs28.yapnplay.backend.games.base.rules.GameRules
@@ -29,6 +32,12 @@ data class CityBazaarHouseRules(
     val clubFee: Boolean = true,
     val roundLimit: Int? = ROUND_LIMIT,
     val timeLimitMinutes: Int? = TIME_LIMIT_MINUTES,
+    /** Rounds added when the players vote to keep going at the round limit. */
+    val extensionRounds: Int = EXTENSION_ROUNDS,
+    /** Minutes added when they vote to keep going after the time limit. */
+    val extensionMinutes: Int = EXTENSION_MINUTES,
+    /** The bank's starting reserve (shown, never limits play). */
+    val bankStart: Int = BANK_START,
 ) : HouseRules
 
 @Serializable

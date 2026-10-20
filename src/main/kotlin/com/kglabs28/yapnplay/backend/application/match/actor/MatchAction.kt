@@ -18,6 +18,8 @@ sealed interface MatchAction {
     data class AnswerOffer(val accept: Boolean) : MatchAction
     data class ChooseTaker(val giveToUserId: String?) : MatchAction
     data class TakeSeat(val seat: Int) : MatchAction
+    /** The keep-playing vote at the game's limit. */
+    data class VoteExtension(val keepPlaying: Boolean) : MatchAction
 
     /** The user's connection dropped (sent by the server, not the user). */
     data object Disconnected : MatchAction

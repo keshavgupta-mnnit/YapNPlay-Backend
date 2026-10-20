@@ -1,3 +1,8 @@
 {
-    "name": "College Crew"
+    "name": "College Crew",
+    "icon": "dice",
+    "inviteUserIds": [
+        "u-friend-1",
+        "u-friend-2"
+    ]
 }

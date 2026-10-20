@@ -1,5 +1,19 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.SentToJail
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.LeftJail
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.RestTaken
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.WentBankrupt
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.BuildingBuilt
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CantAfford
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.AuctionEnded
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.TurnSkipped
+import com.kglabs28.yapnplay.backend.application.match.actor.ExtensionDecided
+import com.kglabs28.yapnplay.backend.application.match.games.ExtensionOffer
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarLimit
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ReachTimeLimit
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ExtendMatch
+import com.kglabs28.yapnplay.backend.contract.citybazaar.CityBazaarBank
 import com.kglabs28.yapnplay.backend.application.match.games.BotMode
 import com.kglabs28.yapnplay.backend.application.match.games.GameSession
 import com.kglabs28.yapnplay.backend.config.BackendConstants
@@ -71,7 +85,8 @@ class CityBazaarSession(
     override val ranking: List<Int> get() = if (isFinished) CityBazaarEngine.ranking(state) else emptyList()
     override val turnSeconds: Int get() = engine.timing.turnSeconds.toInt()
     override val thinkMillis: Long = THINK_MS
-    override val waitsForTick: Boolean get() = state.phase == CityBazaarPhase.AUCTION
+    // An auction or the keep-playing vote: no turn timer, the tick closes them.
+    override val waitsForTick: Boolean get() = state.phase == CityBazaarPhase.AUCTION || state.phase == CityBazaarPhase.EXTENSION_VOTE
 
     override fun colourOf(seat: Int): Colour = Colour.entries[(seat - 1) % Colour.entries.size]
 
@@ -93,11 +108,15 @@ class CityBazaarSession(
         },
     )
 
-    override fun tick(now: Long, cpuSeats: Set<Int>): List<GameEvent>? {
+    override fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int>): List<GameEvent>? {
         if (isFinished) return null
         state.cbRules.house.timeLimitMinutes?.let { limit ->
-            if (now - startedAt >= limit * MILLIS_PER_MINUTE) return apply(state.currentSeat, EndMatch)
+            // Time is up: between turns the match pauses for the keep-playing vote.
+            if (now - startedAt >= limit * MILLIS_PER_MINUTE && state.phase == CityBazaarPhase.ROLL) {
+                return apply(state.currentSeat, ReachTimeLimit)
+            }
         }
+
         val auction = state.auction ?: return null
         if (now >= auctionEndsAt) return apply(state.currentSeat, CloseAuction)
         if (now - lastBidAt < CPU_BID_DELAY_MS) return null
@@ -108,14 +127,43 @@ class CityBazaarSession(
         return apply(bidder, PlaceBid)
     }
 
-    override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
-        when (event) {
-            is DiceRolled -> AFTER_ROLL_MS
-            is TokenMoved -> if (event.jump) AFTER_MOVE_MS else PER_STEP_MS * abs(event.steps) + AFTER_MOVE_MS
-            is CardDrawn -> CARD_MS
-            is MoneyMoved -> MONEY_MS
-            else -> 0L
+    override val atLimit: Boolean get() = state.phase == CityBazaarPhase.EXTENSION_VOTE
+
+    override val stillIn: Set<Int> get() = state.active.toSet()
+
+    override val extension: ExtensionOffer
+        get() = when (state.limitHit) {
+            CityBazaarLimit.ROUNDS -> ExtensionOffer(extraRounds = state.cbRules.house.extensionRounds)
+            CityBazaarLimit.TIME -> ExtensionOffer(extraMinutes = state.cbRules.house.extensionMinutes)
+            null -> ExtensionOffer()
         }
+
+    override fun extend(): List<GameEvent>? =
+        apply(state.currentSeat, ExtendMatch(state.cbRules.house.extensionRounds, state.cbRules.house.extensionMinutes))
+
+    override fun endAtLimit(): List<GameEvent>? = apply(state.currentSeat, EndMatch)
+
+    /**
+     * Dice and hop animations, then ~2.5 s for each event the table shows as
+     * a message (capped at 8 s), so the next turn's timer starts only after
+     * players have read them.
+     */
+    override fun pauseAfter(events: List<GameEvent>): Long {
+        val animation = events.sumOf { event ->
+            when (event) {
+                is DiceRolled -> AFTER_ROLL_MS
+                is TokenMoved -> if (event.jump) AFTER_MOVE_MS else PER_STEP_MS * abs(event.steps) + AFTER_MOVE_MS
+                else -> 0L
+            }
+        }
+        val messages = events.count { it.showsMessage() }
+        return animation + (MESSAGE_MS * messages).coerceAtMost(MAX_MESSAGES_MS)
+    }
+
+    private fun GameEvent.showsMessage(): Boolean = when (this) {
+        is MoneyMoved, is CardDrawn, is SentToJail, is LeftJail, is RestTaken, is WentBankrupt, is BuildingBuilt,
+        is CantAfford, is AuctionStarted, is AuctionEnded, is TurnSkipped, is ExtensionDecided -> true
+        else -> false
     }
 
     override fun removeSeat(seat: Int) {
@@ -133,6 +181,7 @@ class CityBazaarSession(
                     inJail = state.inJail(seat),
                     halfRent = seat in state.halfRent,
                     bankrupt = seat !in state.active,
+                    rentCollected = state.rentBySeat[seat] ?: 0,
                 )
             },
             owners = state.owners,
@@ -151,6 +200,10 @@ class CityBazaarSession(
             roundLimit = state.cbRules.house.roundLimit,
             netWorth = (1..state.seatCount).associateWith { CityBazaarEconomy.netWorth(state, it) },
             ranking = ranking,
+            rentCollected = state.rentByTile,
+            bank = state.cbRules.house.bankStart.toLong().let { start ->
+                CityBazaarBank(cash = start + state.bankReceived - state.bankPaid, received = state.bankReceived, paid = state.bankPaid)
+            },
         ),
     ).jsonObject
 
@@ -197,8 +250,9 @@ class CityBazaarSession(
         const val AFTER_ROLL_MS = 2_100L
         const val PER_STEP_MS = 200L
         const val AFTER_MOVE_MS = 500L
-        const val CARD_MS = 1_800L
-        const val MONEY_MS = 700L
+        /** Reading time for each message the table shows (Money, Card, Jailed, …). */
+        const val MESSAGE_MS = 2_500L
+        const val MAX_MESSAGES_MS = 8_000L
         const val CPU_BID_DELAY_MS = 1_200L
         const val CPU_BID_CHANCE_PERCENT = 35
         const val PERCENT = 100

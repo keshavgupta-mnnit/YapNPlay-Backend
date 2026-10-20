@@ -15,11 +15,11 @@ import org.koin.core.Koin
 /** All routes, with their use cases taken from the dependency graph. */
 fun Application.configureRouting(koin: Koin) {
     routing {
-        publicRoutes(koin.get(), GUEST_RATE_LIMIT)
+        publicRoutes(koin.get(), koin.get(), GUEST_RATE_LIMIT)
         adminRoutes(koin.get(), koin.get())
         authenticate(BearerUserAuthProvider.NAME) {
             rateLimit(PLAYER_RATE_LIMIT) {
-                userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
+                userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
                 socialRoutes(koin.get(), koin.get(), koin.get(), koin.get())
             }
             webSocketRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())

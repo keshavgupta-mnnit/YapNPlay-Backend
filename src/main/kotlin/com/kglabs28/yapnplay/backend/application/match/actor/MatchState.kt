@@ -35,7 +35,15 @@ class MatchState(
     @Volatile
     var ended = false
 
-    val onHold: Boolean get() = offer?.stage?.holdsMatch == true
+    /** The keep-playing vote while the game waits at its limit (not saved: a restart opens a new one). */
+    var extensionVote: ExtensionVoteState? = null
+
+    /** Humans who have not opened the table yet; play waits for them until [startHoldUntil]. */
+    val waitingFor = mutableSetOf<String>()
+    /** While set (epoch millis), the match has not started: no turns, no timers. */
+    var startHoldUntil: Long? = null
+
+    val onHold: Boolean get() = startHoldUntil != null || offer?.stage?.holdsMatch == true
 
     fun seat(seat: Int): MatchSeatState = seats.first { it.seat == seat }
 
@@ -55,4 +63,7 @@ class MatchState(
 
     /** Seats the server plays fully (CPU bids in City Bazaar auctions). */
     fun serverSeats(): Set<Int> = seats.filter { it.playedByServer }.map { it.seat }.toSet()
+
+    /** Seats with no human at them: CPUs, players who left, seats handed to the bot. They never vote. */
+    fun botSeats(): Set<Int> = seats.filter { it.cpu || it.left || it.presence == SeatPresence.BOT }.map { it.seat }.toSet()
 }

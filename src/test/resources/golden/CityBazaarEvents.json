@@ -32,5 +32,9 @@
         "tile": 9,
         "winner": null,
         "amount": 1000
+    },
+    {
+        "type": "Rested",
+        "seat": 2
     }
 ]

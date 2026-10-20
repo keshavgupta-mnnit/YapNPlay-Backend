@@ -39,7 +39,8 @@ class CityBazaarBot(private val cautious: Boolean) : GameBot {
         if (s.currentSeat != me) return null
         val cash = s.cashOf(me)
         return when (s.phase) {
-            CityBazaarPhase.FINISHED, CityBazaarPhase.AUCTION -> null
+            // Bots never vote on keeping the match going.
+            CityBazaarPhase.FINISHED, CityBazaarPhase.AUCTION, CityBazaarPhase.EXTENSION_VOTE -> null
             CityBazaarPhase.ROLL, CityBazaarPhase.JAIL_ROLL -> RollDice
             CityBazaarPhase.JAIL_CHOICE -> if (!cautious && cash >= BOT_JAIL_FINE_CASH) PayJailFine else StayInJail
             CityBazaarPhase.DEBT -> {

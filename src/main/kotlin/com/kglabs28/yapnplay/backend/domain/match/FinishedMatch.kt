@@ -15,4 +15,6 @@ data class FinishedSeat(
     val seat: Int,
     val userId: String?,
     val place: Int,
+    /** Left the match before it ended: no XP, no winnings. */
+    val left: Boolean = false,
 )
