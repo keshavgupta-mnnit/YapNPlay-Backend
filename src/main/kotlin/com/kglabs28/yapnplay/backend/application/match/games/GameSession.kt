@@ -32,6 +32,9 @@ interface GameSession {
     /** Turns a match-channel message into an engine action, or null when this game has no such action. */
     fun decode(type: String, payload: JsonObject): Action?
 
+    /** True when [seat] may send [action] while it isn't their turn (MONO!'s callout). */
+    fun actsOutOfTurn(seat: Int, action: Action): Boolean = false
+
     /** Applies [action] for [seat]; null when the engine refuses it. */
     fun apply(seat: Int, action: Action): List<GameEvent>?
 
@@ -84,6 +87,9 @@ interface GameSession {
 
     /** Engine events as wire JSON (each with `"type"`), dropping internal ones. */
     fun wireEvents(events: List<GameEvent>): List<JsonObject>
+
+    /** The events as [viewerSeat] may see them (null: a spectator); a card game hides others' drawn cards. */
+    fun wireEventsFor(events: List<GameEvent>, viewerSeat: Int?): List<JsonObject> = wireEvents(events)
 
     /** Everything needed to rebuild this session after a restart ([GameSessionFactory.restore]). */
     fun save(): JsonObject

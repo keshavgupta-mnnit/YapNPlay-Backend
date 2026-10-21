@@ -32,6 +32,7 @@ object BackendStrings {
     const val ROOM_FULL = "This room is full."
     const val NO_INVITE = "That invite is no longer open."
     const val AD_REWARDS_USED = "That's all the ad rewards for today. Come back tomorrow."
+    const val AD_COOLDOWN = "You've just had an ad reward. The next one is ready in a little while."
     const val NOT_ENOUGH_COINS = "Not enough coins for this league. Try a smaller league, watch an ad or come back tomorrow."
     const val NO_SUCH_LEAGUE = "That league does not exist."
     const val BAD_AD_ID = "That ad could not be checked."

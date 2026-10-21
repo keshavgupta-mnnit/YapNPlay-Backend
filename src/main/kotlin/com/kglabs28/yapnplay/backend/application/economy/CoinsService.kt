@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.application.economy
 
+import com.kglabs28.yapnplay.backend.contract.AdRewardStatus
+import com.kglabs28.yapnplay.backend.domain.economy.AdRefusal
+import com.kglabs28.yapnplay.backend.domain.economy.AdClaimResult
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.CoinLedgerTable
@@ -47,10 +50,40 @@ class CoinsService(
         if (adId.isBlank() || adId.length > CoinLedgerTable.REF_MAX_LENGTH) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_AD_ID)
         if (!ads.verify(userId, adId)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_AD_ID)
         val now = clock.nowMillis()
-        val claim = store.claimAdReward(userId, adId, dayOf(now), settings[GameSettings.AD_REWARD], settings[GameSettings.AD_DAILY_CAP], now)
-            ?: throw ServiceException(ErrorCode.RATE_LIMITED, BackendStrings.AD_REWARDS_USED)
-        return CoinsReward(coins = store.balance(userId), granted = claim.granted, adsLeftToday = claim.adsLeftToday)
+        val limit = settings[GameSettings.AD_DAILY_LIMIT]
+        val claim = when (val result = store.claimAdReward(userId, adId, dayOf(now), settings[GameSettings.AD_REWARD], limit, cooldownMillis(), now)) {
+            is AdClaimResult.Paid -> result.claim
+            is AdClaimResult.Refused -> throw ServiceException(
+                ErrorCode.RATE_LIMITED,
+                if (result.reason == AdRefusal.DAILY_LIMIT) BackendStrings.AD_REWARDS_USED else BackendStrings.AD_COOLDOWN,
+            )
+        }
+        return CoinsReward(
+            coins = store.balance(userId),
+            granted = claim.granted,
+            adsLeftToday = claim.adsLeftToday,
+            dailyLimit = limit,
+            nextAdAt = nextAdAt(claim.adsLeftToday, claim.lastAdAt, now),
+        )
     }
+
+    /** `GET /coins/ad-status`: what an ad pays, how many are left today, and when the next one can pay. */
+    suspend fun adStatus(userId: String): AdRewardStatus {
+        val now = clock.nowMillis()
+        val limit = settings[GameSettings.AD_DAILY_LIMIT]
+        val usage = store.adUsage(userId, dayOf(now))
+        val left = (limit - usage.usedToday).coerceAtLeast(0)
+        return AdRewardStatus(settings[GameSettings.AD_REWARD], limit, left, nextAdAt(left, usage.lastAdAt, now), now)
+    }
+
+    /** Null when an ad can pay now; the next India-time day when today's are used up; else the end of the gap since the last one. */
+    private fun nextAdAt(adsLeftToday: Int, lastAdAt: Long, now: Long): Long? {
+        if (adsLeftToday <= 0) return Instant.ofEpochMilli(now).atZone(ZONE).toLocalDate().plusDays(1).atStartOfDay(ZONE).toInstant().toEpochMilli()
+        val ready = lastAdAt + cooldownMillis()
+        return if (lastAdAt > 0 && ready > now) ready else null
+    }
+
+    private fun cooldownMillis(): Long = settings[GameSettings.AD_COOLDOWN_MINUTES] * MILLIS_PER_MINUTE
 
     suspend fun balance(userId: String): Int = store.balance(userId)
 

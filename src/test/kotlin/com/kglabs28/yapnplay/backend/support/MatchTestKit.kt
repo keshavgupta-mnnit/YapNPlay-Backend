@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.support
 
+import com.kglabs28.yapnplay.backend.application.match.games.mono.MonoSessionFactory
+import com.kglabs28.yapnplay.backend.application.match.games.mono.MonoChaosSessionFactory
+import com.kglabs28.yapnplay.backend.games.mono.engine.MonoEngine
+import com.kglabs28.yapnplay.backend.games.monochaos.engine.MonoChaosEngine
 import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.application.match.RoomGateway
@@ -44,6 +48,8 @@ class MatchTestKit(scope: TestScope, seed: Int = SEED) {
         factories = listOf(
             RoyalLudoSessionFactory(RoyalLudoEngine(), gameRandom, testJson),
             CityBazaarSessionFactory(CityBazaarEngine(), gameRandom, testJson, clock),
+            MonoSessionFactory(MonoEngine(), gameRandom, testJson, clock),
+            MonoChaosSessionFactory(MonoChaosEngine(), gameRandom, testJson, clock),
         ),
         registry = registry,
         deps = deps,

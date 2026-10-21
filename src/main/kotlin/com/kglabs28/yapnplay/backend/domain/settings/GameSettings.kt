@@ -7,6 +7,7 @@ enum class SettingGroup(val label: String) {
     MATCH("All matches"),
     CITY_BAZAAR("City Bazaar"),
     ROYAL_LUDO("Royal Ludo"),
+    MONO("MONO games"),
 }
 
 /** A value the operator can change from the admin dashboard without a deploy. */
@@ -57,7 +58,8 @@ object GameSettings {
     // ── Coins ─────────────────────────────────────────────────────────────
     val DAILY_BONUS = IntSetting("coins.daily_bonus", SettingGroup.ECONOMY, "Daily bonus (coins)", 100, 0, MAX_COINS)
     val AD_REWARD = IntSetting("coins.ad_reward", SettingGroup.ECONOMY, "Coins per rewarded ad", 500, 0, MAX_COINS)
-    val AD_DAILY_CAP = IntSetting("coins.ad_daily_cap", SettingGroup.ECONOMY, "Rewarded ads per day", 5, 0, 50)
+    val AD_DAILY_LIMIT = IntSetting("coins.ad_daily_limit", SettingGroup.ECONOMY, "Rewarded ads per day", 5, 0, 50)
+    val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 120, 0, 1_440)
     val LEAGUE_FEES = IntListSetting(
         "coins.league_fees", SettingGroup.ECONOMY, "Quick Play league fees (Starter, Bronze, Silver, Gold, Diamond)",
         listOf(0, 100, 500, 1_000, 5_000), "5 rising numbers, the first 0",
@@ -134,6 +136,21 @@ object GameSettings {
     val CB_BOT_JAIL_POSTPONE_PCT = IntSetting("cb.bot_jail_postpone_pct", SettingGroup.CITY_BAZAAR, "Bots: % of the rent dodged in jail that is really saved", 30, 0, 100)
     val CB_BOT_DEFAULT_ROUNDS = IntSetting("cb.bot_default_rounds", SettingGroup.CITY_BAZAAR, "Bots: rounds assumed left with no round limit", 20, 3, 30)
 
+    // ── MONO and MONO: Complete Chaos ──
+    val MONO_TURN_SECONDS = IntSetting("mono.turn_seconds", SettingGroup.MONO, "Turn time (seconds)", 15, 5, MAX_SECONDS)
+    val MONO_CALL_WINDOW_MS = IntSetting("mono.call_window_ms", SettingGroup.MONO, "Time to call MONO! after going down to one card (ms)", 2_500, 500, 10_000)
+    val MONO_DRAW_PLAY_WINDOW_MS = IntSetting("mono.draw_play_window_ms", SettingGroup.MONO, "Time to play a playable drawn card before the turn passes (ms)", 3_000, 500, 15_000)
+    val MONO_CPU_THINK_MS = IntSetting("mono.cpu_think_ms", SettingGroup.MONO, "CPU think time (ms)", 1_000, 0, 10_000)
+    val MONO_PENALTY_CARDS = IntSetting("mono.penalty_cards", SettingGroup.MONO, "MONO: cards drawn for a missed MONO! call", 2, 0, 10)
+    val CHAOS_PENALTY_CARDS = IntSetting("chaos.penalty_cards", SettingGroup.MONO, "Complete Chaos: cards drawn for a missed MONO! call", 4, 0, 10)
+    val CHAOS_KNOCKOUT_CARDS = IntSetting("chaos.knockout_cards", SettingGroup.MONO, "Complete Chaos: a hand this big knocks the player out", 25, 10, 100)
+    val MONO_BOT_CARD_COST = IntSetting("mono.bot_card_cost", SettingGroup.MONO, "Bots: what one card in hand costs", 10, 1, 100)
+    val MONO_BOT_SHED_PCT = IntSetting("mono.bot_shed_pct", SettingGroup.MONO, "Bots: shed high cards early, % of card points when a rival is near MONO", 100, 0, 500)
+    val MONO_BOT_ATTACK_VALUE = IntSetting("mono.bot_attack_value", SettingGroup.MONO, "Bots: value per penalty card on a next player close to winning", 8, 0, 100)
+    val MONO_BOT_HOLD_VALUE = IntSetting("mono.bot_hold_value", SettingGroup.MONO, "Bots: value of keeping a wild or draw card back", 15, 0, 200)
+    val MONO_BOT_COLOUR_VALUE = IntSetting("mono.bot_colour_value", SettingGroup.MONO, "Bots: value of keeping a colour the hand can follow", 10, 0, 100)
+    val MONO_BOT_KNOCKOUT_COST = IntSetting("mono.bot_knockout_cost", SettingGroup.MONO, "Bots (Chaos): cost of being knocked out", 1_000, 0, 10_000)
+
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "CPU think time (ms)", 900, 0, 10_000)
@@ -150,7 +167,7 @@ object GameSettings {
     val RL_BOT_CHASE = IntSetting("ludo.bot_chase", SettingGroup.ROYAL_LUDO, "Bots: value per opponent piece 1-6 squares ahead it could hit", 5, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        DAILY_BONUS, AD_REWARD, AD_DAILY_CAP, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        DAILY_BONUS, AD_REWARD, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_REFERENCE_MINUTES, XP_MIN_TIME_FACTOR_PCT, XP_MAX_TIME_FACTOR_PCT, XP_PER_LEVEL,
         VOTE_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
@@ -159,6 +176,8 @@ object GameSettings {
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,
+        MONO_TURN_SECONDS, MONO_CALL_WINDOW_MS, MONO_DRAW_PLAY_WINDOW_MS, MONO_CPU_THINK_MS, MONO_PENALTY_CARDS, CHAOS_PENALTY_CARDS,
+        CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST,
         RL_TURN_SECONDS, RL_CPU_THINK_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
     )

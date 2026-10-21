@@ -23,6 +23,8 @@ object UsersTable : Table("users") {
     /** V12: completion coins paid today, for the daily cap. */
     val completionDay = integer("completion_day")
     val completionsToday = integer("completions_today")
+    /** V13: when the last rewarded ad paid (epoch millis). */
+    val lastAdAt = long("last_ad_at")
 
     override val primaryKey = PrimaryKey(id)
 

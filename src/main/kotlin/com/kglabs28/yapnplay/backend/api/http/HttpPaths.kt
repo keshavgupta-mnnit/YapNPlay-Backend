@@ -22,6 +22,7 @@ object HttpPaths {
     const val ACTIVE_MATCH = "/matches/active"
     const val PLAY_GAMES_SIGN_IN = "/auth/play-games"
     const val AD_REWARD = "/coins/ad-reward"
+    const val AD_STATUS = "/coins/ad-status"
     const val LEAGUES = "/coins/leagues"
     const val ROOM_INVITES = "/rooms/invites"
     const val INVITE_TO_ROOM = "/rooms/{roomId}/invites"

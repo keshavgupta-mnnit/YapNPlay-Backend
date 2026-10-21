@@ -1,5 +1,14 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.mono.MonoCardWire
+import com.kglabs28.yapnplay.backend.contract.mono.MonoPublicState
+import com.kglabs28.yapnplay.backend.contract.mono.MonoWireAction
+import com.kglabs28.yapnplay.backend.contract.mono.MonoWireEvent
+import com.kglabs28.yapnplay.backend.contract.mono.MonoChaosCardWire
+import com.kglabs28.yapnplay.backend.contract.mono.MonoChaosPublicState
+import com.kglabs28.yapnplay.backend.contract.mono.MonoChaosWireAction
+import com.kglabs28.yapnplay.backend.contract.mono.MonoChaosWireEvent
+import com.kglabs28.yapnplay.backend.contract.AdRewardStatus
 import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
 import com.kglabs28.yapnplay.backend.contract.CastEndVote
 import com.kglabs28.yapnplay.backend.contract.EndVoteInfo
@@ -43,7 +52,8 @@ object GoldenSamples {
         GoldenCase("HealthResponse", HealthResponse.serializer(), HealthResponse("ok", CONTRACT_VERSION, "1.0.1")),
         GoldenCase("GuestCreated", GuestCreated.serializer(), GuestCreated(USER, "s3cr3t-example-not-real")),
         GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, username = "keshav_28", userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
-        GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 2_100, granted = 500, adsLeftToday = 4)),
+        GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 2_100, granted = 500, adsLeftToday = 4, dailyLimit = 5, nextAdAt = 1_760_007_200_000)),
+        GoldenCase("AdRewardStatus", AdRewardStatus.serializer(), AdRewardStatus(coinsPerAd = 500, dailyLimit = 5, adsLeftToday = 4, nextAdAt = 1_760_007_200_000, serverTime = 1_760_000_000_000)),
         GoldenCase("Leagues", Leagues.serializer(), Leagues(coins = 600, leagues = listOf(League(0, "Starter", true), League(100, "Bronze", true), League(500, "Silver", true), League(1_000, "Gold", false)))),
         GoldenCase("UpdateProfileBody", UpdateProfileBody.serializer(), UpdateProfileBody(username = "keshav_28", avatarId = "a03")),
         GoldenCase("UpdateName", UpdateName.serializer(), UpdateName("Keshav")),
@@ -79,6 +89,12 @@ object GoldenSamples {
         GoldenCase("EndVoteInfo", EndVoteInfo.serializer(), EndVoteInfo(proposerSeat = 2, endsAt = 1_760_000_120_000, voters = listOf(1, 2, 3), yes = listOf(2), no = emptyList())),
         GoldenCase("EndVoted", EndVoted.serializer(), EndVoted(ended = true, yes = 2, voters = 3)),
         GoldenCase("MatchPot", MatchPot.serializer(), MatchPot(entryCoins = 100, total = 400, split = listOf(50, 30, 20))),
+        GoldenCase("MonoPublicState", MonoPublicState.serializer(), MonoPublicState(phase = "AWAITING_PLAY", topCard = MonoCardWire("NumberCard", "RED", 5), topCardColor = "RED", hands = mapOf(1 to listOf(MonoCardWire("SkipCard", "BLUE"), MonoCardWire("PrismDrawFour"))), cardCounts = mapOf(1 to 2, 2 to 7, 3 to 1), drawPileCount = 80, discardPileCount = 6, monoCallWindowExpiry = 1_760_000_002_500, monoWindowSeat = 3, drawnCardIndex = 1, drawnCardExpiry = 1_760_000_003_000)),
+        GoldenCase("MonoWireAction", MonoWireAction.serializer(), MonoWireAction.ChooseColor("GOLD")),
+        GoldenCase("MonoWireEvent", MonoWireEvent.serializer(), MonoWireEvent.CardsDrawn(seat = 2, count = 2)),
+        GoldenCase("MonoChaosPublicState", MonoChaosPublicState.serializer(), MonoChaosPublicState(phase = "AWAITING_STACK_CHOICE", topCard = MonoChaosCardWire("PrismDrawSix"), topCardColor = "GREEN", hands = mapOf(2 to listOf(MonoChaosCardWire("PrismDrawTen"), MonoChaosCardWire("NumberCard", "GOLD", 7))), cardCounts = mapOf(1 to 4, 2 to 2, 3 to 0), activeStackPenalty = 10, stackTopValue = 6, eliminatedSeats = listOf(3), knockoutThreshold = 25)),
+        GoldenCase("MonoChaosWireAction", MonoChaosWireAction.serializer(), MonoChaosWireAction.StackDraw(handIndex = 0)),
+        GoldenCase("MonoChaosWireEvent", MonoChaosWireEvent.serializer(), MonoChaosWireEvent.CardsDiscarded(seat = 1, count = 3)),
         GoldenCase("PlayGamesSignInBody", PlayGamesSignInBody.serializer(), PlayGamesSignInBody("4/0AeanS0Z-server-auth-code")),
         GoldenCase("PlayGamesSignedIn", PlayGamesSignedIn.serializer(), PlayGamesSignedIn("u-asha", "s3cr3t-from-server", restored = true)),
         GoldenCase("InviteToRoomReply", InviteToRoomReply.serializer(), InviteToRoomReply(listOf("u-friend-1"), listOf("u-stranger"))),

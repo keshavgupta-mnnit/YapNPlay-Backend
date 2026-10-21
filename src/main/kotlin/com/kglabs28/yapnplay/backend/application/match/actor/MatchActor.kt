@@ -191,7 +191,7 @@ class MatchActor(
         val session = state.session
         val move = session.decode(action.type, action.payload)
             ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_ACTION)
-        if (seat.seat != session.currentSeat && !session.waitsForTick) {
+        if (seat.seat != session.currentSeat && !session.waitsForTick && !session.actsOutOfTurn(seat.seat, move)) {
             throw ServiceException(ErrorCode.NOT_YOUR_TURN, BackendStrings.NOT_YOUR_TURN)
         }
         val events = session.apply(seat.seat, move) ?: throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.ILLEGAL_MOVE)
@@ -418,13 +418,13 @@ class MatchActor(
         seatedUsers = state.seats.filter { !it.cpu && !it.left }.map { it.userId }.toSet()
         presentUsers = state.seats.filter { !it.cpu && !it.left && it.connected }.map { it.userId }.toSet() + state.spectators.keys
         // The vote's result is the same for every game: added after the game's own events.
-        val wire = session.wireEvents(events) + events.filterIsInstance<ExtensionDecided>().map {
+        val voteWire = events.filterIsInstance<ExtensionDecided>().map {
             json.encodeToJsonElement(ExtensionVoted.serializer(), ExtensionVoted(it.continued, it.yes, it.voters)).jsonObject
         } + events.filterIsInstance<EndVoteDecided>().map {
             json.encodeToJsonElement(EndVoted.serializer(), EndVoted(it.ended, it.yes, it.voters)).jsonObject
         }
         state.viewers().forEach { viewer ->
-            val snapshot = snapshots.build(viewer, now, wire)
+            val snapshot = snapshots.build(viewer, now, session.wireEventsFor(events, state.seatOf(viewer)?.seat) + voteWire)
             deps.notifier.send(viewer, deps.codec.push(Channel.MATCH, MessageType.MATCH_SNAPSHOT, MatchSnapshot.serializer(), snapshot))
         }
         if (session.isFinished && !state.ended) finish(now) else if (!state.ended) checkpoints.trySend(MatchCheckpoint.of(state))

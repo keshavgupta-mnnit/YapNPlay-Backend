@@ -1,0 +1,44 @@
+{
+    "phase": "AWAITING_STACK_CHOICE",
+    "topCard": {
+        "kind": "PrismDrawSix",
+        "color": null,
+        "number": null
+    },
+    "topCardColor": "GREEN",
+    "hands": {
+        "2": [
+            {
+                "kind": "PrismDrawTen",
+                "color": null,
+                "number": null
+            },
+            {
+                "kind": "NumberCard",
+                "color": "GOLD",
+                "number": 7
+            }
+        ]
+    },
+    "cardCounts": {
+        "1": 4,
+        "2": 2,
+        "3": 0
+    },
+    "drawPileCount": 0,
+    "discardPileCount": 0,
+    "activeStackPenalty": 10,
+    "monoCallWindowExpiry": 0,
+    "monoWindowSeat": null,
+    "monoCalledSeat": null,
+    "stackTopValue": 6,
+    "reversed": false,
+    "drawnCardIndex": null,
+    "pendingSwapSeat": null,
+    "eliminatedSeats": [
+        3
+    ],
+    "finishedSeats": [],
+    "ranking": [],
+    "knockoutThreshold": 25
+}

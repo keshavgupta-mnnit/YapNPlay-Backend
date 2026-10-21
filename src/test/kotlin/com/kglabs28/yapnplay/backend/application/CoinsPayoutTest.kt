@@ -1,7 +1,9 @@
 package com.kglabs28.yapnplay.backend.application
 
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
-import com.kglabs28.yapnplay.backend.domain.economy.AdClaim
+import com.kglabs28.yapnplay.backend.domain.economy.AdClaimResult
+import com.kglabs28.yapnplay.backend.domain.economy.AdRefusal
+import com.kglabs28.yapnplay.backend.domain.economy.AdUsage
 import com.kglabs28.yapnplay.backend.domain.economy.CoinReason
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
@@ -18,7 +20,9 @@ class CoinsPayoutTest {
         override suspend fun balance(userId: String) = 0
         override suspend fun change(userId: String, delta: Int, reason: CoinReason, matchId: String?, at: Long): Int? = 0
         override suspend fun claimDaily(userId: String, day: Int, amount: Int, at: Long) = false
-        override suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, at: Long): AdClaim? = null
+        override suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult =
+            AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(0, 0))
+        override suspend fun adUsage(userId: String, day: Int) = AdUsage(0, 0)
         override suspend fun entriesFor(matchId: String) = emptyMap<String, Int>()
         override suspend fun settle(
             matchId: String, wins: Map<String, Int>, finishers: List<String>, completionCoins: Int, day: Int, dailyCap: Int, at: Long,

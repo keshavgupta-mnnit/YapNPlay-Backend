@@ -1,0 +1,42 @@
+{
+    "phase": "AWAITING_PLAY",
+    "topCard": {
+        "kind": "NumberCard",
+        "color": "RED",
+        "number": 5
+    },
+    "topCardColor": "RED",
+    "hands": {
+        "1": [
+            {
+                "kind": "SkipCard",
+                "color": "BLUE",
+                "number": null
+            },
+            {
+                "kind": "PrismDrawFour",
+                "color": null,
+                "number": null
+            }
+        ]
+    },
+    "cardCounts": {
+        "1": 2,
+        "2": 7,
+        "3": 1
+    },
+    "drawPileCount": 80,
+    "discardPileCount": 6,
+    "activeStackPenalty": 0,
+    "stackTopValue": 0,
+    "monoCallWindowExpiry": 1760000002500,
+    "monoWindowSeat": 3,
+    "monoCalledSeat": null,
+    "reversed": false,
+    "drawnCardIndex": 1,
+    "drawnCardExpiry": 1760000003000,
+    "pendingSwapSeat": null,
+    "eliminatedSeats": [],
+    "finishedSeats": [],
+    "ranking": []
+}

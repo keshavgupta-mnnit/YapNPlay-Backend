@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import com.kglabs28.yapnplay.backend.domain.economy.AdUsage
+import com.kglabs28.yapnplay.backend.domain.economy.AdRefusal
+import com.kglabs28.yapnplay.backend.domain.economy.AdClaimResult
 import com.kglabs28.yapnplay.backend.domain.economy.AdClaim
 import org.jetbrains.exposed.sql.and
 import com.kglabs28.yapnplay.backend.domain.economy.CoinReason
@@ -46,22 +49,42 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
         }
     }
 
-    override suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, at: Long): AdClaim? {
-        val uuid = userId.toUuidOrNull() ?: return null
+    override suspend fun claimAdReward(
+        userId: String,
+        adId: String,
+        day: Int,
+        amount: Int,
+        maxPerDay: Int,
+        cooldownMillis: Long,
+        at: Long,
+    ): AdClaimResult {
+        val uuid = userId.toUuidOrNull() ?: return AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(0, 0))
         return db.run {
-            val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.forUpdate().singleOrNull() ?: return@run null
+            val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.forUpdate().singleOrNull()
+                ?: return@run AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(0, 0))
             val usedToday = if (row[UsersTable.adRewardDay] == day) row[UsersTable.adRewardsToday] else 0
-            // The same ad view sent again (retry or replay): nothing more.
+            val lastAdAt = row[UsersTable.lastAdAt]
+            // The same ad view sent again (retry or replay): nothing more, the same answer.
             val seen = CoinLedgerTable.selectAll().where { (CoinLedgerTable.userId eq uuid) and (CoinLedgerTable.ref eq adId) }.any()
-            if (seen) return@run AdClaim(0, (maxPerDay - usedToday).coerceAtLeast(0))
-            if (usedToday >= maxPerDay) return@run null
+            if (seen) return@run AdClaimResult.Paid(AdClaim(0, (maxPerDay - usedToday).coerceAtLeast(0), lastAdAt))
+            if (usedToday >= maxPerDay) return@run AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(usedToday, lastAdAt))
+            if (lastAdAt > 0 && at - lastAdAt < cooldownMillis) return@run AdClaimResult.Refused(AdRefusal.COOLDOWN, AdUsage(usedToday, lastAdAt))
             UsersTable.update({ UsersTable.id eq uuid }) {
                 it[coins] = row[UsersTable.coins] + amount
                 it[adRewardDay] = day
                 it[adRewardsToday] = usedToday + 1
+                it[UsersTable.lastAdAt] = at
             }
             log(userId, amount, CoinReason.AD, null, at, adId)
-            AdClaim(amount, maxPerDay - usedToday - 1)
+            AdClaimResult.Paid(AdClaim(amount, maxPerDay - usedToday - 1, at))
+        }
+    }
+
+    override suspend fun adUsage(userId: String, day: Int): AdUsage {
+        val uuid = userId.toUuidOrNull() ?: return AdUsage(0, 0)
+        return db.run {
+            val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.singleOrNull() ?: return@run AdUsage(0, 0)
+            AdUsage(if (row[UsersTable.adRewardDay] == day) row[UsersTable.adRewardsToday] else 0, row[UsersTable.lastAdAt])
         }
     }
 

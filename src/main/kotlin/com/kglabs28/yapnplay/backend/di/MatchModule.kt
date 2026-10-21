@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.games.monochaos.engine.MonoChaosEngine
+import com.kglabs28.yapnplay.backend.games.mono.engine.MonoEngine
+import com.kglabs28.yapnplay.backend.application.match.games.mono.MonoChaosSessionFactory
+import com.kglabs28.yapnplay.backend.application.match.games.mono.MonoSessionFactory
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.config.BackendConfig
@@ -32,6 +36,8 @@ val matchModule = module {
         listOf(
             RoyalLudoSessionFactory(RoyalLudoEngine(), get(), get(), get<Settings>()),
             CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get(), get<Settings>()),
+            MonoSessionFactory(MonoEngine(), get(), get(), get(), get<Settings>()),
+            MonoChaosSessionFactory(MonoChaosEngine(), get(), get(), get(), get<Settings>()),
         )
     }
     single { MatchRegistry() }

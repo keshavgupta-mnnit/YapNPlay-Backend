@@ -4,7 +4,13 @@ package com.kglabs28.yapnplay.backend.domain.economy
 enum class CoinReason { DAILY, AD, ENTRY, WIN, COMPLETION, ADMIN }
 
 /** An ad reward claim: [granted] is 0 when this ad id was already paid. */
-data class AdClaim(val granted: Int, val adsLeftToday: Int)
+data class AdClaim(val granted: Int, val adsLeftToday: Int, val lastAdAt: Long)
+
+/** How a player has used rewarded ads: [usedToday] on the day asked about, and when the last one paid. */
+data class AdUsage(val usedToday: Int, val lastAdAt: Long)
+
+/** Why an ad reward was refused. */
+enum class AdRefusal { DAILY_LIMIT, COOLDOWN }
 
 /** Players' coins and the ledger of every change. */
 interface CoinStore {
@@ -23,7 +29,10 @@ interface CoinStore {
      * Grants [amount] for the ad view [adId], at most [maxPerDay] times on
      * [day]. A repeated [adId] grants nothing. Null when today's cap is used up.
      */
-    suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, at: Long): AdClaim?
+    suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult
+
+    /** Rewarded ads used on [day] and when the last one paid. */
+    suspend fun adUsage(userId: String, day: Int): AdUsage
 
     /**
      * Pays a finished match in one transaction: [wins] from the pot, and
@@ -42,4 +51,10 @@ interface CoinStore {
 
     /** Entry fees paid for [matchId]: user id to coins paid. */
     suspend fun entriesFor(matchId: String): Map<String, Int>
+}
+
+/** A paid (or replayed) claim, or why it was refused. */
+sealed interface AdClaimResult {
+    data class Paid(val claim: AdClaim) : AdClaimResult
+    data class Refused(val reason: AdRefusal, val usage: AdUsage) : AdClaimResult
 }

@@ -1,5 +1,7 @@
 {
     "coins": 2100,
     "granted": 500,
-    "adsLeftToday": 4
+    "adsLeftToday": 4,
+    "dailyLimit": 5,
+    "nextAdAt": 1760007200000
 }
