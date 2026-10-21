@@ -8,8 +8,10 @@ import com.kglabs28.yapnplay.backend.contract.MatchSnapshot
 import com.kglabs28.yapnplay.backend.contract.transport.Channel
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_ID
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_SEARCH_SECONDS
+import com.kglabs28.yapnplay.backend.support.TestDatabase
 import com.kglabs28.yapnplay.backend.support.WsTestClient
+import io.ktor.client.HttpClient
+import io.ktor.server.testing.ApplicationTestBuilder
 import com.kglabs28.yapnplay.backend.support.newGuestToken
 import com.kglabs28.yapnplay.backend.support.serverTest
 import io.ktor.client.call.body
@@ -28,7 +30,7 @@ import kotlin.test.assertTrue
 class QuickPlayWebSocketTest {
 
     @Test
-    fun `a lone player gets a CPU-filled Royal Ludo table that plays`() = serverTest { client ->
+    fun `a lone player gets a CPU-filled Royal Ludo table that plays`() = fastTable { client ->
         val token = client.newGuestToken()
         assertEquals(HttpStatusCode.NoContent, client.get("/matches/active") { bearerAuth(token) }.status)
         client.webSocket("/ws", request = { bearerAuth(token) }) {
@@ -65,8 +67,23 @@ class QuickPlayWebSocketTest {
         }
     }
 
+    /**
+     * Real time on a shared CI runner is slow: a short search and CPUs that don't stop to think
+     * (runtime settings written before the server starts), and generous waits for the dice and
+     * move animations of up to three CPU turns.
+     */
+    private fun fastTable(block: suspend ApplicationTestBuilder.(HttpClient) -> Unit) {
+        TestDatabase.reset()
+        TestDatabase.execute(
+            "INSERT INTO game_settings (key, value, updated_at, updated_by) VALUES " +
+                "('match.quick_play_search_seconds', '$SEARCH_SECONDS', 0, 'test'), ('rl.cpu_think_ms', '0', 0, 'test')",
+        )
+        serverTest(resetDatabase = false, block = block)
+    }
+
     private companion object {
-        const val SEARCH_WAIT_MS = (ROYAL_LUDO_SEARCH_SECONDS + 5) * 1_000
-        const val TABLE_WAIT_MS = 30_000L
+        const val SEARCH_SECONDS = 5
+        const val SEARCH_WAIT_MS = (SEARCH_SECONDS + 15) * 1_000L
+        const val TABLE_WAIT_MS = 120_000L
     }
 }
