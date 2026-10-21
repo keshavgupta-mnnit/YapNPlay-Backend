@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.config.BackendConfig
 import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
@@ -29,22 +30,23 @@ val matchModule = module {
     single<GameRandom> { SecureGameRandom() }
     single<List<GameSessionFactory>> {
         listOf(
-            RoyalLudoSessionFactory(RoyalLudoEngine(), get(), get()),
-            get<BackendConfig>().let { config ->
-                CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get(), config.cityBazaarRoundLimit, config.cityBazaarExtensionRounds, config.cityBazaarBankStart)
-            },
+            RoyalLudoSessionFactory(RoyalLudoEngine(), get(), get(), get<Settings>()),
+            CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get(), get<Settings>()),
         )
     }
     single { MatchRegistry() }
-    single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get(), get()) }
+    single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get()) }
     single<MatchCheckpointStore> { ExposedMatchCheckpointStore(get(), get()) }
     single<MatchOutcomeStore> { ExposedMatchOutcomeStore(get()) }
     single {
-        MatchDeps(notifier = get(), codec = get(), clock = get(), rooms = get(), checkpoints = get(), outcomes = get(), listener = get())
+        MatchDeps(
+            notifier = get(), codec = get(), clock = get(), rooms = get(), checkpoints = get(), outcomes = get(),
+            settings = get(), economy = get<CoinsService>(), listener = get(),
+        )
     }
     factory { GetActiveMatchUseCase(get()) }
-    single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }
+    single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>(), get<Settings>()) }
     single { SendMatchActionUseCase(get()) }
     single { MatchPresenceUseCase(get()) }
-    single { MatchmakingService(get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>()) }
+    single { MatchmakingService(get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>(), get<Settings>()) }
 }

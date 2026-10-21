@@ -3,12 +3,16 @@
         {
             "seat": 2,
             "status": "ACTIVE",
-            "place": 1
+            "place": 1,
+            "coinsWon": 0,
+            "completionCoins": 0
         },
         {
             "seat": 1,
             "status": "ACTIVE",
-            "place": 2
+            "place": 2,
+            "coinsWon": 0,
+            "completionCoins": 0
         }
     ]
 }

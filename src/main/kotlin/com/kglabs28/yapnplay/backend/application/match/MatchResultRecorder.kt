@@ -1,6 +1,5 @@
 package com.kglabs28.yapnplay.backend.application.match
 
-import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.domain.identity.ProgressionPolicy
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
 import com.kglabs28.yapnplay.backend.domain.match.MatchResultRepository
@@ -13,14 +12,11 @@ class MatchResultRecorder(
     private val results: MatchResultRepository,
     private val progression: ProgressionPolicy,
     private val rooms: RoomGateway,
-    private val coins: CoinsService? = null,
 ) : MatchLifecycleListener {
 
     override suspend fun onFinished(match: FinishedMatch) {
         val xp = match.seats.mapNotNull { seat -> seat.userId?.let { it to progression.xpFor(seat.place, seat.left) } }.toMap()
         results.save(match, xp)
-        // Quick Play: the pot is shared by place (server-side only).
-        coins?.payout(match)
         match.roomId?.let { rooms.matchEnded(it, match.matchId) }
     }
 }

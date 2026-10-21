@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.contract.EndVoteInfo
+import com.kglabs28.yapnplay.backend.domain.economy.PotRules
+import com.kglabs28.yapnplay.backend.contract.MatchPot
 import com.kglabs28.yapnplay.backend.contract.ExtensionVoteInfo
 import com.kglabs28.yapnplay.backend.contract.MatchSeatStatus
 import com.kglabs28.yapnplay.backend.contract.MatchSnapshot
@@ -38,6 +41,10 @@ class MatchSnapshotBuilder(private val state: MatchState) {
             spectators = state.spectators.values.map { SpectatorInfo(it.userId, it.displayName, it.micOn) },
             seatOffer = if (session.isFinished) null else state.offer?.toWire(),
             events = events,
+            pot = state.setup.takeIf { it.paid.isNotEmpty() }?.let { setup ->
+                MatchPot(setup.entryCoins, PotRules.total(setup.entryCoins, setup.paid.size, state.seats.count { it.cpu }), setup.potSplit)
+            },
+            endVote = state.endVote?.let { EndVoteInfo(it.proposerSeat, it.endsAt, it.voters.sorted(), it.yes.sorted(), it.no.sorted()) },
             extensionVote = state.extensionVote?.let { vote ->
                 val offer = session.extension
                 ExtensionVoteInfo(vote.endsAt, vote.voters.sorted(), vote.yes.sorted(), vote.no.sorted(), offer.extraRounds, offer.extraMinutes)

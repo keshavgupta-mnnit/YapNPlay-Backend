@@ -1,5 +1,10 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
+import com.kglabs28.yapnplay.backend.contract.CastEndVote
+import com.kglabs28.yapnplay.backend.contract.EndVoteInfo
+import com.kglabs28.yapnplay.backend.contract.EndVoted
+import com.kglabs28.yapnplay.backend.contract.MatchPot
 import com.kglabs28.yapnplay.backend.contract.League
 import com.kglabs28.yapnplay.backend.contract.Leagues
 import com.kglabs28.yapnplay.backend.contract.CoinsReward
@@ -35,7 +40,7 @@ object GoldenSamples {
 
     val all: List<GoldenCase<*>> = listOf(
         // ── HTTP ────────────────────────────────────────────────────────
-        GoldenCase("HealthResponse", HealthResponse.serializer(), HealthResponse("ok", CONTRACT_VERSION)),
+        GoldenCase("HealthResponse", HealthResponse.serializer(), HealthResponse("ok", CONTRACT_VERSION, "1.0.1")),
         GoldenCase("GuestCreated", GuestCreated.serializer(), GuestCreated(USER, "s3cr3t-example-not-real")),
         GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, username = "keshav_28", userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
         GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 2_100, granted = 500, adsLeftToday = 4)),
@@ -69,6 +74,11 @@ object GoldenSamples {
         GoldenCase("VoteExtension", VoteExtension.serializer(), VoteExtension("match-1", keepPlaying = true)),
         GoldenCase("ExtensionVoteInfo", ExtensionVoteInfo.serializer(), ExtensionVoteInfo(1_760_000_110_000, listOf(1, 2), yes = listOf(1), extraRounds = 30)),
         GoldenCase("ExtensionVoted", ExtensionVoted.serializer(), ExtensionVoted(continued = true, yes = 2, voters = 3)),
+        GoldenCase("ProposeEndMatch", ProposeEndMatch.serializer(), ProposeEndMatch("match-1")),
+        GoldenCase("CastEndVote", CastEndVote.serializer(), CastEndVote("match-1", agree = true)),
+        GoldenCase("EndVoteInfo", EndVoteInfo.serializer(), EndVoteInfo(proposerSeat = 2, endsAt = 1_760_000_120_000, voters = listOf(1, 2, 3), yes = listOf(2), no = emptyList())),
+        GoldenCase("EndVoted", EndVoted.serializer(), EndVoted(ended = true, yes = 2, voters = 3)),
+        GoldenCase("MatchPot", MatchPot.serializer(), MatchPot(entryCoins = 100, total = 400, split = listOf(50, 30, 20))),
         GoldenCase("PlayGamesSignInBody", PlayGamesSignInBody.serializer(), PlayGamesSignInBody("4/0AeanS0Z-server-auth-code")),
         GoldenCase("PlayGamesSignedIn", PlayGamesSignedIn.serializer(), PlayGamesSignedIn("u-asha", "s3cr3t-from-server", restored = true)),
         GoldenCase("InviteToRoomReply", InviteToRoomReply.serializer(), InviteToRoomReply(listOf("u-friend-1"), listOf("u-stranger"))),

@@ -37,14 +37,6 @@ val STAR_SQUARES = setOf(8, 21, 34, 47)
 const val PIECES_PER_COLOUR = 4
 const val COLOUR_COUNT = 4
 const val MAX_CONSECUTIVE_SIXES = 3
-const val SCORE_FINISH = 1000
-const val SCORE_CAPTURE = 800
-const val SCORE_LEAVE_BASE = 600
-const val SCORE_SAFE = 400
-/** Bot: reaching the home lane, getting a threatened piece away, landing where one roll can hit it. */
-const val SCORE_HOME_LANE = 350
-const val SCORE_ESCAPE = 250
-const val SCORE_DANGER = 300
 const val DICE_FACES = 6
 
 // Lobby: house-rule toggles (keys match RoyalLudoHouseRules fields) and

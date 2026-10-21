@@ -45,7 +45,7 @@ data class RoyalLudoRules(
     }
 
     companion object {
-        /** Traditional rules as confirmed in the Project brief. */
-        val TRADITIONAL = RoyalLudoRules()
+        /** Quick Play's rules: traditional, with no pair protection (rooms may switch it on). */
+        val TRADITIONAL = RoyalLudoRules(house = RoyalLudoHouseRules(pairProtection = false))
     }
 }

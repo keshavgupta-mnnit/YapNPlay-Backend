@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.match.games.royalludo
 
+import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
+import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
+import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBot
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.application.match.games.BotMode
 import com.kglabs28.yapnplay.backend.application.match.games.GameSession
 import com.kglabs28.yapnplay.backend.contract.Colour
@@ -36,15 +40,19 @@ class RoyalLudoSession(
     private var state: RoyalLudoState,
     private val random: GameRandom,
     private val json: Json,
+    override val turnSeconds: Int = GameSettings.RL_TURN_SECONDS.default,
+    override val thinkMillis: Long = GameSettings.RL_CPU_THINK_MS.default.toLong(),
+    /** How the server plays a seat (values from the runtime settings), and its recent decisions. */
+    private val bots: RoyalLudoSessionBots = RoyalLudoSessionBots(),
 ) : GameSession {
+    override val botTrace: List<BotTraceEntry> get() = bots.trace.recent()
+
 
     override val currentSeat: Int get() = state.currentSeat
     override val phase: String get() = phaseName()
     override val isFinished: Boolean get() = state.phase == Phase.FINISHED
     override val ranking: List<Int>
         get() = if (isFinished) engine.outcome(state).ranking.sortedBy { it.place }.map { it.seat.value } else emptyList()
-    override val turnSeconds: Int get() = engine.timing.turnSeconds.toInt()
-    override val thinkMillis: Long = THINK_MS
     override val waitsForTick: Boolean = false
 
     override fun colourOf(seat: Int): Colour = Colour.entries[state.colourForSeat(seat)]
@@ -62,7 +70,7 @@ class RoyalLudoSession(
         take(engine.apply(state, SeatNumber(seat), action, random))
 
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? =
-        take(engine.autoplay(state, SeatNumber(seat), random))
+        take(engine.autoplayWith(bots.bot, state, SeatNumber(seat), random))
 
     override fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int>): List<GameEvent>? = null
 
@@ -129,7 +137,6 @@ class RoyalLudoSession(
     private fun stepsOf(event: PieceMoved) = if (event.fromProgress < 0) 1 else event.toProgress - event.fromProgress
 
     private companion object {
-        const val THINK_MS = 900L
         const val AFTER_ROLL_MS = 2_100L
         const val PER_STEP_MS = 230L
         const val AFTER_MOVE_MS = 500L
@@ -141,4 +148,14 @@ class RoyalLudoSession(
         const val ACTION = "action"
         const val TYPE = "type"
     }
+}
+
+/** The session's bot and the trace it writes to. */
+class RoyalLudoSessionBots(
+    val bot: RoyalLudoBot,
+    val trace: BotTrace,
+) {
+    constructor() : this(BotTrace())
+
+    private constructor(trace: BotTrace) : this(RoyalLudoBot(trace = trace), trace)
 }

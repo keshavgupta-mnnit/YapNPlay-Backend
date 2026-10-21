@@ -66,14 +66,17 @@ class RoyalLudoEngine : Game {
 
     override fun currentActor(state: GameState) = SeatNumber((state as RoyalLudoState).currentSeat)
 
-    override fun autoplay(state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult {
+    override fun autoplay(state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult = autoplayWith(bot, state, seat, random)
+
+    /** Plays [seat]'s step with [player] (its values come from the runtime settings). */
+    fun autoplayWith(player: RoyalLudoBot, state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult {
         val s = state as RoyalLudoState
         if (s.phase == Phase.FINISHED) return ApplyResult.Rejected(TypedRejection("MATCH_ENDED", "Match ended"))
         if (seat.value != s.currentSeat) return ApplyResult.Rejected(TypedRejection("NOT_YOUR_TURN", "Not your turn"))
         return when (s.phase) {
             // Same fair, independent roll as a player's own.
             Phase.AWAITING_ROLL -> handleRoll(s, random)
-            Phase.AWAITING_MOVE -> bot.bestPiece(s)?.let { handleMove(s, it) }
+            Phase.AWAITING_MOVE -> player.bestPiece(s)?.let { handleMove(s, it) }
                 ?: ApplyResult.Rejected(TypedRejection("NO_LEGAL_MOVE", "No legal move"))
             Phase.FINISHED -> ApplyResult.Rejected(TypedRejection("MATCH_ENDED", "Match ended"))
         }
@@ -137,8 +140,13 @@ class RoyalLudoEngine : Game {
         return MatchOutcome(ranking)
     }
 
-    private fun handleRoll(state: RoyalLudoState, random: GameRandom): ApplyResult {
-        val roll = random.nextInt(6) + 1
+    private fun handleRoll(rolling: RoyalLudoState, random: GameRandom): ApplyResult {
+        // Stuck in base: each roll in a row without a six makes the next six a little likelier (same for every
+        // seat, bots too), never certain. A fair roll otherwise.
+        val stuck = rolling.piecesForSeat(rolling.currentSeat).let { pieces -> PROGRESS_IN_BASE in pieces && pieces.none { it in 0 until PROGRESS_FINISH } }
+        val misses = rolling.baseMisses[rolling.currentSeat] ?: 0
+        val roll = if (stuck && misses > 0 && rolling.sixBoostPerMissPct > 0) boostedRoll(misses, rolling, random) else random.nextInt(6) + 1
+        val state = rolling.copy(baseMisses = rolling.baseMisses + (rolling.currentSeat to if (stuck && roll != SIX) misses + 1 else 0))
         val events = mutableListOf<GameEvent>()
         if (state.ludoRules.house.threeSixesForfeit && roll == 6 && state.consecutiveSixes >= MAX_CONSECUTIVE_SIXES - 1) {
             // Third six: the whole turn is void, every piece goes back to
@@ -163,6 +171,15 @@ class RoyalLudoEngine : Game {
             return if (moved is ApplyResult.Success) ApplyResult.Success(moved.state, events + moved.events) else moved
         }
         return ApplyResult.Success(newState, events)
+    }
+
+    /**
+     * A six with chance 1/6 + [misses] × the boost (in hundredths of a percent, capped);
+     * otherwise 1–5, each equally likely.
+     */
+    private fun boostedRoll(misses: Int, s: RoyalLudoState, random: GameRandom): Int {
+        val chance = minOf(FAIR_SIX_BASIS + misses * s.sixBoostPerMissPct * PCT_TO_BASIS, maxOf(s.sixChanceCapPct * PCT_TO_BASIS, FAIR_SIX_BASIS))
+        return if (random.nextInt(BASIS) < chance) SIX else random.nextInt(SIX - 1) + 1
     }
 
     private fun handleMove(state: RoyalLudoState, piece: Int): ApplyResult {
@@ -310,3 +327,10 @@ class RoyalLudoEngine : Game {
 data class RoyalLudoSeatView(val seat: Int, val colour: Int, val pieces: List<Int>, val status: String, val finished: Boolean)
 @Serializable
 data class RoyalLudoView(val seats: List<RoyalLudoSeatView>, val currentSeat: Int, val phase: String, val lastRoll: Int?, val legalMoves: List<Int>, val finishingOrder: List<Int>, val turnCounter: Long) : GameView
+
+/** The roll that brings a piece out of base. */
+private const val SIX = 6
+/** Chances in hundredths of a percent: a fair six is 1667 in 10000. */
+private const val BASIS = 10_000
+private const val FAIR_SIX_BASIS = 1_667
+private const val PCT_TO_BASIS = 100

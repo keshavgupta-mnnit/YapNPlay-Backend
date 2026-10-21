@@ -43,7 +43,12 @@ class MatchState(
     /** While set (epoch millis), the match has not started: no turns, no timers. */
     var startHoldUntil: Long? = null
 
-    val onHold: Boolean get() = startHoldUntil != null || offer?.stage?.holdsMatch == true
+    /** A player asked to end the match: play is paused until it is decided (not saved: a restart drops it). */
+    var endVote: EndVoteState? = null
+    /** When each seat last asked to end the match (rate limit). */
+    val lastEndProposal = mutableMapOf<Int, Long>()
+
+    val onHold: Boolean get() = startHoldUntil != null || offer?.stage?.holdsMatch == true || endVote != null
 
     fun seat(seat: Int): MatchSeatState = seats.first { it.seat == seat }
 

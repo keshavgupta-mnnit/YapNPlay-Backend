@@ -39,4 +39,18 @@ object HttpPaths {
     const val ADMIN_TEST_ERROR = "/admin/test-error"
     /** Public: only when the server process started (the sign-in page clock). */
     const val ADMIN_UPTIME = "/admin/uptime"
+    const val ADMIN_SETTINGS = "/admin/settings"
+    const val ADMIN_SETTING = "/admin/settings/{key}"
+    const val ADMIN_USERS = "/admin/users"
+    const val ADMIN_USER_BLOCK = "/admin/users/{userId}/block"
+    const val ADMIN_USER_UNBLOCK = "/admin/users/{userId}/unblock"
+    const val ADMIN_USER_COINS = "/admin/users/{userId}/coins"
+    const val ADMIN_REPORTS = "/admin/reports"
+    const val ADMIN_REPORT_DECIDE = "/admin/reports/{reportId}/decide"
+    const val ADMIN_AUDIT = "/admin/audit"
+    const val ADMIN_MATCHES = "/admin/matches"
+    const val ADMIN_MATCH_BOT = "/admin/matches/{matchId}/bot"
+    const val KEY_PARAM = "key"
+    const val REPORT_ID_PARAM = "reportId"
+    const val QUERY_PARAM = "q"
 }

@@ -65,9 +65,10 @@ class CityBazaarEngine : Game {
     override val maxSpectators: Int? = null
     override val turnPolicy: TurnPolicy = TurnPolicy.Sequential
     /** CPU seats: buys, builds and bids. */
-    override val bot = CityBazaarBot(cautious = false)
-    /** Autoplay, away and timed-out turns: rolls and moves, sells only to pay. */
-    val cautiousBot = CityBazaarBot(cautious = true)
+    /** CPU seats, away and bot-held seats. */
+    override val bot = CityBazaarBot(CityBazaarBotProfile.CPU)
+    /** Timed-out turns: rolls and moves, sells only to pay. */
+    val cautiousBot = CityBazaarBot(CityBazaarBotProfile.CAUTIOUS)
 
     override fun defaultRules(): GameRules = CityBazaarRules.STANDARD
 
@@ -118,7 +119,12 @@ class CityBazaarEngine : Game {
             PayJailFine -> s.phase in JAIL_DECISION && turn.payJailFine(me)
             StayInJail -> (s.phase in JAIL_DECISION).also { if (it) turn.stayInJail(me) }
             is SellBuilding -> (s.phase == CityBazaarPhase.DEBT && turn.sellBuilding(me, action.tile)).also { if (it) turn.settleDebtIfPossible() }
-            is SellTile -> (s.phase == CityBazaarPhase.DEBT && turn.sellTile(me, action.tile)).also { if (it) turn.settleDebtIfPossible() }
+            // House rule "debt_auction" (on by default): a city sold to pay a debt goes up for auction first.
+            is SellTile -> if (s.cbRules.house.debtAuction) {
+                s.phase == CityBazaarPhase.DEBT && turn.startAuction(me, action.tile)
+            } else {
+                (s.phase == CityBazaarPhase.DEBT && turn.sellTile(me, action.tile)).also { if (it) turn.settleDebtIfPossible() }
+            }
             is StartAuction -> s.phase == CityBazaarPhase.DEBT && turn.startAuction(me, action.tile)
             CloseAuction -> s.phase == CityBazaarPhase.AUCTION && turn.closeAuction()
             DeclareBankruptcy -> (s.phase == CityBazaarPhase.DEBT).also { if (it) turn.bankrupt(me, s.debt?.payees.orEmpty()) }
@@ -134,8 +140,11 @@ class CityBazaarEngine : Game {
     /** A CPU seat's move. */
     override fun autoplay(state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult = playWith(bot, state, seat, random)
 
+    /** Plays one step of [seat]'s turn with [player] (e.g. a player's Autoplay profile). */
+    fun playAs(player: CityBazaarBot, state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult = playWith(player, state, seat, random)
+
     /**
-     * Autoplay / away / time ran out: roll and move, decline buying and
+     * Time ran out: roll and move, decline buying and
      * building, stay in jail on half rent, sell only what a debt needs.
      * [lateFine]: the user didn't roll and Autoplay is off (₹50 first).
      */

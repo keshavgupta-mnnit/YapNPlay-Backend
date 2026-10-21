@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.matchmaking
 
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.economy.EntryFees
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.MatchService
@@ -43,6 +45,7 @@ class MatchmakingService(
     private val scope: CoroutineScope,
     /** League entry fees in coins (free in tests). */
     private val fees: EntryFees = EntryFees.Free,
+    private val settings: Settings = Settings.Defaults,
 ) {
     private val lock = Mutex()
     private val forming = mutableMapOf<String, FormingTable>()
@@ -52,13 +55,13 @@ class MatchmakingService(
     suspend fun join(userId: String, gameId: String, entryCoins: Int = BackendConstants.QUICK_PLAY_ENTRY_COINS) {
         val game = games.findEnabled(gameId) ?: throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
         blocks.requireNotBlocked(userId)
-        if (BackendConstants.LEAGUES.none { it.second == entryCoins }) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SUCH_LEAGUE)
+        if (entryCoins !in settings[GameSettings.LEAGUE_FEES]) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SUCH_LEAGUE)
         if (!fees.canEnter(userId, entryCoins)) throw ServiceException(ErrorCode.NOT_ENOUGH_COINS, BackendStrings.NOT_ENOUGH_COINS)
         if (matches.isPlaying(userId)) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
         lock.withLock {
             if (forming.values.any { userId in it.players }) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
             val table = forming.getOrPut(keyOf(gameId, entryCoins)) {
-                val deadline = clock.nowMillis() + game.matchmaking.searchSeconds * BackendConstants.MILLIS_PER_SECOND
+                val deadline = clock.nowMillis() + settings[GameSettings.QUICK_PLAY_SEARCH_SECONDS] * BackendConstants.MILLIS_PER_SECOND
                 FormingTable(gameId, entryCoins, deadline).also { it.timer = scheduleDeadline(it) }
             }
             table.players += userId
@@ -116,9 +119,8 @@ class MatchmakingService(
         forming.remove(table.key)
         table.timer?.cancel()
         val players = table.players.toList()
-        val matchId = matches.startQuickPlay(table.gameId, players, cpuCount)
-        // Everyone pays in at the start; the bank covers the CPU seats in the pot.
-        fees.charge(players, matchId, table.entryCoins)
+        // Everyone pays the league fee as the match opens; the bank covers the CPU seats in the pot.
+        val matchId = matches.startQuickPlay(table.gameId, players, cpuCount, table.entryCoins)
         val found = codec.push(Channel.MATCHMAKING, MessageType.MATCH_FOUND, MatchFound.serializer(), MatchFound(matchId, table.gameId, players.size, cpuCount, table.entryCoins))
         players.forEach { notifier.send(it, found) }
     }

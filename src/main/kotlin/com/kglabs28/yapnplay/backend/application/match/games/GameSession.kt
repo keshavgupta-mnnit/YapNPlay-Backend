@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games
 
+import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.contract.Colour
 import com.kglabs28.yapnplay.backend.games.base.play.Action
 import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
@@ -61,6 +62,15 @@ interface GameSession {
 
     /** They voted to stop (or nobody voted yes): the match ends as at its limit. */
     fun endAtLimit(): List<GameEvent>? = null
+
+    /** The bots' recent decisions in this match, newest first (admin page: why did the bot do that). */
+    val botTrace: List<BotTraceEntry> get() = emptyList()
+
+    /** Players may vote to end the match early right now (false: the game has no early end, or it is mid-auction). */
+    val canEndEarly: Boolean get() = false
+
+    /** The end-game vote passed: the match ends now, ranked as the game ranks an early end. */
+    fun endEarly(): List<GameEvent>? = null
 
     /** How long the table needs to animate [events] before the next action. */
     fun pauseAfter(events: List<GameEvent>): Long

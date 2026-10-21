@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.infrastructure.monitoring
 
+import com.kglabs28.yapnplay.backend.config.BuildInfo
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
 import com.kglabs28.yapnplay.backend.config.BackendConfig
@@ -30,7 +31,7 @@ object ErrorTracking {
         Sentry.init { options ->
             options.dsn = dsn
             options.environment = if (config.devMode) ENV_LOCAL else ENV_PRODUCTION
-            options.release = RELEASE_PREFIX + CONTRACT_VERSION
+            options.release = RELEASE_PREFIX + BuildInfo.version
             options.isSendDefaultPii = false
             options.beforeSend = SentryOptions.BeforeSendCallback { event, _ -> SentryScrubber.scrub(event) }
             options.beforeBreadcrumb = SentryOptions.BeforeBreadcrumbCallback { crumb, _ -> SentryScrubber.scrub(crumb) }

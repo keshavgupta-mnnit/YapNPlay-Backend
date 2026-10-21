@@ -12,6 +12,12 @@ data class MatchSetup(
     val players: List<SeatHolder>,
     val cpuCount: Int,
     val houseRules: Map<String, Boolean>?,
+    /** Entry fee per player in coins (0 = free). */
+    val entryCoins: Int = 0,
+    /** Players whose fee was taken; only they can win the pot. */
+    val paid: List<String> = emptyList(),
+    /** % of the pot by finishing place, from the settings when the match opened. */
+    val potSplit: List<Int> = emptyList(),
 )
 
 /** A human taking a seat. */

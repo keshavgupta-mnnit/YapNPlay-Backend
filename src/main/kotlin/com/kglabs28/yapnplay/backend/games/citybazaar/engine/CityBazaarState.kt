@@ -42,6 +42,8 @@ data class CityBazaarState(
     val rentBySeat: Map<Int, Int> = emptyMap(),
     /** Rent each tile has earned its owners this match (tile → ₹). */
     val rentByTile: Map<Int, Int> = emptyMap(),
+    /** Rent each seat has paid to other players this match (rent only: not Club, Rest House or tax). */
+    val rentPaidBySeat: Map<Int, Int> = emptyMap(),
     /** Which limit paused play (phase EXTENSION_VOTE) until the players decide to go on or end. */
     val limitHit: CityBazaarLimit? = null,
     /** Everything paid to the bank this match (₹). */

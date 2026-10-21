@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.contract.AdRewardBody
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import io.ktor.server.routing.post
 import com.kglabs28.yapnplay.backend.contract.InviteToRoomBody
@@ -37,7 +38,7 @@ fun Route.userRoutes(
         call.respond(preview(call.userId, call.parameters[HttpPaths.CODE_PARAM].orEmpty()))
     }
     get(HttpPaths.ONLINE_STATS) { call.respond(onlineStats()) }
-    post(HttpPaths.AD_REWARD) { call.respond(coins.adReward(call.userId)) }
+    post(HttpPaths.AD_REWARD) { call.respond(coins.adReward(call.userId, call.receive<AdRewardBody>().adId)) }
     get(HttpPaths.LEAGUES) { call.respond(coins.leagues(call.userId)) }
     get(HttpPaths.ROOM_INVITES) { call.respond(roomInvites.list(call.userId)) }
     post(HttpPaths.INVITE_TO_ROOM) {

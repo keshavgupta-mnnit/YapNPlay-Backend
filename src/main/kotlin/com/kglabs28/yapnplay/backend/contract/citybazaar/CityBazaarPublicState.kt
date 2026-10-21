@@ -30,6 +30,8 @@ data class CityBazaarPublicState(
     val rentCollected: Map<Int, Int> = emptyMap(),
     /** 0.4.4: the bank's balance and its totals this match. */
     val bank: CityBazaarBank? = null,
+    /** 0.5.0: house rule "debt_auction": in debt, selling a city starts an auction (label it "Auction"); false: sold straight to the bank. */
+    val debtAuction: Boolean = true,
 )
 
 /** 0.4.4: the bank's [cash] = starting reserve + [received] − [paid] (₹). */
@@ -51,6 +53,8 @@ data class CityBazaarSeatState(
     val bankrupt: Boolean,
     /** 0.4.2: rent this player has collected this match (₹). */
     val rentCollected: Int = 0,
+    /** 0.5.0: rent this player has paid other players this match (₹; rent only, not Club, Rest House or tax). */
+    val rentPaid: Int = 0,
 )
 
 /** What the current player owes but can't pay yet. [reason] is a MoneyReason name. */

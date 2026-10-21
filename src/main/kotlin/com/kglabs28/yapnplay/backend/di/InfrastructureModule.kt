@@ -1,5 +1,12 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.application.settings.SettingsService
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminAuditRepository
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedSettingsRepository
+import com.kglabs28.yapnplay.backend.domain.admin.AdminAuditRepository
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
+import com.kglabs28.yapnplay.backend.domain.settings.SettingsRepository
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedCoinStore
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
@@ -60,7 +67,22 @@ fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = m
     single<JoinRequestRepository> { ExposedJoinRequestRepository(get()) }
     single<RoomInviteRepository> { ExposedRoomInviteRepository(get()) }
     single<CoinStore> { ExposedCoinStore(get()) }
-    single { CoinsService(get(), get()) }
+    single { CoinsService(get(), get(), settings = get()) }
+    single<SettingsRepository> { ExposedSettingsRepository(get()) }
+    single<AdminAuditRepository> { ExposedAdminAuditRepository(get()) }
+    single {
+        // Env values set on Render stay the defaults until changed in the admin dashboard.
+        val config = get<BackendConfig>()
+        SettingsService(
+            get(), get(), get(),
+            defaults = mapOf(
+                GameSettings.CB_ROUND_LIMIT.key to config.cityBazaarRoundLimit,
+                GameSettings.CB_EXTENSION_ROUNDS.key to config.cityBazaarExtensionRounds,
+                GameSettings.CB_BANK_START.key to config.cityBazaarBankStart,
+            ),
+        )
+    }
+    single<Settings> { get<SettingsService>() }
     single<ModerationRepository> { ExposedModerationRepository(get()) }
     single<SecretHasher> { Sha256SecretHasher() }
     single<SecretGenerator> { SecureRandomSecretGenerator() }

@@ -1,5 +1,10 @@
 package com.kglabs28.yapnplay.backend.application.match.games.royalludo
 
+import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
+import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBotTuning
+import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBot
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.match.games.GameSession
 import com.kglabs28.yapnplay.backend.application.match.games.GameSessionFactory
 import com.kglabs28.yapnplay.backend.games.base.play.GameRandom
@@ -15,16 +20,41 @@ class RoyalLudoSessionFactory(
     override val game: RoyalLudoEngine,
     private val random: GameRandom,
     private val json: Json,
+    /** Turn and CPU think time (runtime settings). */
+    private val settings: Settings = Settings.Defaults,
 ) : GameSessionFactory {
 
     override fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession {
         val rules = houseRules?.let(::rulesFrom) ?: RoyalLudoRules.TRADITIONAL
-        val state = game.start(rules, seatCount, random) as RoyalLudoState
-        return RoyalLudoSession(game, state, random, json)
+        val state = (game.start(rules, seatCount, random) as RoyalLudoState).copy(
+            sixBoostPerMissPct = settings[GameSettings.RL_SIX_BOOST_PER_MISS_PCT],
+            sixChanceCapPct = settings[GameSettings.RL_SIX_CHANCE_CAP_PCT],
+        )
+        return RoyalLudoSession(game, state, random, json, settings[GameSettings.RL_TURN_SECONDS], settings[GameSettings.RL_CPU_THINK_MS].toLong(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) })
     }
 
     override fun restore(saved: JsonObject): GameSession =
-        RoyalLudoSession(game, json.decodeFromJsonElement(RoyalLudoState.serializer(), saved), random, json)
+        RoyalLudoSession(
+            game, json.decodeFromJsonElement(RoyalLudoState.serializer(), saved), random, json,
+            settings[GameSettings.RL_TURN_SECONDS], settings[GameSettings.RL_CPU_THINK_MS].toLong(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) },
+        )
+
+    private fun bot(trace: BotTrace) = RoyalLudoBot(
+        RoyalLudoBotTuning(
+            baseCost = settings[GameSettings.RL_BOT_BASE_COST],
+            captureWeightPct = settings[GameSettings.RL_BOT_CAPTURE_WEIGHT_PCT],
+            endgameCapturePct = settings[GameSettings.RL_BOT_ENDGAME_CAPTURE_PCT],
+            extraTurnBonus = settings[GameSettings.RL_BOT_EXTRA_TURN],
+            finishBonus = settings[GameSettings.RL_BOT_FINISH],
+            leaveBaseBonus = settings[GameSettings.RL_BOT_LEAVE_BASE],
+            flexBonus = settings[GameSettings.RL_BOT_FLEX],
+            riskWeightPct = settings[GameSettings.RL_BOT_RISK_WEIGHT_PCT],
+            chaseBonus = settings[GameSettings.RL_BOT_CHASE],
+            standingMinPct = settings[GameSettings.BOT_STANDING_MIN_PCT],
+            standingMaxPct = settings[GameSettings.BOT_STANDING_MAX_PCT],
+        ),
+        trace,
+    )
 
     private fun rulesFrom(toggles: Map<String, Boolean>): RoyalLudoRules {
         val defaults = RoyalLudoHouseRules()

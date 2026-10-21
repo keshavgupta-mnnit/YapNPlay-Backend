@@ -20,6 +20,9 @@ object UsersTable : Table("users") {
     val dailyBonusDay = integer("daily_bonus_day")
     val adRewardDay = integer("ad_reward_day")
     val adRewardsToday = integer("ad_rewards_today")
+    /** V12: completion coins paid today, for the daily cap. */
+    val completionDay = integer("completion_day")
+    val completionsToday = integer("completions_today")
 
     override val primaryKey = PrimaryKey(id)
 

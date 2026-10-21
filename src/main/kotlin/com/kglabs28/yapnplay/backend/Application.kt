@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend
 
+import com.kglabs28.yapnplay.backend.application.settings.SettingsService
 import com.kglabs28.yapnplay.backend.infrastructure.monitoring.ErrorTracking
 import com.kglabs28.yapnplay.backend.application.rooms.PlayRoomActors
 import com.kglabs28.yapnplay.backend.config.BackendConfig
@@ -58,6 +59,8 @@ fun Application.module(config: BackendConfig, overrides: BackendOverrides = Back
     // Open the database (and run migrations) at startup, not on the first request.
     koin.get<DatabaseHandle>()
     // Matches that were running when the server last stopped carry on.
+    // Settings first: restored matches and new ones read them.
+    runBlocking { koin.get<SettingsService>().load() }
     val restored = runBlocking { koin.get<MatchService>().restoreSaved() }
     if (restored > 0) log.info("Brought back $restored running match(es)")
 

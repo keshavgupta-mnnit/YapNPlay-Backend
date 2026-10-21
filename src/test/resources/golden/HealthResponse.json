@@ -1,4 +1,5 @@
 {
     "status": "ok",
-    "contractVersion": "0.4.0"
+    "contractVersion": "0.5.0",
+    "version": "1.0.1"
 }

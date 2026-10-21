@@ -34,6 +34,15 @@ class RoyalLudoState(
     val turnCounter: Long = 0,
     /** Board as it was when the current seat's turn began (a third six puts it back). */
     val turnStartPieces: Map<Int, List<Int>> = pieces,
+    /** Rolls in a row without a six while a seat had no piece out of base (seat → count). */
+    val baseMisses: Map<Int, Int> = emptyMap(),
+    /**
+     * Each such miss raises the chance of a six by this many percentage
+     * points, up to [sixChanceCapPct] % (0 = fair dice; runtime settings,
+     * fixed per match). Still random: only the odds improve.
+     */
+    val sixBoostPerMissPct: Int = 0,
+    val sixChanceCapPct: Int = 0,
 ) : GameState {
     override val gameId: GameId get() = _gameId
     override val rules: GameRules get() = _rules
@@ -60,9 +69,13 @@ class RoyalLudoState(
         removalOrder: List<Int> = this.removalOrder,
         turnCounter: Long = this.turnCounter,
         turnStartPieces: Map<Int, List<Int>> = this.turnStartPieces,
+        baseMisses: Map<Int, Int> = this.baseMisses,
+        sixBoostPerMissPct: Int = this.sixBoostPerMissPct,
+        sixChanceCapPct: Int = this.sixChanceCapPct,
     ): RoyalLudoState = RoyalLudoState(
         _gameId, _rules, _seats, _turn, seatColours, pieces,
         currentSeat, phase, lastRoll, legalPieces, consecutiveSixes,
         finishingOrder, removalOrder, turnCounter, turnStartPieces,
+        baseMisses, sixBoostPerMissPct, sixChanceCapPct,
     )
 }

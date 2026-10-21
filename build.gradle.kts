@@ -76,3 +76,13 @@ tasks.test {
 tasks.named("shadowJar", com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar::class) {
     mergeServiceFiles()
 }
+
+// Offline bot arena (src/test/.../arena/BotArena.kt): seeded bot-vs-bot games to compare bot settings.
+// ./gradlew arena -Parena="game=citybazaar games=200 B.ruinWeightPct=150"
+tasks.register<JavaExec>("arena") {
+    group = "verification"
+    description = "Runs seeded bot-vs-bot games and compares two bot setting sets"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.kglabs28.yapnplay.backend.arena.BotArenaKt")
+    args = (project.findProperty("arena") as String?)?.split(' ') ?: emptyList()
+}

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.config.BuildInfo
 import io.ktor.server.request.receive
 import io.ktor.http.HttpHeaders
 import com.kglabs28.yapnplay.backend.contract.PlayGamesSignInBody
@@ -18,7 +19,7 @@ import io.ktor.server.routing.post
 /** Routes that need no sign-in: health check, guest creation and Play Games sign-in. */
 fun Route.publicRoutes(createGuest: CreateGuestUseCase, playGames: PlayGamesSignInUseCase, guestLimit: RateLimitName) {
     get(HttpPaths.HEALTH) {
-        call.respond(HealthResponse(BackendStrings.STATUS_OK, CONTRACT_VERSION))
+        call.respond(HealthResponse(BackendStrings.STATUS_OK, CONTRACT_VERSION, BuildInfo.version))
     }
     rateLimit(guestLimit) {
         post(HttpPaths.GUEST) {

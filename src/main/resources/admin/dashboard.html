@@ -61,6 +61,14 @@
   #error { color: var(--bad); min-height: 1.4em; margin-top: 8px; font-size: 13px; }
   .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
   [hidden] { display: none !important; }
+  nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  nav.tabs button { margin: 0; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  nav.tabs button[aria-selected="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row input { width: auto; flex: 1; min-width: 140px; }
+  td input { width: 130px; padding: 5px 8px; }
+  td button { margin: 0 4px 0 0; padding: 5px 10px; }
+  .msg { min-height: 1.4em; font-size: 13px; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -93,6 +101,52 @@
 </form>
 
 <main id="dash" hidden>
+  <nav class="tabs" role="tablist">
+    <button type="button" data-tab="overview" aria-selected="true">Overview</button>
+    <button type="button" data-tab="settings" aria-selected="false">Game settings</button>
+    <button type="button" data-tab="players" aria-selected="false">Players</button>
+    <button type="button" data-tab="reports" aria-selected="false">Reports</button>
+    <button type="button" data-tab="audit" aria-selected="false">Audit</button>
+    <button type="button" data-tab="bots" aria-selected="false">Bots</button>
+  </nav>
+  <div class="row" style="margin-top:10px">
+    <label for="who" class="note" style="margin:0">Your name (saved with every change):</label>
+    <input id="who" maxlength="64" placeholder="e.g. Keshav" style="max-width:220px">
+  </div>
+  <div id="actionMsg" class="msg"></div>
+
+  <section id="tab-settings" hidden>
+    <h2>Game settings</h2>
+    <div class="note">Changes apply right away to matches that start after them; running matches keep their values. Lists are written like [50, 30, 20].</div>
+    <div class="panel"><table id="settingsTable"></table></div>
+  </section>
+
+  <section id="tab-players" hidden>
+    <h2>Players</h2>
+    <form id="userSearch" class="row"><input id="userQuery" placeholder="Name, user code or id"><button type="submit" style="margin:0">Search</button></form>
+    <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
+  </section>
+
+  <section id="tab-reports" hidden>
+    <h2>Reports</h2>
+    <div class="note">Open reports can be decided here; upholding one blocks the reported player like a vote would.</div>
+    <div class="panel"><table id="reportsTable"></table></div>
+  </section>
+
+  <section id="tab-audit" hidden>
+    <h2>Audit</h2>
+    <div class="panel"><table id="auditTable"></table></div>
+  </section>
+
+  <section id="tab-bots" hidden>
+    <h2>Live matches</h2>
+    <div class="note">Pick a match to see its bots' last decisions: the top options with their gain, cost and risk.</div>
+    <div class="panel"><table id="matchesTable"></table></div>
+    <h2 id="botTitle" hidden>Bot decisions</h2>
+    <div class="panel"><table id="botTable"></table></div>
+  </section>
+
+  <section id="tab-overview">
   <h2>Right now</h2>
   <div class="cards" id="liveCards"></div>
   <div class="note">Live numbers are in memory and reset when the server restarts.</div>
@@ -113,6 +167,7 @@
   <div class="cards" id="modCards"></div>
   <h2>Most reported users</h2>
   <div class="panel"><table id="reported"></table></div>
+  </section>
 </main>
 
 <script>
@@ -303,6 +358,140 @@
     $("token").focus();
   });
   $("signout").addEventListener("click", function () { clearToken(); showSignIn(); });
+
+  // ── Game settings, players, reports, audit ──
+  var WHO_KEY = "yapnplay-admin-name";
+  try { $("who").value = localStorage.getItem(WHO_KEY) || ""; } catch (e) {}
+  $("who").addEventListener("change", function () { try { localStorage.setItem(WHO_KEY, $("who").value.trim()); } catch (e) {} });
+
+  function say(text, bad) { $("actionMsg").textContent = text; $("actionMsg").className = "msg " + (bad ? "bad" : "good"); }
+  function who() {
+    var name = $("who").value.trim();
+    if (!name) { say("Type your name first: every change is audited.", true); $("who").focus(); }
+    return name;
+  }
+  function api(method, path, body) {
+    var opts = { method: method, cache: "no-store", headers: { "Authorization": "Bearer " + (storedToken() || "") } };
+    if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
+    return fetch(path, opts).then(function (r) {
+      if (r.status === 401) { clearToken(); showSignIn("That token was not accepted."); throw new Error("signed out"); }
+      if (r.status === 204) return null;
+      return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || ("HTTP " + r.status)); return j; });
+    });
+  }
+  function btn(text, onClick, ghost) {
+    var b = el("button", text, ghost ? "ghost" : ""); b.type = "button"; b.addEventListener("click", onClick); return b;
+  }
+  function when(ms) { return ms ? new Date(ms).toLocaleString() : ""; }
+  function both(a, b) { var d = el("span"); d.appendChild(a); d.appendChild(b); return d; }
+
+  function loadSettings() {
+    api("GET", "/admin/settings").then(function (list) {
+      var rows = [], group = null;
+      list.forEach(function (s) {
+        var input = el("input"); input.value = s.value; input.setAttribute("aria-label", s.label);
+        var save = btn("Save", function () {
+          var name = who(); if (!name) return;
+          var value; try { value = JSON.parse(input.value); } catch (e) { say(s.label + ": not a number or [list]", true); return; }
+          api("PUT", "/admin/settings/" + encodeURIComponent(s.key), { value: value, by: name })
+            .then(function (v) { input.value = v.value; say(s.label + " saved: " + v.value); })
+            .catch(function (e) { say(s.label + ": " + e.message, true); });
+        });
+        var reset = btn("Default", function () { input.value = s["default"]; }, true);
+        if (s.group !== group) { group = s.group; rows.push([el("b", group), "", "", "", ""]); }
+        rows.push([s.label, input, s["default"], s.hint, both(save, reset)]);
+      });
+      table("settingsTable", [["Setting"], ["Value"], ["Default"], ["Allowed"], [""]], rows, "No settings");
+    }).catch(function (e) { say("Settings: " + e.message, true); });
+  }
+
+  function loadUsers() {
+    api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
+      table("usersTable", [["Name"], ["Code"], ["Coins", true], ["XP", true], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
+        users.map(function (u) {
+          var block = u.blockedUntil
+            ? btn("Unblock", function () {
+                var name = who(); if (!name) return;
+                api("POST", "/admin/users/" + u.userId + "/unblock", { by: name, note: prompt("Why unblock? (optional)") || null })
+                  .then(function () { say(u.displayName + " unblocked"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+              })
+            : btn("Block", function () {
+                var name = who(); if (!name) return;
+                var days = parseInt(prompt("Block " + u.displayName + " for how many days?", "1"), 10); if (!days) return;
+                api("POST", "/admin/users/" + u.userId + "/block", { days: days, by: name, note: prompt("Why? (optional)") || null })
+                  .then(function () { say(u.displayName + " blocked for " + days + " days"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+              });
+          var coins = btn("Coins \u00b1", function () {
+            var name = who(); if (!name) return;
+            var delta = parseInt(prompt("Coins to give (e.g. 500) or take (e.g. -500) for " + u.displayName), 10); if (!delta) return;
+            var why = prompt("Why? (required)"); if (!why) return;
+            api("POST", "/admin/users/" + u.userId + "/coins", { delta: delta, by: name, note: why })
+              .then(function (r) { say(u.displayName + " now has " + fmt(r.coins) + " coins"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+          }, true);
+          return [u.displayName, u.userCode || "\u2014", u.coins, u.xp, u.playGamesLinked ? "Linked" : "\u2014", when(u.blockedUntil), when(u.createdAt), both(block, coins)];
+        }), "No players found");
+    }).catch(function (e) { say("Players: " + e.message, true); });
+  }
+
+  function loadReports() {
+    api("GET", "/admin/reports").then(function (reports) {
+      table("reportsTable", [["When"], ["Reported"], ["By"], ["Reason"], ["Decision"], [""]],
+        reports.map(function (r) {
+          var act = el("span");
+          if (r.upheld === null) {
+            [["Uphold", true], ["Reject", false]].forEach(function (d) {
+              act.appendChild(btn(d[0], function () {
+                var name = who(); if (!name) return;
+                api("POST", "/admin/reports/" + r.reportId + "/decide", { upheld: d[1], by: name, note: prompt("Note (optional)") || null })
+                  .then(function () { say("Report " + (d[1] ? "upheld" : "rejected")); loadReports(); }).catch(function (e) { say(e.message, true); });
+              }, !d[1]));
+            });
+          }
+          return [when(r.createdAt), r.reportedName, r.reporterName, r.reason, r.upheld === null ? "Open" : (r.upheld ? "Upheld" : "Rejected"), act];
+        }), "No reports");
+    }).catch(function (e) { say("Reports: " + e.message, true); });
+  }
+
+  function loadAudit() {
+    api("GET", "/admin/audit").then(function (rows) {
+      table("auditTable", [["When"], ["Who"], ["What"], ["Target"], ["From"], ["To"], ["Note"]],
+        rows.map(function (a) { return [when(a.changedAt), a.changedBy, a.action, a.target, a.oldValue || "", a.newValue || "", a.note || ""]; }),
+        "No changes yet");
+    }).catch(function (e) { say("Audit: " + e.message, true); });
+  }
+
+  function num(v) { return Math.round(v * 10) / 10; }
+  function loadBotDecisions(m) {
+    api("GET", "/admin/matches/" + m.matchId + "/bot").then(function (rows) {
+      $("botTitle").hidden = false; $("botTitle").textContent = "Bot decisions: " + m.title + " (" + m.gameId + ")";
+      var out = [];
+      rows.forEach(function (d) {
+        out.push([el("b", d.decision), "\u2192 " + d.chosen, "", "", "", "risk \u00d7" + num(d.riskWeight)]);
+        d.options.forEach(function (o) { out.push(["", o.option, num(o.gain), num(o.cost), num(o.risk), o.note]); });
+      });
+      table("botTable", [["Decision"], ["Option"], ["Gain"], ["Cost"], ["Risk"], ["Why"]], out, "No bot decisions yet");
+    }).catch(function (e) { say("Bots: " + e.message, true); });
+  }
+  function loadMatches() {
+    api("GET", "/admin/matches").then(function (list) {
+      table("matchesTable", [["Started"], ["Game"], ["Title"], [""]],
+        list.map(function (m) { return [when(m.startedAt), m.gameId, m.title, btn("Bot decisions", function () { loadBotDecisions(m); }, true)]; }),
+        "No live matches");
+    }).catch(function (e) { say("Matches: " + e.message, true); });
+  }
+
+  var LOADERS = { settings: loadSettings, players: loadUsers, reports: loadReports, audit: loadAudit, bots: loadMatches };
+  var TABS = ["overview", "settings", "players", "reports", "audit", "bots"];
+  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function (b) {
+    b.addEventListener("click", function () {
+      var tab = b.getAttribute("data-tab");
+      Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function (x) { x.setAttribute("aria-selected", String(x === b)); });
+      TABS.forEach(function (t) { $("tab-" + t).hidden = t !== tab; });
+      $("actionMsg").textContent = "";
+      if (LOADERS[tab]) LOADERS[tab]();
+    });
+  });
+  $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); loadUsers(); });
   load();
 })();
 </script>

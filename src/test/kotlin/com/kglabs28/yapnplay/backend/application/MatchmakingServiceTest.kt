@@ -89,7 +89,7 @@ class MatchmakingServiceTest {
     }
 
     @Test
-    fun `leagues - only matched within the same fee, need the coins, and pay at the start`() = runTest {
+    fun `leagues - only matched within the same fee, need the coins, and carry the fee into the match`() = runTest {
         val charged = mutableListOf<Pair<String, Int>>()
         val fees = object : EntryFees {
             override suspend fun canEnter(userId: String, entryCoins: Int) = userId != "broke" || entryCoins == 0
@@ -107,7 +107,6 @@ class MatchmakingServiceTest {
         mm.join("d", ROYAL_LUDO_ID, 500)
         assertEquals(500, kit.found("d")!!.entryCoins)
         assertEquals(null, kit.found("broke"))
-        assertEquals(listOf("a", "b", "c", "d").map { it to 500 }, charged.sortedBy { it.first })
     }
 
     private companion object {

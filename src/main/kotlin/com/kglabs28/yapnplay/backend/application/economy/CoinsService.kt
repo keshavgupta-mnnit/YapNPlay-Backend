@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.economy
 
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.CoinLedgerTable
+import com.kglabs28.yapnplay.backend.domain.economy.PotRules
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.config.BackendStrings
@@ -23,20 +27,29 @@ import java.time.ZoneId
 class CoinsService(
     private val store: CoinStore,
     private val clock: Clock,
-) : EntryFees {
+    private val ads: AdVerifier = AdVerifier.AcceptAll,
+    private val settings: Settings = Settings.Defaults,
+) : EntryFees, MatchEconomy {
 
     /** Today's +100, given once a day (India time) the first time the app asks. The coins granted, or 0. */
     suspend fun dailyBonus(userId: String): Int {
         val now = clock.nowMillis()
-        return if (store.claimDaily(userId, dayOf(now), BackendConstants.DAILY_BONUS_COINS, now)) BackendConstants.DAILY_BONUS_COINS else 0
+        val bonus = settings[GameSettings.DAILY_BONUS]
+        return if (bonus > 0 && store.claimDaily(userId, dayOf(now), bonus, now)) bonus else 0
     }
 
-    /** A fully watched rewarded ad: +500, a few times a day (ads are not verified yet). */
-    suspend fun adReward(userId: String): CoinsReward {
+    /**
+     * A fully watched rewarded ad: +500, a few times a day. [adId] is unique
+     * per ad view, so a retry or replay pays nothing. [ads] is the hook for
+     * AdMob server-side verification (SSV) later; today it accepts every view.
+     */
+    suspend fun adReward(userId: String, adId: String): CoinsReward {
+        if (adId.isBlank() || adId.length > CoinLedgerTable.REF_MAX_LENGTH) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_AD_ID)
+        if (!ads.verify(userId, adId)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_AD_ID)
         val now = clock.nowMillis()
-        val left = store.claimAdReward(userId, dayOf(now), BackendConstants.AD_REWARD_COINS, BackendConstants.AD_REWARDS_PER_DAY, now)
+        val claim = store.claimAdReward(userId, adId, dayOf(now), settings[GameSettings.AD_REWARD], settings[GameSettings.AD_DAILY_CAP], now)
             ?: throw ServiceException(ErrorCode.RATE_LIMITED, BackendStrings.AD_REWARDS_USED)
-        return CoinsReward(coins = store.balance(userId), granted = BackendConstants.AD_REWARD_COINS, adsLeftToday = left)
+        return CoinsReward(coins = store.balance(userId), granted = claim.granted, adsLeftToday = claim.adsLeftToday)
     }
 
     suspend fun balance(userId: String): Int = store.balance(userId)
@@ -44,7 +57,8 @@ class CoinsService(
     /** The Quick Play leagues, and which ones this player can afford now. */
     suspend fun leagues(userId: String): Leagues {
         val coins = store.balance(userId)
-        return Leagues(coins, BackendConstants.LEAGUES.map { (name, entry) -> League(entry, name, coins >= entry) })
+        val fees = settings[GameSettings.LEAGUE_FEES]
+        return Leagues(coins, GameSettings.LEAGUE_NAMES.zip(fees).map { (name, entry) -> League(entry, name, coins >= entry) })
     }
 
     override suspend fun canEnter(userId: String, entryCoins: Int): Boolean =
@@ -57,26 +71,22 @@ class CoinsService(
     }
 
     /**
-     * The pot (entry × paid seats, CPU seats paid by the bank) shared by
-     * place. Players who did not pay or who left get nothing; their share
-     * stays with the bank.
+     * Pays a finished match: the pot by place (entry x paid seats, CPU seats
+     * paid by the bank; nothing for players who did not pay or who left),
+     * plus completion coins to every human still playing for themselves at
+     * the end, if the match ran long enough and they are under today's cap.
      */
-    suspend fun payout(match: FinishedMatch): Map<String, Int> {
-        val paid = store.entriesFor(match.matchId)
-        if (paid.isEmpty()) return emptyMap()
-        val entry = paid.values.max()
-        val cpus = match.seats.count { it.userId == null }
-        val pot = entry * (paid.size + cpus)
-        val shares = SHARES[match.seats.size] ?: return emptyMap()
+    override suspend fun settle(match: FinishedMatch): MatchCoins {
+        // The fee, payers and split were fixed when the match opened.
+        val won = PotRules.payouts(match.entryCoins, match.paid.toSet(), match.seats, match.potSplit)
+        val longEnough = match.endedAt - match.startedAt >= settings[GameSettings.COMPLETION_MIN_MINUTES] * MILLIS_PER_MINUTE
+        val finishers = if (longEnough) match.seats.filter { it.completed }.mapNotNull { it.userId } else emptyList()
         val now = clock.nowMillis()
-        return match.seats.mapNotNull { seat ->
-            val userId = seat.userId ?: return@mapNotNull null
-            val percent = shares.getOrNull(seat.place - 1) ?: return@mapNotNull null
-            if (seat.left || userId !in paid || percent == 0) return@mapNotNull null
-            val won = pot * percent / PERCENT
-            store.change(userId, won, CoinReason.WIN, match.matchId, now)
-            userId to won
-        }.toMap()
+        val completion = store.settle(
+            match.matchId, won, finishers, settings[GameSettings.COMPLETION_COINS],
+            dayOf(now), settings[GameSettings.COMPLETION_DAILY_CAP], now,
+        )
+        return MatchCoins(won, completion)
     }
 
     private fun dayOf(millis: Long): Int =
@@ -84,15 +94,7 @@ class CoinsService(
 
     private companion object {
         val ZONE: ZoneId = ZoneId.of("Asia/Kolkata")
-        const val PERCENT = 100
-        /** Pot share (%) by place, per table size; the last place gets nothing. */
-        val SHARES = mapOf(
-            2 to listOf(100),
-            3 to listOf(60, 40),
-            4 to listOf(50, 30, 20),
-            5 to listOf(40, 30, 20, 10),
-            6 to listOf(35, 25, 20, 12, 8),
-        )
+        const val MILLIS_PER_MINUTE = 60_000L
     }
 }
 
@@ -106,5 +108,29 @@ interface EntryFees {
     object Free : EntryFees {
         override suspend fun canEnter(userId: String, entryCoins: Int) = true
         override suspend fun charge(userIds: List<String>, matchId: String, entryCoins: Int) = emptyList<String>()
+    }
+}
+
+/** Checks that an ad view really happened (AdMob SSV callback, later). */
+fun interface AdVerifier {
+    suspend fun verify(userId: String, adId: String): Boolean
+
+    companion object {
+        val AcceptAll = AdVerifier { _, _ -> true }
+    }
+}
+
+/** Coins a finished match paid, by user id. */
+data class MatchCoins(
+    val won: Map<String, Int> = emptyMap(),
+    val completion: Map<String, Int> = emptyMap(),
+)
+
+/** Pays a finished match (pot and completion coins). [None] pays nothing (tests, no economy). */
+fun interface MatchEconomy {
+    suspend fun settle(match: FinishedMatch): MatchCoins
+
+    companion object {
+        val None = MatchEconomy { MatchCoins() }
     }
 }

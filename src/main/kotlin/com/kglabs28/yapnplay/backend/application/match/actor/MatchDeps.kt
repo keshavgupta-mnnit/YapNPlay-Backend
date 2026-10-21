@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.application.economy.MatchEconomy
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
 import com.kglabs28.yapnplay.backend.application.match.MatchLifecycleListener
 import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStore
@@ -18,5 +20,9 @@ class MatchDeps(
     val checkpoints: MatchCheckpointStore = MatchCheckpointStore.None,
     /** Every match's outcome (completed or aborted), for counting unfinished games. */
     val outcomes: MatchOutcomeStore = MatchOutcomeStore.None,
+    /** Runtime settings (vote time); defaults in tests. */
+    val settings: Settings = Settings.Defaults,
+    /** Pays the pot and completion coins when a match ends. */
+    val economy: MatchEconomy = MatchEconomy.None,
     val listener: MatchLifecycleListener,
 )

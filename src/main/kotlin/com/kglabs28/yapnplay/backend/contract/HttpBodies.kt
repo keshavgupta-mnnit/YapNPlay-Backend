@@ -288,3 +288,9 @@ data class League(
     val name: String,
     val canEnter: Boolean,
 )
+
+/** 0.5.0 `POST /coins/ad-reward` body: a unique id per ad view (a random UUID, or AdMob's transaction id). */
+@Serializable
+data class AdRewardBody(
+    val adId: String,
+)

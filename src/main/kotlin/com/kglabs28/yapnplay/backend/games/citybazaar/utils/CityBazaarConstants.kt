@@ -20,6 +20,8 @@ const val STARTING_CASH = 20_000
 const val START_BONUS = 1_500
 const val JAIL_FINE = 500
 const val CLUB_FEE = 500
+/** Club: the lander pays each other player this; Rest House: each other player pays the lander. */
+const val CLUB_REST_EACH = 50
 /** Property tax (a Shagun Chest result): per property owned. */
 const val PROPERTY_TAX_PER = 50
 /** Wealth Tax tile: per building owned (each house and each hotel). */
@@ -67,8 +69,9 @@ const val BOT_JAIL_FINE_CASH = 6_000
 // Lobby: house-rule toggles (keys match CityBazaarHouseRules) and the fixed rule sheet.
 val CITY_BAZAAR_HOUSE_RULES = listOf(
     HouseRuleOption("set_double_rent", "Colour Bonus", "3 cities of one colour: their rent doubles", true),
-    HouseRuleOption("rest_house_skip", "Rest House Rest", "Landing on Rest House skips your next turn", true),
-    HouseRuleOption("club_fee", "Club Fee", "Landing on Club costs ₹500", true),
+    HouseRuleOption("rest_house_skip", "Rest House Treat", "Land on Rest House: every other player pays you ₹50", true),
+    HouseRuleOption("club_fee", "Club Party", "Land on Club: you pay every other player ₹50", true),
+    HouseRuleOption("debt_auction", "Auction to Pay Debts", "In debt, a city you sell goes up for auction instead of straight to the bank", true),
     HouseRuleOption("round_limit", "Round Limit", "End after the set number of rounds; richest wins", true),
     HouseRuleOption("time_limit", "Time Limit", "End when the match time is up; richest wins", true),
 )

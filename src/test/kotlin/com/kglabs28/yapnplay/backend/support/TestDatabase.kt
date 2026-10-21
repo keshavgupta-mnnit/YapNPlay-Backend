@@ -38,5 +38,5 @@ object TestDatabase {
     private const val USER = "postgres"
     private const val DATABASE = "postgres"
     private const val POOL_SIZE = 5
-    private const val TRUNCATE = "TRUNCATE match_outcomes, active_matches, play_room_members, play_rooms, users CASCADE"
+    private const val TRUNCATE = "TRUNCATE match_outcomes, active_matches, play_room_members, play_rooms, users, game_settings, admin_audit CASCADE"
 }

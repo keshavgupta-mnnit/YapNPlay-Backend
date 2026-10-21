@@ -1,5 +1,10 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
+import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBotProfile
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBot
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.SentToJail
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.LeftJail
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.RestTaken
@@ -76,6 +81,13 @@ class CityBazaarSession(
     private val startedAt: Long = clock.nowMillis(),
     private var auctionEndsAt: Long = 0L,
     private var lastBidAt: Long = 0L,
+    private val timing: CityBazaarTiming = CityBazaarTiming(),
+    /** The bots' recent decisions, for the admin page. */
+    private val trace: BotTrace = BotTrace(),
+    /** How a player's Autoplay plays (reserves are runtime settings). */
+    private val autoplayBot: CityBazaarBot = CityBazaarBot(CityBazaarBotProfile.AUTOPLAY),
+    /** How CPU, away and bot-held seats play (tuning from runtime settings). */
+    private val cpuBot: CityBazaarBot = CityBazaarBot(CityBazaarBotProfile.CPU),
 ) : GameSession {
     private val mapper = CityBazaarWireMapper(json)
 
@@ -83,8 +95,8 @@ class CityBazaarSession(
     override val phase: String get() = state.phase.name
     override val isFinished: Boolean get() = state.phase == CityBazaarPhase.FINISHED
     override val ranking: List<Int> get() = if (isFinished) CityBazaarEngine.ranking(state) else emptyList()
-    override val turnSeconds: Int get() = engine.timing.turnSeconds.toInt()
-    override val thinkMillis: Long = THINK_MS
+    override val turnSeconds: Int get() = timing.turnSeconds
+    override val thinkMillis: Long get() = timing.thinkMillis
     // An auction or the keep-playing vote: no turn timer, the tick closes them.
     override val waitsForTick: Boolean get() = state.phase == CityBazaarPhase.AUCTION || state.phase == CityBazaarPhase.EXTENSION_VOTE
 
@@ -103,7 +115,8 @@ class CityBazaarSession(
 
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? = take(
         when (mode) {
-            BotMode.FULL -> engine.autoplay(state, SeatNumber(seat), random)
+            BotMode.FULL -> engine.playAs(cpuBot, state, SeatNumber(seat), random)
+            BotMode.AUTOPLAY -> engine.playAs(autoplayBot, state, SeatNumber(seat), random)
             BotMode.TIMEOUT -> engine.cautiousPlay(state, SeatNumber(seat), random, lateFine = true)
         },
     )
@@ -120,7 +133,11 @@ class CityBazaarSession(
         val auction = state.auction ?: return null
         if (now >= auctionEndsAt) return apply(state.currentSeat, CloseAuction)
         if (now - lastBidAt < CPU_BID_DELAY_MS) return null
-        val bidder = cpuSeats.filter { it != auction.seller && engine.bot.wantsToBid(state, it) }
+        // Seats the server plays: a player's Autoplay bids with its own profile, CPUs and held seats with the CPU's.
+        val bidder = cpuSeats.filter { seat ->
+            val bot = if (seat in botSeats) cpuBot else autoplayBot
+            seat != auction.seller && bot.wantsToBid(state, seat)
+        }
             .shuffled()
             .firstOrNull { random.nextInt(PERCENT) < CPU_BID_CHANCE_PERCENT }
             ?: return null
@@ -143,6 +160,15 @@ class CityBazaarSession(
 
     override fun endAtLimit(): List<GameEvent>? = apply(state.currentSeat, EndMatch)
 
+    // Not during an auction or the keep-playing vote: those settle first.
+    override val botTrace: List<BotTraceEntry> get() = trace.recent()
+
+    override val canEndEarly: Boolean
+        get() = !isFinished && state.phase != CityBazaarPhase.AUCTION && state.phase != CityBazaarPhase.EXTENSION_VOTE
+
+    /** Ends like the time limit: ranked by net worth. */
+    override fun endEarly(): List<GameEvent>? = apply(state.currentSeat, EndMatch)
+
     /**
      * Dice and hop animations, then ~2.5 s for each event the table shows as
      * a message (capped at 8 s), so the next turn's timer starts only after
@@ -157,7 +183,7 @@ class CityBazaarSession(
             }
         }
         val messages = events.count { it.showsMessage() }
-        return animation + (MESSAGE_MS * messages).coerceAtMost(MAX_MESSAGES_MS)
+        return animation + (timing.messageMillis * messages).coerceAtMost(timing.maxMessageMillis)
     }
 
     private fun GameEvent.showsMessage(): Boolean = when (this) {
@@ -182,6 +208,7 @@ class CityBazaarSession(
                     halfRent = seat in state.halfRent,
                     bankrupt = seat !in state.active,
                     rentCollected = state.rentBySeat[seat] ?: 0,
+                    rentPaid = state.rentPaidBySeat[seat] ?: 0,
                 )
             },
             owners = state.owners,
@@ -201,6 +228,7 @@ class CityBazaarSession(
             netWorth = (1..state.seatCount).associateWith { CityBazaarEconomy.netWorth(state, it) },
             ranking = ranking,
             rentCollected = state.rentByTile,
+            debtAuction = state.cbRules.house.debtAuction,
             bank = state.cbRules.house.bankStart.toLong().let { start ->
                 CityBazaarBank(cash = start + state.bankReceived - state.bankPaid, received = state.bankReceived, paid = state.bankPaid)
             },
@@ -246,13 +274,9 @@ class CityBazaarSession(
     }
 
     private companion object {
-        const val THINK_MS = 1_000L
         const val AFTER_ROLL_MS = 2_100L
         const val PER_STEP_MS = 200L
         const val AFTER_MOVE_MS = 500L
-        /** Reading time for each message the table shows (Money, Card, Jailed, …). */
-        const val MESSAGE_MS = 2_500L
-        const val MAX_MESSAGES_MS = 8_000L
         const val CPU_BID_DELAY_MS = 1_200L
         const val CPU_BID_CHANCE_PERCENT = 35
         const val PERCENT = 100
@@ -268,4 +292,12 @@ data class CityBazaarSaved(
     val startedAt: Long,
     val auctionEndsAt: Long,
     val lastBidAt: Long,
+)
+
+/** Turn time, CPU think time and reading time per table message (runtime settings). */
+data class CityBazaarTiming(
+    val turnSeconds: Int = GameSettings.CB_TURN_SECONDS.default,
+    val thinkMillis: Long = GameSettings.CB_CPU_THINK_MS.default.toLong(),
+    val messageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_MS.default.toLong(),
+    val maxMessageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_CAP_MS.default.toLong(),
 )

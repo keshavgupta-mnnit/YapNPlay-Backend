@@ -78,6 +78,18 @@ data class MatchSnapshot(
     val events: List<JsonObject> = emptyList(),
     /** 0.4.4: the keep-playing vote while the game waits at its round or time limit; null otherwise. */
     val extensionVote: ExtensionVoteInfo? = null,
+    /** 0.5.0: the coin pot (null for free games). */
+    val pot: MatchPot? = null,
+    /** 0.5.0: the end-game vote while it runs (play is paused). */
+    val endVote: EndVoteInfo? = null,
+)
+
+/** [total] = entryCoins x (paid players + CPU seats); [split] = % of the pot by place (1st first). */
+@Serializable
+data class MatchPot(
+    val entryCoins: Int,
+    val total: Int,
+    val split: List<Int>,
 )
 
 /**
@@ -103,6 +115,44 @@ data class ExtensionVoteInfo(
 data class VoteExtension(
     val matchId: String,
     val keepPlaying: Boolean,
+)
+
+/**
+ * 0.5.0: someone asked to end the match early. Play is paused (no turn
+ * deadline) until it is decided. [voters] are the humans still in; the
+ * proposer counts as yes. More than half yes ends the match (ranked like
+ * the time limit); a missing vote counts as no. The result arrives as the
+ * event `{"type":"EndVoted","ended":…,"yes":…,"voters":…}`.
+ */
+@Serializable
+data class EndVoteInfo(
+    val proposerSeat: Int,
+    val endsAt: Long,
+    val voters: List<Int>,
+    val yes: List<Int> = emptyList(),
+    val no: List<Int> = emptyList(),
+)
+
+/** 0.5.0: ask everyone to end the match early (a player at the table, not more often than the cooldown). */
+@Serializable
+data class ProposeEndMatch(
+    val matchId: String,
+)
+
+/** 0.5.0: a vote on ending the match early. Once per voter. */
+@Serializable
+data class CastEndVote(
+    val matchId: String,
+    val agree: Boolean,
+)
+
+/** 0.5.0: the generic event sent when the end-game vote is decided. */
+@Serializable
+data class EndVoted(
+    val ended: Boolean,
+    val yes: Int,
+    val voters: Int,
+    val type: String = "EndVoted",
 )
 
 /** 0.4.4: the generic event sent when the keep-playing vote is decided. */
@@ -218,6 +268,10 @@ data class RankedSeat(
     val status: MatchSeatStatus,
     /** 1-based finishing place. */
     val place: Int,
+    /** 0.5.0: coins won from the pot (0 for free games, CPUs and leavers). */
+    val coinsWon: Int = 0,
+    /** 0.5.0: coins for finishing the match (0 for CPUs, leavers, bot-held seats, short matches or past the daily cap). */
+    val completionCoins: Int = 0,
 )
 
 // ══════════════════════════════════════════════════════════════════════════

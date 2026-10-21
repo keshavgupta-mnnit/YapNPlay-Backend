@@ -44,8 +44,8 @@ class AutoplayNowTest {
         val sentBefore = kit.notifier.sent.size
 
         actor.ask("a", MatchAction.SetAutoplay(enabled = true))
-        // Well inside the 10s turn timer: the bot pause plus thinking time.
-        advanceTimeBy(BOT_PAUSE_MS)
+        // Before the turn timer runs out (it starts after the table's reading pause), so this is Autoplay, not the timeout bot.
+        advanceTimeBy(turn.turn.deadline!! - turn.serverTime - BEFORE_DEADLINE_MS)
         runCurrent()
         val after = kit.notifier.sent.drop(sentBefore)
             .filter { it.first == "a" && it.second.type == MessageType.MATCH_SNAPSHOT }
@@ -63,6 +63,6 @@ class AutoplayNowTest {
     private companion object {
         const val STEP_MS = 250L
         const val MAX_STEPS = 2_000
-        const val BOT_PAUSE_MS = 5_000L
+        const val BEFORE_DEADLINE_MS = 1_000L
     }
 }

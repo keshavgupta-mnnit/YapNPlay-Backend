@@ -2,7 +2,7 @@ package com.kglabs28.yapnplay.backend.application.match.actor
 
 /**
  * The keep-playing vote at a game's round or time limit (any game). [voters]
- * are the humans still in whom the server isn't playing for; it closes at
+ * are the humans still in (never CPUs or leavers); it closes at
  * [endsAt] or once everyone voted. Continue when at least half say yes; a
  * missing vote counts as "end".
  */

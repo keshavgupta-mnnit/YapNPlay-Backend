@@ -76,8 +76,6 @@ class CountdownHandler(
             state.members.values, state.room.leaderId, game, state.room.botFill, state.houseRules,
         )
         val matchId = deps.matchStarter.start(state.room.id, plan)
-        // Everyone who has the coins pays in; anyone short plays for free but wins nothing.
-        deps.fees.charge(plan.players, matchId, BackendConstants.ROOM_ENTRY_COINS)
         state.matchInProgress = matchId
         state.updateAll { copy(ready = false, readyAt = null, watching = false) }
         val starting = deps.codec.push(Channel.ROOM, MessageType.MATCH_STARTING, MatchStarting.serializer(), MatchStarting(matchId))

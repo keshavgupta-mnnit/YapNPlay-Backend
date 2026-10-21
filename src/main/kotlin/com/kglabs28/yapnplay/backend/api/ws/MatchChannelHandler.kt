@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.contract.CastEndVote
+import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
 import com.kglabs28.yapnplay.backend.contract.VoteExtension
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.SendMatchActionUseCase
@@ -65,6 +67,8 @@ class MatchChannelHandler(
         MessageType.CHOOSE_SEAT_TAKER -> codec.payload(request, ChooseSeatTaker.serializer()).let { it.matchId to MatchAction.ChooseTaker(it.giveToUserId) }
         MessageType.TAKE_SEAT -> codec.payload(request, TakeSeat.serializer()).let { it.matchId to MatchAction.TakeSeat(it.seat) }
         MessageType.VOTE_EXTENSION -> codec.payload(request, VoteExtension.serializer()).let { it.matchId to MatchAction.VoteExtension(it.keepPlaying) }
+        MessageType.PROPOSE_END_MATCH -> codec.payload(request, ProposeEndMatch.serializer()).let { it.matchId to MatchAction.ProposeEnd }
+        MessageType.CAST_END_VOTE -> codec.payload(request, CastEndVote.serializer()).let { it.matchId to MatchAction.VoteEnd(it.agree) }
         else -> throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_TYPE)
     }
 

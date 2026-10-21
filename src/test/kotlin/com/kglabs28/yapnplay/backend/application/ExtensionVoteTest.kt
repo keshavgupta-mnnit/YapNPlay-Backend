@@ -122,4 +122,23 @@ class ExtensionVoteTest {
         assertEquals(ErrorCode.NOT_MEMBER, assertIs<MatchResult.Failed>(stranger).code)
         assertEquals(MessageType.VOTE_EXTENSION, "VoteExtension")
     }
+
+    @Test
+    fun `a lone human with CPUs decides alone, even while the bot holds their seat`() = runTest {
+        val kit = MatchTestKit(this)
+        val setup = MatchSetup("m-2", "test", null, "Quick Play", listOf(SeatHolder("a", "A", 1)), 3, null)
+        val seats = mutableListOf(
+            MatchSeatState(1, "a", "A", 1, Colour.RED, cpu = false, presence = SeatPresence.BOT),
+            MatchSeatState(2, "cpu-1", "CPU 1", 1, Colour.GREEN, cpu = true, presence = SeatPresence.BOT),
+            MatchSeatState(3, "cpu-2", "CPU 2", 1, Colour.YELLOW, cpu = true, presence = SeatPresence.BOT),
+        )
+        val inner = AtLimitGame()
+        val actor = MatchActor(MatchState(setup, inner, seats, 0L), kit.deps, backgroundScope) {}
+        runCurrent()
+        advanceTimeBy(600)
+        runCurrent()
+        assertEquals(listOf(1), actor.snapshot("a").extensionVote!!.voters)
+        assertEquals(MatchResult.Done, actor.ask("a", MatchAction.VoteExtension(keepPlaying = true)))
+        assertEquals("extended", inner.outcome)
+    }
 }

@@ -17,7 +17,7 @@ import org.koin.dsl.module
 val identityModule = module {
     single { DisplayNamePolicy() }
     single { GuestNameGenerator(get()) }
-    single { ProgressionPolicy() }
+    single { ProgressionPolicy(get()) }
     single { ProfilePolicy() }
     single { UserCodeGenerator(get()) }
     single { UserCodeAssigner(get(), get()) }

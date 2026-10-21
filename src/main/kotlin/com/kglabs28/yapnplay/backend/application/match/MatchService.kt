@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.match
 
+import com.kglabs28.yapnplay.backend.domain.settings.potShares
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
+import com.kglabs28.yapnplay.backend.application.economy.EntryFees
 import com.kglabs28.yapnplay.backend.domain.identity.Avatars
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchActor
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchDeps
@@ -33,6 +37,9 @@ class MatchService(
     private val clock: Clock,
     private val progression: ProgressionPolicy,
     private val scope: CoroutineScope,
+    /** Takes entry fees when a paid match opens (free in tests). */
+    private val fees: EntryFees = EntryFees.Free,
+    private val settings: Settings = Settings.Defaults,
 ) : MatchStarter {
 
     override suspend fun start(roomId: String, plan: SeatPlan): String {
@@ -46,12 +53,13 @@ class MatchService(
                 players = holders(plan.players),
                 cpuCount = plan.botCount,
                 houseRules = plan.houseRules,
+                entryCoins = settings[GameSettings.GROUP_FEE],
             ),
         )
     }
 
     /** A Quick Play table: public rules, no room, no spectators. */
-    suspend fun startQuickPlay(gameId: String, userIds: List<String>, cpuCount: Int): String = open(
+    suspend fun startQuickPlay(gameId: String, userIds: List<String>, cpuCount: Int, entryCoins: Int = 0): String = open(
         MatchSetup(
             matchId = ids.newId(),
             gameId = gameId,
@@ -60,6 +68,7 @@ class MatchService(
             players = holders(userIds),
             cpuCount = cpuCount,
             houseRules = null,
+            entryCoins = entryCoins,
         ),
     )
 
@@ -108,7 +117,11 @@ class MatchService(
         return restored.size
     }
 
-    private suspend fun open(setup: MatchSetup): String {
+    private suspend fun open(request: MatchSetup): String {
+        // Everyone who has the coins pays in now; anyone short plays for free but wins nothing.
+        val paid = fees.charge(request.players.map { it.userId }, request.matchId, request.entryCoins)
+        val split = settings.potShares()[request.players.size + request.cpuCount].orEmpty()
+        val setup = request.copy(paid = paid, potSplit = if (paid.isEmpty()) emptyList() else split)
         val factory = factories.first { it.game.id.value == setup.gameId }
         val seatCount = setup.players.size + setup.cpuCount
         val session = factory.start(seatCount, setup.houseRules)
@@ -128,14 +141,14 @@ class MatchService(
         }
         val now = clock.nowMillis()
         val state = MatchState(setup, session, seats.toMutableList(), now)
-        // Play waits until every human has opened the table (at most START_WAIT_MS);
+        // Play waits until every human has opened the table (at most the start-wait setting);
         // the first turn's timer starts then, even when a human moves first.
         val humans = setup.players.map { it.userId }
         if (humans.isEmpty()) {
             state.deadline = now + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
         } else {
             state.waitingFor += humans
-            state.startHoldUntil = now + BackendConstants.START_WAIT_MS
+            state.startHoldUntil = now + settings[GameSettings.START_WAIT_SECONDS] * BackendConstants.MILLIS_PER_SECOND
         }
         runCatching { deps.outcomes.started(setup.matchId, setup.gameId, setup.roomId, now) }
             .onFailure { log.warn("Match ${setup.matchId}: recording the start failed", it) }

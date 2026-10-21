@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import com.kglabs28.yapnplay.backend.domain.economy.AdClaim
 import org.jetbrains.exposed.sql.and
 import com.kglabs28.yapnplay.backend.domain.economy.CoinReason
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
@@ -45,20 +46,54 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
         }
     }
 
-    override suspend fun claimAdReward(userId: String, day: Int, amount: Int, maxPerDay: Int, at: Long): Int? {
+    override suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, at: Long): AdClaim? {
         val uuid = userId.toUuidOrNull() ?: return null
         return db.run {
             val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.forUpdate().singleOrNull() ?: return@run null
             val usedToday = if (row[UsersTable.adRewardDay] == day) row[UsersTable.adRewardsToday] else 0
+            // The same ad view sent again (retry or replay): nothing more.
+            val seen = CoinLedgerTable.selectAll().where { (CoinLedgerTable.userId eq uuid) and (CoinLedgerTable.ref eq adId) }.any()
+            if (seen) return@run AdClaim(0, (maxPerDay - usedToday).coerceAtLeast(0))
             if (usedToday >= maxPerDay) return@run null
             UsersTable.update({ UsersTable.id eq uuid }) {
                 it[coins] = row[UsersTable.coins] + amount
                 it[adRewardDay] = day
                 it[adRewardsToday] = usedToday + 1
             }
-            log(userId, amount, CoinReason.AD, null, at)
-            maxPerDay - usedToday - 1
+            log(userId, amount, CoinReason.AD, null, at, adId)
+            AdClaim(amount, maxPerDay - usedToday - 1)
         }
+    }
+
+    override suspend fun settle(
+        matchId: String,
+        wins: Map<String, Int>,
+        finishers: List<String>,
+        completionCoins: Int,
+        day: Int,
+        dailyCap: Int,
+        at: Long,
+    ): Map<String, Int> = db.run {
+        wins.forEach { (userId, coins) ->
+            val uuid = userId.toUuidOrNull() ?: return@forEach
+            val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.forUpdate().singleOrNull() ?: return@forEach
+            UsersTable.update({ UsersTable.id eq uuid }) { it[UsersTable.coins] = row[UsersTable.coins] + coins }
+            log(userId, coins, CoinReason.WIN, matchId, at)
+        }
+        if (completionCoins <= 0) return@run emptyMap()
+        finishers.mapNotNull { userId ->
+            val uuid = userId.toUuidOrNull() ?: return@mapNotNull null
+            val row = UsersTable.selectAll().where { UsersTable.id eq uuid }.forUpdate().singleOrNull() ?: return@mapNotNull null
+            val doneToday = if (row[UsersTable.completionDay] == day) row[UsersTable.completionsToday] else 0
+            if (doneToday >= dailyCap) return@mapNotNull null
+            UsersTable.update({ UsersTable.id eq uuid }) {
+                it[UsersTable.coins] = row[UsersTable.coins] + completionCoins
+                it[completionDay] = day
+                it[completionsToday] = doneToday + 1
+            }
+            log(userId, completionCoins, CoinReason.COMPLETION, matchId, at)
+            userId to completionCoins
+        }.toMap()
     }
 
     override suspend fun entriesFor(matchId: String): Map<String, Int> {
@@ -70,13 +105,14 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
         }
     }
 
-    private fun Transaction.log(userId: String, delta: Int, reason: CoinReason, matchId: String?, at: Long) {
+    private fun Transaction.log(userId: String, delta: Int, reason: CoinReason, matchId: String?, at: Long, ref: String? = null) {
         CoinLedgerTable.insert {
             it[CoinLedgerTable.userId] = userId.toUuid()
             it[CoinLedgerTable.delta] = delta
             it[CoinLedgerTable.reason] = reason.name
             it[CoinLedgerTable.matchId] = matchId?.toUuidOrNull()
             it[createdAt] = at
+            it[CoinLedgerTable.ref] = ref
         }
     }
 }

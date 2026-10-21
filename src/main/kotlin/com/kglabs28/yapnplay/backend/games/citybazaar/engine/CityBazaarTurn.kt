@@ -4,7 +4,6 @@ import com.kglabs28.yapnplay.backend.games.base.play.ApplyResult
 import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
 import com.kglabs28.yapnplay.backend.games.base.play.GameRandom
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BidSteps
-import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CLUB_FEE
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CardDeck
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CardEffect
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CityBazaarBoard
@@ -92,10 +91,17 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
         when (spec.kind) {
             TileKind.START -> Unit
             TileKind.JAIL -> goToJail(seat)
-            TileKind.CLUB -> if (s.cbRules.house.clubFee) charge(seat, CLUB_FEE, emptyMap(), MoneyReason.CLUB, tile)
+            // Club: the lander treats everyone; Rest House: everyone pays the lander. One Money event per pair.
+            TileKind.CLUB -> if (s.cbRules.house.clubFee) {
+                val each = s.cbRules.house.clubRestEach
+                val others = s.active.filter { it != seat }
+                if (others.isNotEmpty()) charge(seat, each * others.size, others.associateWith { each }, MoneyReason.CLUB, tile)
+            }
             TileKind.REST_HOUSE -> if (s.cbRules.house.restHouseSkips) {
-                s = s.copy(skipNext = s.skipNext + seat)
-                events += RestTaken(seat)
+                val each = s.cbRules.house.clubRestEach
+                s.active.filter { it != seat }.forEach { payer ->
+                    if (payer in s.active) charge(payer, each, mapOf(seat to each), MoneyReason.REST, tile)
+                }
             }
             TileKind.TAX -> {
                 val bill = spec.taxPerProperty * CityBazaarEconomy.properties(s, seat) + spec.taxPerBuilding * CityBazaarEconomy.buildings(s, seat)
@@ -228,6 +234,7 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
         var cash = s.cash + (seat to s.cashOf(seat) - total)
         var bySeat = s.rentBySeat
         var byTile = s.rentByTile
+        var paidBySeat = s.rentPaidBySeat
         payees.forEach { (to, amount) ->
             cash = cash + (to to (cash[to] ?: 0) + amount)
             events += MoneyMoved(seat, to, amount, reason, tile)
@@ -235,11 +242,12 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
             if (reason == MoneyReason.RENT) {
                 bySeat = bySeat + (to to (bySeat[to] ?: 0) + amount)
                 if (tile != null) byTile = byTile + (tile to (byTile[tile] ?: 0) + amount)
+                paidBySeat = paidBySeat + (seat to (paidBySeat[seat] ?: 0) + amount)
             }
         }
         val toBank = total - payees.values.sum()
         if (toBank > 0) events += MoneyMoved(seat, null, toBank, reason, tile)
-        s = s.copy(cash = cash, rentBySeat = bySeat, rentByTile = byTile)
+        s = s.copy(cash = cash, rentBySeat = bySeat, rentByTile = byTile, rentPaidBySeat = paidBySeat)
     }
 
     /** Sells to the bank (as the bot would) until [seat] has [amount] or nothing is left. */
@@ -261,7 +269,11 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
         return true
     }
 
-    /** A bare tile back to the bank at half its price. */
+    /**
+     * A bare tile back to the bank at half its price. A city with buildings
+     * sells them first, one at a time (hotel → 3 houses → … → bare city);
+     * other cities don't matter.
+     */
     fun sellTile(seat: Int, tile: Int): Boolean {
         if (s.owners[tile] != seat || s.level(tile) > 0) return false
         val amount = CityBazaarEconomy.tileResale(tile)

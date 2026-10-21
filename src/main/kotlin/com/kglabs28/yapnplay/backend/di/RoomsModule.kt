@@ -1,6 +1,5 @@
 package com.kglabs28.yapnplay.backend.di
 
-import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.application.rooms.RoomInvitesUseCase
 import org.slf4j.LoggerFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -63,7 +62,6 @@ fun roomsModule(config: BackendConfig) = module {
             activity = get(),
             maxRoomsPerUser = config.maxRoomsPerUser,
             countdownSeconds = config.countdownSeconds,
-            fees = get<CoinsService>(),
         )
     }
     single { PlayRoomActors(get(), get(ROOMS_SCOPE)) }

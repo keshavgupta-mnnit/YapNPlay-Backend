@@ -20,6 +20,10 @@ sealed interface MatchAction {
     data class TakeSeat(val seat: Int) : MatchAction
     /** The keep-playing vote at the game's limit. */
     data class VoteExtension(val keepPlaying: Boolean) : MatchAction
+    /** Ask everyone to end the match early. */
+    data object ProposeEnd : MatchAction
+    /** A vote on someone's request to end the match. */
+    data class VoteEnd(val agree: Boolean) : MatchAction
 
     /** The user's connection dropped (sent by the server, not the user). */
     data object Disconnected : MatchAction

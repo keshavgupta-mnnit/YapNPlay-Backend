@@ -8,6 +8,10 @@ data class FinishedMatch(
     val startedAt: Long,
     val endedAt: Long,
     val seats: List<FinishedSeat>,
+    /** The pot: fee per player, who paid, and % by place (empty when free). */
+    val entryCoins: Int = 0,
+    val paid: List<String> = emptyList(),
+    val potSplit: List<Int> = emptyList(),
 )
 
 /** [userId] is null for a CPU seat. [place] is 1-based. */
@@ -17,4 +21,6 @@ data class FinishedSeat(
     val place: Int,
     /** Left the match before it ended: no XP, no winnings. */
     val left: Boolean = false,
+    /** Still at the table at the end, playing for themselves (not left, removed or bot-held): earns completion coins. */
+    val completed: Boolean = false,
 )

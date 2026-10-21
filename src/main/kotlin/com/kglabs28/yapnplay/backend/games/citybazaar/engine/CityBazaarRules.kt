@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_MINUTES
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.BANK_START
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CLUB_REST_EACH
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.EXTENSION_ROUNDS
 import kotlinx.serialization.Serializable
 
@@ -28,8 +29,13 @@ data class CityBazaarMandatoryRules(
 @Serializable
 data class CityBazaarHouseRules(
     val setDoubleRent: Boolean = true,
+    /** Rest House on: every other player pays the lander [clubRestEach] (stored under its old name). */
     val restHouseSkips: Boolean = true,
+    /** Club on: the lander pays every other player [clubRestEach]. */
     val clubFee: Boolean = true,
+    val clubRestEach: Int = CLUB_REST_EACH,
+    /** In debt, selling a city puts it up for auction (no bids: the bank buys it at half). Off: straight to the bank. */
+    val debtAuction: Boolean = true,
     val roundLimit: Int? = ROUND_LIMIT,
     val timeLimitMinutes: Int? = TIME_LIMIT_MINUTES,
     /** Rounds added when the players vote to keep going at the round limit. */

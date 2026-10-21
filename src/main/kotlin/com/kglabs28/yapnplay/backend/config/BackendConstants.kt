@@ -61,10 +61,6 @@ object BackendConstants {
     const val MATCH_TICK_MS = 500L
     /** A dropped connection counts as away after this grace (contract). */
     const val DISCONNECT_GRACE_MS = 5_000L
-    /** At the start, play waits up to this long for every human to open the table. */
-    const val START_WAIT_MS = 20_000L
-    /** How long the keep-playing vote at a game's limit stays open. */
-    const val EXTENSION_VOTE_MS = 10_000L
     /** Ticks or turn wakes in a row that throw before the match is aborted (ABORTED_ERROR). */
     const val MATCH_FAILURES_BEFORE_ABORT = 5
     const val OPEN_SEAT_AFTER_MS = 30_000L
@@ -100,21 +96,10 @@ object BackendConstants {
     const val ROOM_PUSH_THROTTLE_MS = 5 * 60_000L
 
     // ── Progression (placeholder formula until it is designed) ───────────
-    /** XP in hundreds: for playing a match to the end, plus a place bonus (ProgressionPolicy). */
-    const val XP_FOR_PLAYING = 100
-    /** Every 1,000 XP is a new level. */
-    const val XP_PER_LEVEL = 1_000
 
-    // ── Coins (play money: never sold, never cashed out) ─────────────────
-    const val DAILY_BONUS_COINS = 100
-    const val AD_REWARD_COINS = 500
-    const val AD_REWARDS_PER_DAY = 5
+    // ── Coins (play money: never sold, never cashed out; amounts are runtime settings) ──
     /** Quick Play's default league (an app that does not pick one). */
     const val QUICK_PLAY_ENTRY_COINS = 100
-    /** Quick Play leagues: name to entry fee. Players only meet others in the same league; Starter is free. */
-    val LEAGUES = listOf("Starter" to 0, "Bronze" to 100, "Silver" to 500, "Gold" to 1_000, "Diamond" to 5_000)
-    /** Group games: each player pays this when the match starts; players short of coins play for free but win nothing. */
-    const val ROOM_ENTRY_COINS = 100
 
     // ── Time ─────────────────────────────────────────────────────────────
     const val MILLIS_PER_SECOND = 1_000L
