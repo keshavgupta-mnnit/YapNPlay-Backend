@@ -15,7 +15,8 @@ class MatchResultRecorder(
 ) : MatchLifecycleListener {
 
     override suspend fun onFinished(match: FinishedMatch) {
-        val xp = match.seats.mapNotNull { seat -> seat.userId?.let { it to progression.xpFor(seat.place, seat.left) } }.toMap()
+        // Decided when the match ended (place and match length), and shown on the result screen.
+        val xp = match.seats.mapNotNull { seat -> seat.userId?.let { it to seat.xp } }.toMap()
         results.save(match, xp)
         match.roomId?.let { rooms.matchEnded(it, match.matchId) }
     }

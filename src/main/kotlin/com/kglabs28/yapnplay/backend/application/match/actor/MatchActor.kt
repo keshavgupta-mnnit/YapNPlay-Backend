@@ -474,10 +474,12 @@ class MatchActor(
             startedAt = state.startedAt,
             endedAt = now,
             seats = state.seats.map { s ->
+                val place = ranking.indexOf(s.seat).let { if (it < 0) ranking.size + 1 else it + 1 }
                 FinishedSeat(
-                    s.seat, s.userId.takeUnless { s.cpu }, ranking.indexOf(s.seat).let { if (it < 0) ranking.size + 1 else it + 1 },
+                    s.seat, s.userId.takeUnless { s.cpu }, place,
                     left = s.left,
                     completed = !s.cpu && !s.left && !s.removed && s.presence != SeatPresence.BOT,
+                    xp = if (s.cpu) 0 else deps.progression.xpFor(place, s.left, now - state.startedAt),
                 )
             },
             entryCoins = state.setup.entryCoins,
@@ -496,6 +498,7 @@ class MatchActor(
                         s.seat, if (s.removed) MatchSeatStatus.REMOVED else MatchSeatStatus.ACTIVE, index + 1,
                         coinsWon = coins.won[s.userId] ?: 0,
                         completionCoins = coins.completion[s.userId] ?: 0,
+                        xpGained = record.seats.firstOrNull { it.seat == s.seat }?.xp ?: 0,
                     )
                 },
             )

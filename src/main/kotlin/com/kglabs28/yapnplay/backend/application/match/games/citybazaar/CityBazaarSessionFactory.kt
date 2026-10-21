@@ -86,6 +86,7 @@ class CityBazaarSessionFactory(
             restHouseSkips = on(REST_HOUSE_SKIP),
             clubFee = on(CLUB_FEE),
             debtAuction = on(DEBT_AUCTION),
+            moneyPopups = on(MONEY_POPUPS),
             roundLimit = if (on(ROUND_LIMIT_KEY)) settings[GameSettings.CB_ROUND_LIMIT] else null,
             timeLimitMinutes = if (on(TIME_LIMIT_KEY)) TIME_LIMIT_MINUTES else null,
             extensionRounds = settings[GameSettings.CB_EXTENSION_ROUNDS],
@@ -101,6 +102,7 @@ class CityBazaarSessionFactory(
         const val REST_HOUSE_SKIP = "rest_house_skip"
         const val CLUB_FEE = "club_fee"
         const val DEBT_AUCTION = "debt_auction"
+        const val MONEY_POPUPS = "money_popups"
         const val ROUND_LIMIT_KEY = "round_limit"
         const val TIME_LIMIT_KEY = "time_limit"
     }

@@ -36,6 +36,8 @@ data class CityBazaarHouseRules(
     val clubRestEach: Int = CLUB_REST_EACH,
     /** In debt, selling a city puts it up for auction (no bids: the bank buys it at half). Off: straight to the bank. */
     val debtAuction: Boolean = true,
+    /** Show a popup for every payment (off: a quick coin animation). Display only; the app reads it from the public state. */
+    val moneyPopups: Boolean = true,
     val roundLimit: Int? = ROUND_LIMIT,
     val timeLimitMinutes: Int? = TIME_LIMIT_MINUTES,
     /** Rounds added when the players vote to keep going at the round limit. */

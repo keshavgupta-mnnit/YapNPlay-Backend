@@ -98,6 +98,9 @@ object GameSettings {
     val XP_PLACE_BONUS = IntListSetting(
         "xp.place_bonus", SettingGroup.XP, "Extra XP by place (1st first)", listOf(300, 200, 100), "Up to 6 numbers, none negative",
     ) { bonus -> if (bonus.size > 6 || bonus.any { it !in 0..10_000 }) "Up to 6 numbers from 0 to 10000" else null }
+    val XP_REFERENCE_MINUTES = IntSetting("xp.reference_minutes", SettingGroup.XP, "A match this long gives the full XP; shorter less, longer more (minutes)", 10, 1, 120)
+    val XP_MIN_TIME_FACTOR_PCT = IntSetting("xp.min_time_factor_pct", SettingGroup.XP, "Shortest matches still give this % of the XP", 50, 0, 100)
+    val XP_MAX_TIME_FACTOR_PCT = IntSetting("xp.max_time_factor_pct", SettingGroup.XP, "Long matches give at most this % of the XP (1200 = up to 2 hours keeps counting)", 1_200, 100, 5_000)
     val XP_PER_LEVEL = IntSetting("xp.per_level", SettingGroup.XP, "XP per level", 1_000, 100, 1_000_000)
 
     // ── Every match ───────────────────────────────────────────────────────
@@ -149,7 +152,7 @@ object GameSettings {
     val ALL: List<GameSetting<*>> = listOf(
         DAILY_BONUS, AD_REWARD, AD_DAILY_CAP, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
-        XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_LEVEL,
+        XP_PER_PLAY, XP_PLACE_BONUS, XP_REFERENCE_MINUTES, XP_MIN_TIME_FACTOR_PCT, XP_MAX_TIME_FACTOR_PCT, XP_PER_LEVEL,
         VOTE_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
         CB_TURN_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,

@@ -229,6 +229,7 @@ class CityBazaarSession(
             ranking = ranking,
             rentCollected = state.rentByTile,
             debtAuction = state.cbRules.house.debtAuction,
+            moneyPopups = state.cbRules.house.moneyPopups,
             bank = state.cbRules.house.bankStart.toLong().let { start ->
                 CityBazaarBank(cash = start + state.bankReceived - state.bankPaid, received = state.bankReceived, paid = state.bankPaid)
             },

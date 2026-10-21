@@ -41,7 +41,7 @@ val matchModule = module {
     single {
         MatchDeps(
             notifier = get(), codec = get(), clock = get(), rooms = get(), checkpoints = get(), outcomes = get(),
-            settings = get(), economy = get<CoinsService>(), listener = get(),
+            settings = get(), progression = get(), economy = get<CoinsService>(), listener = get(),
         )
     }
     factory { GetActiveMatchUseCase(get()) }

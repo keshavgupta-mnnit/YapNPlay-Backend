@@ -32,6 +32,8 @@ data class CityBazaarPublicState(
     val bank: CityBazaarBank? = null,
     /** 0.5.0: house rule "debt_auction": in debt, selling a city starts an auction (label it "Auction"); false: sold straight to the bank. */
     val debtAuction: Boolean = true,
+    /** 0.5.0: house rule "money_popups": a popup for every payment; false: a quick coin animation. Quick Play: always true. */
+    val moneyPopups: Boolean = true,
 )
 
 /** 0.4.4: the bank's [cash] = starting reserve + [received] − [paid] (₹). */

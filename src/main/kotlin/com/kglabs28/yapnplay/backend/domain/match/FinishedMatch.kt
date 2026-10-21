@@ -23,4 +23,6 @@ data class FinishedSeat(
     val left: Boolean = false,
     /** Still at the table at the end, playing for themselves (not left, removed or bot-held): earns completion coins. */
     val completed: Boolean = false,
+    /** XP this seat earned (0 for CPUs and leavers), decided when the match ended. */
+    val xp: Int = 0,
 )

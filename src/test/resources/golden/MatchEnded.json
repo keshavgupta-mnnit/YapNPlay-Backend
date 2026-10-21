@@ -5,14 +5,16 @@
             "status": "ACTIVE",
             "place": 1,
             "coinsWon": 0,
-            "completionCoins": 0
+            "completionCoins": 0,
+            "xpGained": 0
         },
         {
             "seat": 1,
             "status": "ACTIVE",
             "place": 2,
             "coinsWon": 0,
-            "completionCoins": 0
+            "completionCoins": 0,
+            "xpGained": 0
         }
     ]
 }

@@ -61,5 +61,6 @@
         "received": 2000,
         "paid": 3500
     },
-    "debtAuction": true
+    "debtAuction": true,
+    "moneyPopups": true
 }

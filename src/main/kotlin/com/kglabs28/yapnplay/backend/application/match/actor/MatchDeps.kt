@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.domain.identity.ProgressionPolicy
 import com.kglabs28.yapnplay.backend.application.economy.MatchEconomy
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.match.MatchCheckpointStore
@@ -22,6 +23,8 @@ class MatchDeps(
     val outcomes: MatchOutcomeStore = MatchOutcomeStore.None,
     /** Runtime settings (vote time); defaults in tests. */
     val settings: Settings = Settings.Defaults,
+    /** XP for each seat when a match ends (place and match length). */
+    val progression: ProgressionPolicy = ProgressionPolicy(),
     /** Pays the pot and completion coins when a match ends. */
     val economy: MatchEconomy = MatchEconomy.None,
     val listener: MatchLifecycleListener,

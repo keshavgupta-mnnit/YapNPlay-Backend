@@ -72,6 +72,7 @@ val CITY_BAZAAR_HOUSE_RULES = listOf(
     HouseRuleOption("rest_house_skip", "Rest House Treat", "Land on Rest House: every other player pays you ₹50", true),
     HouseRuleOption("club_fee", "Club Party", "Land on Club: you pay every other player ₹50", true),
     HouseRuleOption("debt_auction", "Auction to Pay Debts", "In debt, a city you sell goes up for auction instead of straight to the bank", true),
+    HouseRuleOption("money_popups", "Money Popups", "Show a popup for every payment (off: a quick coin animation)", true),
     HouseRuleOption("round_limit", "Round Limit", "End after the set number of rounds; richest wins", true),
     HouseRuleOption("time_limit", "Time Limit", "End when the match time is up; richest wins", true),
 )

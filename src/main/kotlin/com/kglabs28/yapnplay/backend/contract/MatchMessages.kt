@@ -272,6 +272,8 @@ data class RankedSeat(
     val coinsWon: Int = 0,
     /** 0.5.0: coins for finishing the match (0 for CPUs, leavers, bot-held seats, short matches or past the daily cap). */
     val completionCoins: Int = 0,
+    /** 0.5.0: XP earned (place and match length; 0 for CPUs and leavers). */
+    val xpGained: Int = 0,
 )
 
 // ══════════════════════════════════════════════════════════════════════════
