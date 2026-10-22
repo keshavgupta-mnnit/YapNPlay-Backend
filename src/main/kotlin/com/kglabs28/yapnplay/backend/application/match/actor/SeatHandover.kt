@@ -58,13 +58,23 @@ class SeatHandover(
     }
 
     /**
-     * The owner gives up their seat: the bot takes it or, in a room, the
-     * picked spectator is offered it. In a room the leaver keeps watching.
+     * The owner gives up their seat. In a room the picked spectator is
+     * offered it (else the bot takes it) and the leaver keeps watching. In
+     * Quick Play nobody plays on for them: their seat leaves the game
+     * (pieces off the board, cards out, properties back to the bank).
      */
     fun leave(seat: Int, giveTo: String?) {
         val leaver = state.seat(seat)
         state.update(seat) { copy(left = true, autoplay = false, presence = SeatPresence.AWAY) }
         state.idleTurns.remove(seat)
+        if (!isRoomMatch) {
+            if (state.offer?.seat == seat) state.offer = null
+            state.session.removeSeat(seat)
+            state.update(seat) { copy(removed = true) }
+            endHold()
+            publish()
+            return
+        }
         if (isRoomMatch) {
             state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level, leaver.avatarId)
         }
