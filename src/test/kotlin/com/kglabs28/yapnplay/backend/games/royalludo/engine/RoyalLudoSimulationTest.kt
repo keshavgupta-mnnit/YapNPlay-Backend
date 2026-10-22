@@ -56,7 +56,7 @@ class RoyalLudoSimulationTest {
             _gameId = GameId("royal-ludo"), _rules = RoyalLudoRules.TRADITIONAL,
             _seats = state.seats, _turn = RoyalLudoTurnState(SeatNumber(1), Phase.AWAITING_MOVE.name),
             seatColours = (state as RoyalLudoState).seatColours,
-            pieces = (state as RoyalLudoState).pieces,
+            pieces = state.pieces,
             currentSeat = 1, phase = Phase.AWAITING_MOVE, lastRoll = 3, legalPieces = listOf(0),
         )
         val result = engine.apply(badMove, SeatNumber(1), MovePiece(PieceId("1")), random)

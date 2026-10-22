@@ -311,7 +311,10 @@ class MatchActor(
                 // Only real people still in vote: never CPUs or leavers. A human whose seat the bot is
                 // holding (away, missed turns) still votes, so a lone player with CPUs always decides.
                 val voters = session.stillIn - state.seats.filter { it.cpu || it.left }.map { it.seat }.toSet()
-                state.extensionVote = ExtensionVoteState(voters, now + deps.settings[GameSettings.VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
+                // The clock starts after the table has shown the last turn (its messages can take seconds),
+                // so players get the whole vote time with the question on screen.
+                val endsAt = now + state.pauseMs + deps.settings[GameSettings.VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND
+                state.extensionVote = ExtensionVoteState(voters, endsAt)
                 if (voters.isEmpty()) decideExtension() else publish(emptyList())
             }
         }

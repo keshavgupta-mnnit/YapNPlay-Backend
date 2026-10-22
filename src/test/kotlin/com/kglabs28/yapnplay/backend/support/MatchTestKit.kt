@@ -24,6 +24,7 @@ import kotlin.random.Random
  * A match service on virtual time, with recorded pushes and results, for
  * match, matchmaking and moderation tests.
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MatchTestKit(scope: TestScope, seed: Int = SEED) {
     val clock = Clock { scope.testScheduler.currentTime }
     val notifier = RecordingNotifier()

@@ -57,6 +57,8 @@ class MonoChaosSession(
     private val voteFrom: Int = MonoContinueVote.MIN_FINISHERS,
 ) : GameSession {
     private val misses = mutableMapOf<Int, MutableSet<Color>>()
+    /** How long the table animates the last events (the continue vote's clock waits for it). */
+    private var lastPauseMs = 0L
     /** When the current catch window opened (bots react from then). */
     private var catchOpenedAt = 0L
 
@@ -146,7 +148,8 @@ class MonoChaosSession(
             if (voters.isEmpty()) {
                 decideVote()
             } else {
-                vote.open(now, voters)
+                // The clock starts once the table has shown the finishing move.
+                vote.open(now + lastPauseMs, voters)
                 emptyList()
             }
         }
@@ -276,6 +279,7 @@ class MonoChaosSession(
             }
         }
         state = next
+        lastPauseMs = pauseAfter(result.events)
         // From the 2nd finisher on, with 2+ seats still holding cards, the table votes to go on.
         if (next.phase != MonoChaosPhase.FINISHED && next.finishOrder.size >= voteFrom && result.events.any { it is MonoChaosEvent.SeatFinished }) vote.request()
         return if (reshuffled) result.events + MonoDeckReshuffled(next.drawPile.size) else result.events

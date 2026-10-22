@@ -33,11 +33,11 @@ class MonoContinueVote(private val voteMs: Long) {
         pending = true
     }
 
-    /** Opens the vote for [voters] from [now]. */
-    fun open(now: Long, voters: Set<Int>) {
+    /** Opens the vote for [voters]; its clock starts at [from] (now, or after the table's animation). */
+    fun open(from: Long, voters: Set<Int>) {
         pending = false
         this.voters = voters
-        endsAt = now + voteMs
+        endsAt = from + voteMs
         yes.clear()
         no.clear()
     }
