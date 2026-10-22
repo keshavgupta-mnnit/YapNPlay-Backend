@@ -196,11 +196,12 @@ class MatchActor(
             throw ServiceException(ErrorCode.NOT_YOUR_TURN, BackendStrings.NOT_YOUR_TURN)
         }
         val events = session.apply(seat.seat, move) ?: throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.ILLEGAL_MOVE)
-        if (seat.seat == state.turnOwner) state.turnActed = true
+        val outOfTurn = seat.seat != state.turnOwner
+        if (!outOfTurn) state.turnActed = true
         handover.clearAbsenceCheck(seat.seat)
         // Acting means they are back at the table.
         if (seat.presence == SeatPresence.AWAY) handover.setAway(seat.seat, away = false)
-        publish(events)
+        publish(events, outOfTurn)
     }
 
     /** A player's snapshot; a room member without a seat becomes a spectator. */
@@ -382,7 +383,8 @@ class MatchActor(
             endStartHold()
         }
         // While players vote on ending the match, the game stands still (no limits, auctions or CPU bids).
-        if (state.endVote == null) state.session.tick(now, state.serverSeats(), state.botSeats())?.let { publish(it) }
+        // The game's own clock (bots catching, auctions) never gives the seat to play more time.
+        if (state.endVote == null) state.session.tick(now, state.serverSeats(), state.botSeats())?.let { publish(it, outOfTurn = true) }
         if (!state.ended) handover.tick(now)
         if (!state.ended) endIfNoHumans()
         if (!state.ended) extensionTick(now)
@@ -422,14 +424,27 @@ class MatchActor(
         }
     }
 
-    /** Sends every viewer their snapshot; the next action waits for the animations. */
-    private fun publish(events: List<GameEvent>) {
+    /**
+     * Sends every viewer their snapshot; the next action waits for the animations.
+     * The turn clock restarts only for a new turn (or when the game asks, e.g.
+     * after a roll). A follow-up step by the same seat keeps the time left, at
+     * least the follow-up floor, plus the animation; [outOfTurn] events (another
+     * seat's MONO! or Caught, the game's own clock) never give the seat more time.
+     */
+    private fun publish(events: List<GameEvent>, outOfTurn: Boolean = false) {
         val session = state.session
-        if (session.currentSeat != state.turnOwner) closeTurn()
+        val newTurn = session.currentSeat != state.turnOwner
+        if (newTurn) closeTurn()
         val now = deps.clock.nowMillis()
         if (events.isNotEmpty()) state.pauseMs = session.pauseAfter(events)
-        if (events.isNotEmpty() || state.deadline == null) {
-            state.deadline = now + state.pauseMs + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        val deadline = state.deadline
+        val fullTurn = now + state.pauseMs + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        state.deadline = when {
+            deadline == null || newTurn -> fullTurn
+            events.isEmpty() -> deadline
+            outOfTurn -> maxOf(deadline, now + state.pauseMs)
+            session.restartsClockOn(events) -> fullTurn
+            else -> now + state.pauseMs + maxOf(deadline - now, deps.settings[GameSettings.TURN_FOLLOW_UP_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
         }
         state.version++
         rescheduleNeeded = true
@@ -510,17 +525,23 @@ class MatchActor(
             val coins = runCatching { deps.economy.settle(record) }
                 .onFailure { log.error("Match $matchId: paying coins failed", it) }
                 .getOrDefault(MatchCoins())
+            // The table shows every seat's place share and stake as if a person held it. Only paying humans
+            // still at the table are credited; a CPU's or leaver's share is shown, never paid to anyone.
+            val cpuCount = record.seats.count { it.userId == null }
+            val completionShown = if (now - state.startedAt >= deps.settings[GameSettings.COMPLETION_MIN_MINUTES] * MILLIS_PER_MINUTE) {
+                deps.settings[GameSettings.COMPLETION_COINS]
+            } else {
+                0
+            }
             val ended = MatchEnded(
                 seats.mapIndexed { index, s ->
+                    val paidIn = s.cpu || s.userId in record.paid
                     RankedSeat(
                         s.seat, if (s.removed) MatchSeatStatus.REMOVED else MatchSeatStatus.ACTIVE, index + 1,
-                        // A CPU has no wallet: it shows what its place would pay a person (nothing is credited).
-                        coinsWon = if (s.cpu) {
-                            PotRules.placeShare(record.entryCoins, record.paid.size, record.seats.count { it.userId == null }, record.potSplit, index + 1)
-                        } else {
-                            coins.won[s.userId] ?: 0
-                        },
-                        completionCoins = coins.completion[s.userId] ?: 0,
+                        coinsWon = PotRules.placeShare(record.entryCoins, record.paid.size, cpuCount, record.potSplit, index + 1),
+                        // CPUs show the completion coins a person would get for the same match (the daily cap aside).
+                        completionCoins = if (s.cpu) completionShown else coins.completion[s.userId] ?: 0,
+                        stake = if (paidIn && record.paid.isNotEmpty()) record.entryCoins else 0,
                         xpGained = record.seats.firstOrNull { it.seat == s.seat }?.xp ?: 0,
                     )
                 },
@@ -543,6 +564,8 @@ class MatchActor(
 }
 
 /** The keep-playing vote was decided (shared by every game; sent as an ExtensionVoted event). */
+private const val MILLIS_PER_MINUTE = 60_000L
+
 data class ExtensionDecided(val continued: Boolean, val yes: Int, val voters: Int) : GameEvent
 
 /** The end-game vote's result (the same for every game). */

@@ -44,7 +44,7 @@ object BackendStrings {
     const val PLAY_GAMES_UNAVAILABLE = "Play Games sign-in is not available right now."
     const val PLAY_GAMES_REJECTED = "Google could not confirm this Play Games sign-in."
     const val ROOM_INVITE_BODY = "Tap to answer"
-    const val GROUP_NAME_REQUIRED = "Give your group a name."
+    const val GROUP_NAME_REQUIRED = "Give your room a name."
     const val GROUP_NEEDS_INVITEES = "Pick at least one friend to invite."
     fun roomInviteTitle(inviter: String, room: String) = "$inviter invited you to $room"
     const val ROOM_LIMIT_REACHED = "You are already in the maximum number of rooms."

@@ -177,6 +177,9 @@ class MonoSession(
     /** A saved match was mid-vote: a fresh vote opens on the next tick. */
     fun resumeVote() = vote.request()
 
+    /** One MONO turn is one clock: drawing, choosing a colour or a swap partner keeps the time left. A vote's end restarts it. */
+    override fun restartsClockOn(events: List<GameEvent>): Boolean = events.any { it is MonoContinueVoted }
+
     override fun endEarly(): List<GameEvent>? = take(engine.apply(state, SeatNumber(state.currentSeat), MonoAction.EndMatch, random))
 
     override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
