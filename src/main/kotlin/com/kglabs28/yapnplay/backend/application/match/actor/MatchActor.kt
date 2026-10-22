@@ -7,6 +7,7 @@ import com.kglabs28.yapnplay.backend.application.economy.MatchCoins
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.Json
 import com.kglabs28.yapnplay.backend.contract.ExtensionVoted
+import com.kglabs28.yapnplay.backend.domain.economy.PotRules
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.MatchOutcomeStatus
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
@@ -380,10 +381,22 @@ class MatchActor(
         // While players vote on ending the match, the game stands still (no limits, auctions or CPU bids).
         if (state.endVote == null) state.session.tick(now, state.serverSeats(), state.botSeats())?.let { publish(it) }
         if (!state.ended) handover.tick(now)
+        if (!state.ended) endIfNoHumans()
         if (!state.ended) extensionTick(now)
         if (!state.ended) endVoteTick(now)
         // Only replan when something changed, or a pending wake would keep being pushed back.
         if (rescheduleNeeded) scheduleWake()
+    }
+
+    /**
+     * Every human has left (away or on Autoplay still counts as here; spectators
+     * don't): the match ends at once, ranked as it stands, and pays as usual.
+     */
+    private fun endIfNoHumans() {
+        if (state.seats.any { !it.cpu && !it.left && !it.removed }) return
+        val events = state.session.endWithoutHumans() ?: return
+        log.info("Match $matchId: every human left, ending it")
+        publish(events)
     }
 
     /** Wakes the worker when the current seat must be played: after the bot's pause, or at the deadline. */
@@ -394,7 +407,9 @@ class MatchActor(
         val owner = state.seat(state.session.currentSeat)
         val now = deps.clock.nowMillis()
         val wait = if (owner.playedByServer) {
-            state.pauseMs + state.session.thinkMillis
+            // The bot's think time counts inside its turn: never past the deadline.
+            val deadlineLeft = state.deadline?.let { it - now } ?: Long.MAX_VALUE
+            (state.pauseMs + state.session.thinkMillis).coerceAtMost(deadlineLeft)
         } else {
             (state.deadline ?: now) - now
         }
@@ -496,7 +511,12 @@ class MatchActor(
                 seats.mapIndexed { index, s ->
                     RankedSeat(
                         s.seat, if (s.removed) MatchSeatStatus.REMOVED else MatchSeatStatus.ACTIVE, index + 1,
-                        coinsWon = coins.won[s.userId] ?: 0,
+                        // A CPU has no wallet: it shows what its place would pay a person (nothing is credited).
+                        coinsWon = if (s.cpu) {
+                            PotRules.placeShare(record.entryCoins, record.paid.size, record.seats.count { it.userId == null }, record.potSplit, index + 1)
+                        } else {
+                            coins.won[s.userId] ?: 0
+                        },
                         completionCoins = coins.completion[s.userId] ?: 0,
                         xpGained = record.seats.firstOrNull { it.seat == s.seat }?.xp ?: 0,
                     )

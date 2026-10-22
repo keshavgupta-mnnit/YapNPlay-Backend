@@ -43,7 +43,7 @@ class MonoChaosBot(private val tuning: MonoBotTuning = MonoBotTuning(), private 
         }
     }
 
-    private fun active(s: MonoChaosState) = s.seats.map { it.value }.filter { !s.isEliminated(it) }
+    private fun active(s: MonoChaosState) = s.seats.map { it.value }.filter { !s.isEliminated(it) && it !in s.finishOrder }
     private fun threshold(s: MonoChaosState) = s.monoChaosRules.mandatory.knockoutThreshold
 
     /** Fewer cards than the rest → more careful (risk counts more). */

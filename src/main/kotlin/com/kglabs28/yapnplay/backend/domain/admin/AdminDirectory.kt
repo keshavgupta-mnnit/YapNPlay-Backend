@@ -25,10 +25,32 @@ data class AdminReport(
     val upheld: Boolean?,
 )
 
+/** A room as the admin dashboard shows it. */
+data class AdminRoom(
+    val roomId: String,
+    val code: String,
+    val name: String,
+    val description: String?,
+    val selectedGame: String?,
+    val members: Int,
+    val leaderName: String,
+    val adminName: String,
+    val createdAt: Long,
+)
+
 /** Admin-only reads and the one report write the dashboard needs. */
 interface AdminDirectory {
-    /** By name, user code or id; newest first when [query] is blank. */
+    /** By name, user code, username, Play Games id or id (any part); newest first when [query] is blank. */
     suspend fun searchUsers(query: String, now: Long, limit: Int): List<AdminUser>
+    /** By name, code, description, game or id (any part); newest first when [query] is blank. */
+    suspend fun searchRooms(query: String, limit: Int): List<AdminRoom>
+    /**
+     * Deletes a player and everything that points at them (friends, requests,
+     * blocks, devices, reports, penalties); finished-match seats keep the
+     * match but lose the link. Rooms they created pass to the room's admin.
+     * They must already have left every room. False when there was no such player.
+     */
+    suspend fun deleteUser(userId: String): Boolean
     suspend fun recentReports(limit: Int): List<AdminReport>
     /** Decides a report nobody decided yet; false when already decided or missing. */
     suspend fun decideReport(reportId: String, upheld: Boolean, at: Long): Boolean

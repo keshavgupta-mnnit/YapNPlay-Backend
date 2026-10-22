@@ -75,6 +75,13 @@ interface GameSession {
     /** The end-game vote passed: the match ends now, ranked as the game ranks an early end. */
     fun endEarly(): List<GameEvent>? = null
 
+    /**
+     * Every human has left and only bots play on: the match ends now, ranked
+     * as it stands. Null when the game can't end at this moment (the match
+     * tries again on the next tick).
+     */
+    fun endWithoutHumans(): List<GameEvent>? = endEarly()
+
     /** How long the table needs to animate [events] before the next action. */
     fun pauseAfter(events: List<GameEvent>): Long
 

@@ -1,7 +1,14 @@
 {
-    "coins": 2100,
-    "granted": 500,
+    "coins": 1800,
+    "granted": 200,
     "adsLeftToday": 4,
     "dailyLimit": 5,
-    "nextAdAt": 1760007200000
+    "nextAdAt": 1760007200000,
+    "adRewards": [
+        200,
+        300,
+        400,
+        500,
+        700
+    ]
 }

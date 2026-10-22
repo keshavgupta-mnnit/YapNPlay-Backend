@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.royalludo
 
+import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBot
@@ -41,7 +42,11 @@ class RoyalLudoSession(
     private val random: GameRandom,
     private val json: Json,
     override val turnSeconds: Int = GameSettings.RL_TURN_SECONDS.default,
-    override val thinkMillis: Long = GameSettings.RL_CPU_THINK_MS.default.toLong(),
+    private val think: BotThinkTime = BotThinkTime(
+        GameSettings.RL_CPU_THINK_MS.default.toLong(),
+        GameSettings.RL_CPU_THINK_JITTER_MS.default.toLong(),
+        GameSettings.RL_CPU_DECISION_EXTRA_MS.default.toLong(),
+    ),
     /** How the server plays a seat (values from the runtime settings), and its recent decisions. */
     private val bots: RoyalLudoSessionBots = RoyalLudoSessionBots(),
 ) : GameSession {
@@ -54,6 +59,8 @@ class RoyalLudoSession(
     override val ranking: List<Int>
         get() = if (isFinished) engine.outcome(state).ranking.sortedBy { it.place }.map { it.seat.value } else emptyList()
     override val waitsForTick: Boolean = false
+    /** A bot's think time: longer when more than one piece can move. */
+    override val thinkMillis: Long get() = think.millis(state.phase == Phase.AWAITING_MOVE && state.legalPieces.size > 1)
 
     override fun colourOf(seat: Int): Colour = Colour.entries[state.colourForSeat(seat)]
 
@@ -81,6 +88,13 @@ class RoyalLudoSession(
             is PieceCaptured, is TurnReverted -> AFTER_CAPTURE_MS
             else -> 0L
         }
+    }
+
+    /** Every human left: the match ends here, finishers first, then by how far each seat's pieces got. */
+    override fun endWithoutHumans(): List<GameEvent>? {
+        if (isFinished) return null
+        state = state.copy(phase = Phase.FINISHED, legalPieces = emptyList())
+        return emptyList()
     }
 
     override fun removeSeat(seat: Int) {

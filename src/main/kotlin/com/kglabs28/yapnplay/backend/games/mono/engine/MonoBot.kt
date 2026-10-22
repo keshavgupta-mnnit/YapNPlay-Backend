@@ -42,7 +42,7 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
     inner class PlayChoice(private val s: MonoState, private val me: Int) : BotDecision<Action> {
         private val hand = s.handForSeat(me)
         private val top = s.discardPile.lastOrNull()
-        private val threat = threatFrom(s.seats.map { it.value }.filter { it != me }.minOfOrNull { s.cardCountForSeat(it) } ?: 7)
+        private val threat = threatFrom(s.seats.map { it.value }.filter { it != me && it !in s.finishOrder }.minOfOrNull { s.cardCountForSeat(it) } ?: 7)
         private val next = nextSeat(s, me)
 
         override val name = "play"
@@ -52,9 +52,13 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
         }
 
         override fun options(): List<Action> {
-            s.drawnCardIndex?.let { drawn -> return listOf(MonoAction.Pass, MonoAction.PlayCard(drawn)) }
-            val plays = hand.indices.filter { hand[it].isPlayableOn(top, s.topCardColor) }.map { MonoAction.PlayCard(it) }
-            return plays + MonoAction.DrawCard
+            val noPowerFinish = s.monoRules.house.noPowerFinish
+            // After a draw only the drawn card may go down, unless No Power Finish lets any legal card follow.
+            s.drawnCardIndex?.takeIf { !noPowerFinish }?.let { drawn -> return listOf(MonoAction.Pass, MonoAction.PlayCard(drawn)) }
+            val plays = hand.indices.filter {
+                hand[it].isPlayableOn(top, s.topCardColor) && !(noPowerFinish && hand.size == 1 && hand[it] !is MonoCard.NumberCard)
+            }.map { MonoAction.PlayCard(it) }
+            return plays + if (s.drawnCardIndex != null) MonoAction.Pass else MonoAction.DrawCard
         }
 
         override fun evaluate(option: Action): Evaluation = when (option) {
@@ -113,7 +117,7 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
     /** The Rule of 7 (room house rule): trade with the opponent whose hand is smallest, most so if they are about to win. */
     inner class SwapChoice(private val s: MonoState, private val me: Int) : BotDecision<Int> {
         override val name = "swap"
-        override fun options() = s.seats.map { it.value }.filter { it != me }
+        override fun options() = s.seats.map { it.value }.filter { it != me && it !in s.finishOrder }
         override fun evaluate(option: Int): Evaluation {
             val theirs = s.cardCountForSeat(option)
             val gain = (s.cardCountForSeat(me) - theirs) * tuning.cardCost + threatFrom(theirs) * tuning.attackValue * FOUR
@@ -124,10 +128,15 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
 
     private fun bestColour(cards: List<MonoCard>): Color = Color.entries.maxByOrNull { c -> cards.count { it.playColor() == c } } ?: Color.RED
 
+    /** The next seat still holding cards. */
     private fun nextSeat(s: MonoState, from: Int): Int {
         val seats = s.seats.map { it.value }
-        val i = seats.indexOf(from).coerceAtLeast(0)
-        return seats[((if (s.reversed) i - 1 else i + 1) % seats.size + seats.size) % seats.size]
+        var i = seats.indexOf(from).coerceAtLeast(0)
+        repeat(seats.size) {
+            i = ((if (s.reversed) i - 1 else i + 1) % seats.size + seats.size) % seats.size
+            if (seats[i] !in s.finishOrder) return seats[i]
+        }
+        return seats[i]
     }
 
     companion object {

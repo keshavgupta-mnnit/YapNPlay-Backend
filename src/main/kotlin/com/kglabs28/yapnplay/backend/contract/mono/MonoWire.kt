@@ -57,6 +57,18 @@ data class MonoPublicState(
     val finishedSeats: List<Int> = emptyList(),
     /** Seats from first to last once the match is over. */
     val ranking: List<Int> = emptyList(),
+    /** 0.6.0: the seat whose catch window is open (went down to one card); anyone else may press Caught. */
+    val catchSeat: Int? = null,
+    /** 0.6.0: seats that already pressed Caught falsely in this window (their button is off). */
+    val catchClosedFor: List<Int> = emptyList(),
+    /** 0.6.0: cards a caught player draws, and cards a false catch costs the presser. */
+    val caughtPenaltyCards: Int = 2,
+    val falseCatchPenaltyCards: Int = 0,
+    /** 0.6.0: house rules the table must show (MONO! only before the play; no power card last). */
+    val callBeforePlay: Boolean = false,
+    val noPowerFinish: Boolean = false,
+    /** 0.8.0: the continue vote after the 2nd and later finishers (null when none); play waits while it runs. */
+    val continueVote: MonoContinueVoteWire? = null,
 )
 
 /** MONO actions inside `GameAction.action`; `"type"` names the action. */
@@ -71,6 +83,11 @@ sealed interface MonoWireAction {
     @Serializable @SerialName("Pass") data object Pass : MonoWireAction
     /** The Rule of 7 (room house rule): the seat whose hand to trade with. */
     @Serializable @SerialName("ChooseSwapTarget") data class ChooseSwapTarget(val seat: Int) : MonoWireAction
+    /** 0.6.0: the player on one card didn't call MONO! (any other seat, while the catch window is open). */
+    @Serializable @SerialName("Caught") data object Caught : MonoWireAction
+
+    /** 0.8.0: keep playing (true) or end (false), while a continue vote runs. */
+    @Serializable @SerialName("VoteContinue") data class VoteContinue(val keepPlaying: Boolean) : MonoWireAction
 }
 
 /** MONO events in `MatchSnapshot.events`; `"type"` names the event. */
@@ -93,8 +110,21 @@ sealed interface MonoWireEvent {
     @Serializable @SerialName("MonoCalled")
     data class MonoCalled(val seat: Int) : MonoWireEvent
 
+    /** No longer sent (0.6.0): replaced by [MonoCaught]. */
     @Serializable @SerialName("MonoMissed")
     data class MonoMissed(val seat: Int, val penaltyCards: Int) : MonoWireEvent
+
+    /** 0.6.0: [catcher] caught [seat] without the MONO! shield; [seat] drew [penaltyCards]. */
+    @Serializable @SerialName("MonoCaught")
+    data class MonoCaught(val catcher: Int, val seat: Int, val penaltyCards: Int) : MonoWireEvent
+
+    /** 0.6.0: [seat] pressed Caught on [target], who had called; [seat] drew [penaltyCards]. */
+    @Serializable @SerialName("FalseCatch")
+    data class FalseCatch(val seat: Int, val target: Int, val penaltyCards: Int) : MonoWireEvent
+
+    /** 0.6.0: the draw pile ran out: the discard pile (all but its top card) was shuffled into a new one. */
+    @Serializable @SerialName("DeckReshuffled")
+    data class DeckReshuffled(val drawPileCount: Int) : MonoWireEvent
 
     @Serializable @SerialName("HandSwapped")
     data class HandSwapped(val from: Int, val to: Int) : MonoWireEvent
@@ -110,6 +140,10 @@ sealed interface MonoWireEvent {
 
     @Serializable @SerialName("MatchEnded")
     data class MatchEnded(val finishingOrder: List<Int>) : MonoWireEvent
+
+    /** 0.8.0: the continue vote closed; [yes] of [voters] wanted to keep playing. */
+    @Serializable @SerialName("ContinueVoted")
+    data class ContinueVoted(val continued: Boolean, val yes: Int, val voters: Int) : MonoWireEvent
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -151,6 +185,18 @@ data class MonoChaosPublicState(
     val ranking: List<Int> = emptyList(),
     /** 0.5.0: the hand size that knocks a player out (an admin setting, 25 by default). */
     val knockoutThreshold: Int = 25,
+    /** 0.6.0: the seat whose catch window is open (went down to one card); anyone else may press Caught. */
+    val catchSeat: Int? = null,
+    /** 0.6.0: seats that already pressed Caught falsely in this window (their button is off). */
+    val catchClosedFor: List<Int> = emptyList(),
+    /** 0.6.0: cards a caught player draws, and cards a false catch costs the presser. */
+    val caughtPenaltyCards: Int = 2,
+    val falseCatchPenaltyCards: Int = 0,
+    /** 0.6.0: house rules the table must show (MONO! only before the play; no power card last). */
+    val callBeforePlay: Boolean = false,
+    val noPowerFinish: Boolean = false,
+    /** 0.8.0: the continue vote after the 2nd and later finishers (null when none); play waits while it runs. */
+    val continueVote: MonoContinueVoteWire? = null,
 )
 
 @Serializable
@@ -164,6 +210,9 @@ sealed interface MonoChaosWireAction {
     @Serializable @SerialName("AcceptStack") data object AcceptStack : MonoChaosWireAction
     @Serializable @SerialName("Pass") data object Pass : MonoChaosWireAction
     @Serializable @SerialName("ChooseSwapTarget") data class ChooseSwapTarget(val seat: Int) : MonoChaosWireAction
+    @Serializable @SerialName("Caught") data object Caught : MonoChaosWireAction
+    /** 0.8.0: keep playing (true) or end (false), while a continue vote runs. */
+    @Serializable @SerialName("VoteContinue") data class VoteContinue(val keepPlaying: Boolean) : MonoChaosWireAction
 }
 
 @Serializable
@@ -196,8 +245,18 @@ sealed interface MonoChaosWireEvent {
     @Serializable @SerialName("MonoCalled")
     data class MonoCalled(val seat: Int) : MonoChaosWireEvent
 
+    /** No longer sent (0.6.0): replaced by [MonoCaught]. */
     @Serializable @SerialName("MonoMissed")
     data class MonoMissed(val seat: Int, val penaltyCards: Int) : MonoChaosWireEvent
+
+    @Serializable @SerialName("MonoCaught")
+    data class MonoCaught(val catcher: Int, val seat: Int, val penaltyCards: Int) : MonoChaosWireEvent
+
+    @Serializable @SerialName("FalseCatch")
+    data class FalseCatch(val seat: Int, val target: Int, val penaltyCards: Int) : MonoChaosWireEvent
+
+    @Serializable @SerialName("DeckReshuffled")
+    data class DeckReshuffled(val drawPileCount: Int) : MonoChaosWireEvent
 
     @Serializable @SerialName("HandSwapped")
     data class HandSwapped(val from: Int, val to: Int) : MonoChaosWireEvent
@@ -216,4 +275,17 @@ sealed interface MonoChaosWireEvent {
 
     @Serializable @SerialName("MatchEnded")
     data class MatchEnded(val finishingOrder: List<Int>) : MonoChaosWireEvent
+
+    /** 0.8.0: the continue vote closed; [yes] of [voters] wanted to keep playing. */
+    @Serializable @SerialName("ContinueVoted")
+    data class ContinueVoted(val continued: Boolean, val yes: Int, val voters: Int) : MonoChaosWireEvent
 }
+
+/** 0.8.0 (both MONO games): the continue vote; [endsAt] epoch ms, [voters] the humans at the table, [yes]/[no] who voted. */
+@Serializable
+data class MonoContinueVoteWire(
+    val endsAt: Long,
+    val voters: List<Int>,
+    val yes: List<Int>,
+    val no: List<Int>,
+)

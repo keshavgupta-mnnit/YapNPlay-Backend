@@ -1,6 +1,19 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
 import com.kglabs28.yapnplay.backend.domain.admin.AdminDirectory
+import com.kglabs28.yapnplay.backend.domain.admin.AdminRoom
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.BlocksTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.DevicesTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.FriendRequestsTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.FriendshipsTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.JoinRequestsTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.MatchResultSeatsTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.PlayRoomMembersTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.PlayRoomsTable
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.ReportBallotsTable
+import org.jetbrains.exposed.sql.TextColumnType
+import org.jetbrains.exposed.sql.castTo
+import org.jetbrains.exposed.sql.deleteWhere
 import com.kglabs28.yapnplay.backend.domain.admin.AdminReport
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUser
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.PenaltiesTable
@@ -23,13 +36,11 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
 
     override suspend fun searchUsers(query: String, now: Long, limit: Int): List<AdminUser> = db.run {
         val q = query.trim()
-        val where: Op<Boolean> = when {
-            q.isEmpty() -> Op.TRUE
-            else -> {
-                val byText = (UsersTable.displayName.lowerCase() like "%${q.lowercase()}%") or (UsersTable.userCode eq q.uppercase())
-                q.toUuidOrNull()?.let { byText or (UsersTable.id eq it) } ?: byText
-            }
-        }
+        val part = "%${q.lowercase()}%"
+        val where: Op<Boolean> = if (q.isEmpty()) Op.TRUE else
+            (UsersTable.displayName.lowerCase() like part) or (UsersTable.userCode.lowerCase() like part) or
+                (UsersTable.username.lowerCase() like part) or (UsersTable.playGamesPlayerId.lowerCase() like part) or
+                (UsersTable.id.castTo<String>(TextColumnType()) like part)
         val users = UsersTable.selectAll().where(where).orderBy(UsersTable.createdAt, SortOrder.DESC).limit(limit).toList()
         val ids = users.map { it[UsersTable.id] }
         val blocks = if (ids.isEmpty()) emptyMap() else PenaltiesTable.selectAll()
@@ -75,6 +86,62 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
                 it[resolvedAt] = at
                 it[ReportsTable.upheld] = upheld
             } > 0
+        }
+    }
+
+    override suspend fun searchRooms(query: String, limit: Int): List<AdminRoom> = db.run {
+        val q = query.trim()
+        val part = "%${q.lowercase()}%"
+        val where: Op<Boolean> = if (q.isEmpty()) Op.TRUE else
+            (PlayRoomsTable.name.lowerCase() like part) or (PlayRoomsTable.code.lowerCase() like part) or
+                (PlayRoomsTable.description.lowerCase() like part) or (PlayRoomsTable.selectedGame.lowerCase() like part) or
+                (PlayRoomsTable.id.castTo<String>(TextColumnType()) like part)
+        val rooms = PlayRoomsTable.selectAll().where(where).orderBy(PlayRoomsTable.createdAt, SortOrder.DESC).limit(limit).toList()
+        val roomIds = rooms.map { it[PlayRoomsTable.id] }
+        val counts = if (roomIds.isEmpty()) emptyMap() else PlayRoomMembersTable.selectAll().where { PlayRoomMembersTable.roomId inList roomIds }
+            .groupingBy { it[PlayRoomMembersTable.roomId] }.eachCount()
+        val people = rooms.flatMap { listOf(it[PlayRoomsTable.leaderId], it[PlayRoomsTable.adminId]) }.distinct()
+        val names = if (people.isEmpty()) emptyMap() else UsersTable.selectAll().where { UsersTable.id inList people }
+            .associate { it[UsersTable.id] to it[UsersTable.displayName] }
+        rooms.map {
+            AdminRoom(
+                roomId = it[PlayRoomsTable.id].toString(),
+                code = it[PlayRoomsTable.code],
+                name = it[PlayRoomsTable.name],
+                description = it[PlayRoomsTable.description],
+                selectedGame = it[PlayRoomsTable.selectedGame],
+                members = counts[it[PlayRoomsTable.id]] ?: 0,
+                leaderName = names[it[PlayRoomsTable.leaderId]].orEmpty(),
+                adminName = names[it[PlayRoomsTable.adminId]].orEmpty(),
+                createdAt = it[PlayRoomsTable.createdAt],
+            )
+        }
+    }
+
+    override suspend fun deleteUser(userId: String): Boolean {
+        val id = userId.toUuidOrNull() ?: return false
+        return db.run {
+            if (UsersTable.selectAll().where { UsersTable.id eq id }.empty()) return@run false
+            // Rooms the player created but others still use pass to the room's admin.
+            PlayRoomsTable.selectAll().where { PlayRoomsTable.createdBy eq id }.toList().forEach { room ->
+                PlayRoomsTable.update({ PlayRoomsTable.id eq room[PlayRoomsTable.id] }) { it[createdBy] = room[PlayRoomsTable.adminId] }
+            }
+            val reports = ReportsTable.selectAll().where { (ReportsTable.reporterId eq id) or (ReportsTable.reportedId eq id) }.map { it[ReportsTable.id] }
+            PenaltiesTable.deleteWhere { PenaltiesTable.userId eq id }
+            if (reports.isNotEmpty()) {
+                PenaltiesTable.deleteWhere { PenaltiesTable.reportId inList reports }
+                ReportBallotsTable.deleteWhere { ReportBallotsTable.reportId inList reports }
+                ReportsTable.deleteWhere { ReportsTable.id inList reports }
+            }
+            ReportBallotsTable.deleteWhere { ReportBallotsTable.voterId eq id }
+            FriendshipsTable.deleteWhere { (FriendshipsTable.userId eq id) or (FriendshipsTable.friendId eq id) }
+            FriendRequestsTable.deleteWhere { (FriendRequestsTable.fromId eq id) or (FriendRequestsTable.toId eq id) }
+            BlocksTable.deleteWhere { (BlocksTable.blockerId eq id) or (BlocksTable.blockedId eq id) }
+            DevicesTable.deleteWhere { DevicesTable.userId eq id }
+            JoinRequestsTable.deleteWhere { JoinRequestsTable.userId eq id }
+            PlayRoomMembersTable.deleteWhere { PlayRoomMembersTable.userId eq id }
+            MatchResultSeatsTable.update({ MatchResultSeatsTable.userId eq id }) { it[MatchResultSeatsTable.userId] = null }
+            UsersTable.deleteWhere { UsersTable.id eq id } > 0
         }
     }
 

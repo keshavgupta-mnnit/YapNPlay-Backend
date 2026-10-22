@@ -95,6 +95,12 @@ data class RemoveMember(
     val userId: String,
 )
 
+/** 0.9.0: the admin renames the room (trimmed, 1..30 characters); everyone gets the new RoomInfo. */
+@Serializable
+data class RenameRoom(
+    val name: String,
+)
+
 /** Admin lets [userId] (from the Waiting List) into the room. */
 @Serializable
 data class ApproveJoin(

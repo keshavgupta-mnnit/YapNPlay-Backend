@@ -19,10 +19,10 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
            padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--card); }
   header h1 { font-size: 17px; margin: 0; }
-  #status { color: var(--muted); font-size: 12px; }
+  #status, #whoami { color: var(--muted); font-size: 12px; }
   main { max-width: 1100px; margin: 0 auto; padding: 16px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 8px; }
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
@@ -39,92 +39,100 @@
   .bar { height: 8px; background: var(--bar); border-radius: 4px; min-width: 2px; }
   .empty { color: var(--muted); padding: 12px; }
   .good { color: var(--good); } .bad { color: var(--bad); }
-  #signin { max-width: 360px; margin: 12vh auto 0; background: var(--card); border: 1px solid var(--line);
-            border-radius: 12px; padding: 20px; }
-  #signin h2 { margin-top: 0; }
+  .box { max-width: 380px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  #signin { margin: 12vh auto 0; }
+  .box h2 { margin-top: 0; }
+  .box label { display: block; margin-top: 10px; font-size: 12px; color: var(--muted); }
   input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
           background: var(--bg); color: var(--text); font: inherit; }
+  input[type=checkbox] { width: auto; margin: 0 8px 0 0; }
+  label.check { display: flex; align-items: center; color: var(--text) !important; font-size: 14px !important; }
+  label.check.switch { font-weight: 650; }
   button { margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 8px; background: var(--accent);
            color: #fff; font: inherit; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
   button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); margin: 0; }
-  .pw { position: relative; }
-  .pw input { padding-right: 42px; }
-  .pw button.eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); margin: 0;
-                   width: 34px; height: 30px; padding: 0; background: transparent; color: var(--muted);
-                   display: grid; place-items: center; border-radius: 6px; }
-  .pw button.eye:hover { color: var(--text); }
-  .pw button.eye svg { width: 18px; height: 18px; }
+  button.danger { background: var(--bad); }
   #uptime { margin: -4px 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
   #uptime .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
   #uptime .l { color: var(--muted); font-size: 12px; }
   #build { font-weight: 650; font-variant-numeric: tabular-nums; }
-  #error { color: var(--bad); min-height: 1.4em; margin-top: 8px; font-size: 13px; }
+  .err { color: var(--bad); min-height: 1.4em; margin-top: 8px; font-size: 13px; }
   .note { color: var(--muted); font-size: 12px; margin-top: 6px; }
   [hidden] { display: none !important; }
   nav.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
   nav.tabs button { margin: 0; background: transparent; color: var(--muted); border: 1px solid var(--line); }
   nav.tabs button[aria-selected="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  nav.sub { margin-top: 12px; }
+  nav.sub button { padding: 5px 11px; font-size: 13px; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .row input { width: auto; flex: 1; min-width: 140px; }
   td input { width: 130px; padding: 5px 8px; }
+  td input.dirty { border-color: var(--accent); }
   td button { margin: 0 4px 0 0; padding: 5px 10px; }
   .msg { min-height: 1.4em; font-size: 13px; margin-top: 6px; }
+  .tools { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+  .tools button { margin: 0; }
 </style>
 </head>
 <body>
 <header>
   <h1>YapNPlay Admin</h1>
-  <div style="display:flex;align-items:center;gap:12px">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span id="build" title="Running build: version (git tag) · commit"></span>
     <span id="status"></span>
+    <span id="whoami"></span>
     <button id="signout" class="ghost" hidden>Sign out</button>
   </div>
 </header>
 
-<form id="signin" hidden>
+<form id="signin" class="box" hidden>
   <h2>Sign in</h2>
   <div id="uptime">
     <div class="l">Server running for</div>
     <div class="v" id="uptimeValue">…</div>
     <div class="l" id="uptimeSince"></div>
   </div>
-  <div class="pw">
-    <input id="token" type="password" autocomplete="off" placeholder="Admin token" aria-label="Admin token">
-    <button id="eye" class="eye" type="button" aria-label="Show token" aria-pressed="false" title="Show token">
-      <svg id="eyeOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-      <svg id="eyeClosed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><path d="M3 3l18 18"/><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.7 0 3.2-.4 4.5-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
-    </button>
-  </div>
-  <button type="submit">Open dashboard</button>
-  <div id="error"></div>
-  <div class="note">The token is the server's ADMIN_TOKEN. It is kept only for this browser tab.</div>
+  <label for="loginId">Admin ID</label>
+  <input id="loginId" autocomplete="username" autocapitalize="off" spellcheck="false">
+  <label for="loginPassword">Password</label>
+  <input id="loginPassword" type="password" autocomplete="current-password">
+  <button type="submit">Sign in</button>
+  <div id="error" class="err"></div>
+  <div class="note">Every change you make is saved in the audit under your admin ID.</div>
 </form>
 
 <main id="dash" hidden>
-  <nav class="tabs" role="tablist">
-    <button type="button" data-tab="overview" aria-selected="true">Overview</button>
-    <button type="button" data-tab="settings" aria-selected="false">Game settings</button>
-    <button type="button" data-tab="players" aria-selected="false">Players</button>
-    <button type="button" data-tab="reports" aria-selected="false">Reports</button>
-    <button type="button" data-tab="audit" aria-selected="false">Audit</button>
-    <button type="button" data-tab="bots" aria-selected="false">Bots</button>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button type="button" data-tab="overview">Overview</button>
+    <button type="button" data-tab="reports">Reports</button>
+    <button type="button" data-tab="audit">Audit</button>
+    <button type="button" data-tab="players">Players</button>
+    <button type="button" data-tab="rooms">Rooms</button>
+    <button type="button" data-tab="settings">Game Settings</button>
+    <button type="button" data-tab="bots">Bots</button>
+    <button type="button" data-tab="admins" data-needs="createAdmins">Create Admin</button>
+    <button type="button" data-tab="password">Change Password</button>
   </nav>
-  <div class="row" style="margin-top:10px">
-    <label for="who" class="note" style="margin:0">Your name (saved with every change):</label>
-    <input id="who" maxlength="64" placeholder="e.g. Keshav" style="max-width:220px">
-  </div>
   <div id="actionMsg" class="msg"></div>
 
-  <section id="tab-settings" hidden>
-    <h2>Game settings</h2>
-    <div class="note">Changes apply right away to matches that start after them; running matches keep their values. Lists are written like [50, 30, 20].</div>
-    <div class="panel"><table id="settingsTable"></table></div>
-  </section>
-
-  <section id="tab-players" hidden>
-    <h2>Players</h2>
-    <form id="userSearch" class="row"><input id="userQuery" placeholder="Name, user code or id"><button type="submit" style="margin:0">Search</button></form>
-    <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
+  <section id="tab-overview">
+  <h2>Right now</h2>
+  <div class="cards" id="liveCards"></div>
+  <div class="note">Live numbers are in memory and reset when the server restarts.</div>
+  <h2>Totals</h2>
+  <div class="cards" id="totalCards"></div>
+  <h2>Games</h2>
+  <div class="panel"><table id="games"></table></div>
+  <div class="note">Finished matches come from the database. Quick Play joins count since the last server start.</div>
+  <div class="grid2">
+    <div><h2>New guest players per day</h2><div class="panel"><table id="usersPerDay"></table></div></div>
+    <div><h2>Rooms created per day</h2><div class="panel"><table id="roomsPerDay"></table></div></div>
+  </div>
+  <h2>Moderation</h2>
+  <div class="cards" id="modCards"></div>
+  <h2>Most reported users</h2>
+  <div class="panel"><table id="reported"></table></div>
   </section>
 
   <section id="tab-reports" hidden>
@@ -135,7 +143,28 @@
 
   <section id="tab-audit" hidden>
     <h2>Audit</h2>
+    <div class="note">Every change, sign-in and refused attempt, newest first.</div>
     <div class="panel"><table id="auditTable"></table></div>
+  </section>
+
+  <section id="tab-players" hidden>
+    <h2>Players</h2>
+    <form id="userSearch" class="row"><input id="userQuery" type="search" placeholder="Search name, player code, username, ID…"><button type="submit" style="margin:0">Search</button></form>
+    <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
+  </section>
+
+  <section id="tab-rooms" hidden>
+    <h2>Rooms</h2>
+    <form id="roomSearch" class="row"><input id="roomQuery" type="search" placeholder="Search name, room code, game, ID…"><button type="submit" style="margin:0">Search</button></form>
+    <div class="panel" style="margin-top:8px"><table id="roomsTable"></table></div>
+  </section>
+
+  <section id="tab-settings" hidden>
+    <h2>Game settings</h2>
+    <div class="note">Changes apply to matches that start after them; running matches keep their values. Lists are written like [50, 30, 20].</div>
+    <nav class="tabs sub" id="settingTabs"></nav>
+    <div class="tools"><button type="button" id="saveSettings">Save</button><span id="settingsState" class="note" style="margin:0"></span></div>
+    <div class="panel"><table id="settingsTable"></table></div>
   </section>
 
   <section id="tab-bots" hidden>
@@ -146,38 +175,50 @@
     <div class="panel"><table id="botTable"></table></div>
   </section>
 
-  <section id="tab-overview">
-  <h2>Right now</h2>
-  <div class="cards" id="liveCards"></div>
-  <div class="note">Live numbers are in memory and reset when the server restarts.</div>
+  <section id="tab-admins" hidden>
+    <h2>Create admin</h2>
+    <form id="createAdmin" class="box">
+      <label for="newAdminId">Admin ID</label>
+      <input id="newAdminId" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="32">
+      <label for="newAdminPassword">Password</label>
+      <input id="newAdminPassword" type="password" autocomplete="new-password">
+      <label for="newAdminConfirm">Confirm password</label>
+      <input id="newAdminConfirm" type="password" autocomplete="new-password">
+      <label class="check switch"><input type="checkbox" id="permReadOnly">Read only (can only look; the boxes below don't matter)</label>
+      <label class="check"><input type="checkbox" id="permSettings">Edit settings</label>
+      <label class="check"><input type="checkbox" id="permRemove">Remove players (and rooms)</label>
+      <label class="check"><input type="checkbox" id="permAdmins">Create admins</label>
+      <button type="submit">Create admin</button>
+      <div class="note">Without read only, every admin can block players, give coins and decide reports.</div>
+    </form>
+    <h2>Admins</h2>
+    <div class="panel"><table id="adminsTable"></table></div>
+  </section>
 
-  <h2>Totals</h2>
-  <div class="cards" id="totalCards"></div>
-
-  <h2>Games</h2>
-  <div class="panel"><table id="games"></table></div>
-  <div class="note">Finished matches come from the database. Quick Play joins count since the last server start.</div>
-
-  <div class="grid2">
-    <div><h2>New guest players per day</h2><div class="panel"><table id="usersPerDay"></table></div></div>
-    <div><h2>Rooms created per day</h2><div class="panel"><table id="roomsPerDay"></table></div></div>
-  </div>
-
-  <h2>Moderation</h2>
-  <div class="cards" id="modCards"></div>
-  <h2>Most reported users</h2>
-  <div class="panel"><table id="reported"></table></div>
+  <section id="tab-password" hidden>
+    <h2>Change password</h2>
+    <form id="changePassword" class="box">
+      <label for="pwCurrent">Current password</label>
+      <input id="pwCurrent" type="password" autocomplete="current-password">
+      <label for="pwNew">New password</label>
+      <input id="pwNew" type="password" autocomplete="new-password">
+      <label for="pwConfirm">Confirm new password</label>
+      <input id="pwConfirm" type="password" autocomplete="new-password">
+      <button type="submit">Change password</button>
+      <div class="note">Your other sign-ins end when the password changes.</div>
+    </form>
   </section>
 </main>
 
 <script>
 (function () {
   "use strict";
-  var KEY = "yapnplay-admin-token";
+  var KEY = "yapnplay-admin-session";
   var REFRESH_MS = 10000;
   var timer = null;
   var uptimeTick = null, uptimeSync = null;
   var startedAt = null, skew = 0;
+  var me = null, currentTab = "overview";
   var $ = function (id) { return document.getElementById(id); };
 
   function storedToken() { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } }
@@ -228,7 +269,6 @@
     table(id, [["Day"], ["Count", true], [""]], rows, "None in the last 14 days");
   }
 
-  // Sign-in types the server may report; an unknown one shows its raw name.
   var ACCOUNT_LABELS = { guest: "Guest players" };
   function accountLabel(type) { return ACCOUNT_LABELS[type] || type + " players"; }
 
@@ -239,7 +279,6 @@
       ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow]
     ]);
     cards("totalCards", [
-      // Only worth a card once there is more than one sign-in type.
     ].concat(s.users.byType.length > 1 ? [["All players", s.users.total]] : [])
      .concat(s.users.byType.length ? s.users.byType.map(function (t) { return [accountLabel(t.type), t.count]; })
                                    : [[accountLabel("guest"), 0]]).concat([
@@ -267,32 +306,18 @@
     $("status").textContent = "Updated " + new Date(s.generatedAt).toLocaleTimeString() + " · days in " + s.timeZone;
   }
 
-  // ── Sign-in page: show/hide the token, and how long the server has been up ──
-  function setTokenVisible(visible) {
-    $("token").type = visible ? "text" : "password";
-    $("eyeOpen").hidden = visible; $("eyeClosed").hidden = !visible;
-    var label = visible ? "Hide token" : "Show token";
-    $("eye").setAttribute("aria-label", label); $("eye").title = label;
-    $("eye").setAttribute("aria-pressed", String(visible));
-  }
-
+  // ── Sign-in page: how long the server has been up ──
   function formatUptime(ms) {
     var s = Math.max(0, Math.floor(ms / 1000));
     var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
     var pad = function (n) { return n < 10 ? "0" + n : String(n); };
     return (d ? d + "d " : "") + (d || h ? h + "h " : "") + pad(m) + "m " + pad(sec) + "s";
   }
-
-  function drawUptime() {
-    if (startedAt == null) return;
-    $("uptimeValue").textContent = formatUptime(Date.now() + skew - startedAt);
-  }
-
+  function drawUptime() { if (startedAt != null) $("uptimeValue").textContent = formatUptime(Date.now() + skew - startedAt); }
   function syncUptime() {
     fetch("/admin/uptime", { cache: "no-store" })
       .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
       .then(function (u) {
-        // Server clock minus ours, so a wrong laptop clock doesn't skew the count.
         skew = u.serverTime - Date.now();
         startedAt = u.startedAt;
         $("uptimeSince").textContent = "since " + new Date(u.startedAt).toLocaleString();
@@ -300,151 +325,96 @@
       })
       .catch(function () { startedAt = null; $("uptimeValue").textContent = "Server not reachable"; $("uptimeSince").textContent = ""; });
   }
-
   function startUptime() {
     if (uptimeTick) return;
     syncUptime();
     uptimeTick = setInterval(drawUptime, 1000);
     uptimeSync = setInterval(syncUptime, REFRESH_MS);
   }
-
-  function stopUptime() {
-    clearInterval(uptimeTick); clearInterval(uptimeSync);
-    uptimeTick = uptimeSync = null;
-  }
+  function stopUptime() { clearInterval(uptimeTick); clearInterval(uptimeSync); uptimeTick = uptimeSync = null; }
 
   function showSignIn(message) {
     if (timer) { clearInterval(timer); timer = null; }
+    me = null; dirty = {};
     $("dash").hidden = true; $("signout").hidden = true; $("signin").hidden = false;
-    // Wipe any numbers from an earlier session.
-    ["liveCards", "totalCards", "games", "usersPerDay", "roomsPerDay", "modCards", "reported"]
+    ["liveCards", "totalCards", "games", "usersPerDay", "roomsPerDay", "modCards", "reported", "usersTable", "roomsTable",
+     "reportsTable", "auditTable", "settingsTable", "adminsTable", "matchesTable", "botTable"]
       .forEach(function (id) { $(id).replaceChildren(); });
-    $("status").textContent = "";
+    $("status").textContent = ""; $("whoami").textContent = "";
     $("error").textContent = message || "";
-    setTokenVisible(false);
     startUptime();
-    $("token").focus();
+    $("loginId").focus();
   }
-
-  function load() {
-    var token = storedToken();
-    if (!token) { showSignIn(); return; }
-    fetch("/admin/stats", { headers: { "Authorization": "Bearer " + token }, cache: "no-store" })
-      .then(function (r) {
-        if (r.status === 401) { clearToken(); showSignIn("That token was not accepted."); return null; }
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
-      })
-      .then(function (s) {
-        if (!s) return;
-        stopUptime();
-        $("signin").hidden = true; $("dash").hidden = false; $("signout").hidden = false;
-        render(s);
-        if (!timer) timer = setInterval(load, REFRESH_MS);
-      })
-      .catch(function (e) { $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
-  }
-
-  $("signin").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var t = $("token").value.trim();
-    $("token").value = "";
-    setTokenVisible(false);
-    if (!t) return;
-    saveToken(t); load();
-  });
-  $("eye").addEventListener("click", function () {
-    setTokenVisible($("token").type === "password");
-    $("token").focus();
-  });
-  $("signout").addEventListener("click", function () { clearToken(); showSignIn(); });
-
-  // ── Game settings, players, reports, audit ──
-  var WHO_KEY = "yapnplay-admin-name";
-  try { $("who").value = localStorage.getItem(WHO_KEY) || ""; } catch (e) {}
-  $("who").addEventListener("change", function () { try { localStorage.setItem(WHO_KEY, $("who").value.trim()); } catch (e) {} });
 
   function say(text, bad) { $("actionMsg").textContent = text; $("actionMsg").className = "msg " + (bad ? "bad" : "good"); }
-  function who() {
-    var name = $("who").value.trim();
-    if (!name) { say("Type your name first: every change is audited.", true); $("who").focus(); }
-    return name;
-  }
   function api(method, path, body) {
     var opts = { method: method, cache: "no-store", headers: { "Authorization": "Bearer " + (storedToken() || "") } };
     if (body !== undefined) { opts.headers["Content-Type"] = "application/json"; opts.body = JSON.stringify(body); }
     return fetch(path, opts).then(function (r) {
-      if (r.status === 401) { clearToken(); showSignIn("That token was not accepted."); throw new Error("signed out"); }
+      if (r.status === 401) { clearToken(); showSignIn("Your sign-in ended. Sign in again."); throw new Error("signed out"); }
       if (r.status === 204) return null;
       return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || ("HTTP " + r.status)); return j; });
     });
   }
-  function btn(text, onClick, ghost) {
-    var b = el("button", text, ghost ? "ghost" : ""); b.type = "button"; b.addEventListener("click", onClick); return b;
+  function btn(text, onClick, cls) {
+    var b = el("button", text, cls || ""); b.type = "button"; b.addEventListener("click", onClick); return b;
   }
   function when(ms) { return ms ? new Date(ms).toLocaleString() : ""; }
-  function both(a, b) { var d = el("span"); d.appendChild(a); d.appendChild(b); return d; }
+  function group() { var d = el("span"); Array.prototype.forEach.call(arguments, function (n) { if (n) d.appendChild(n); }); return d; }
+  function can(p) { return me && !me.readOnly && (p === "moderate" || me[p]); }
 
-  function loadSettings() {
-    api("GET", "/admin/settings").then(function (list) {
-      var rows = [], group = null;
-      list.forEach(function (s) {
-        var input = el("input"); input.value = s.value; input.setAttribute("aria-label", s.label);
-        var save = btn("Save", function () {
-          var name = who(); if (!name) return;
-          var value; try { value = JSON.parse(input.value); } catch (e) { say(s.label + ": not a number or [list]", true); return; }
-          api("PUT", "/admin/settings/" + encodeURIComponent(s.key), { value: value, by: name })
-            .then(function (v) { input.value = v.value; say(s.label + " saved: " + v.value); })
-            .catch(function (e) { say(s.label + ": " + e.message, true); });
-        });
-        var reset = btn("Default", function () { input.value = s["default"]; }, true);
-        if (s.group !== group) { group = s.group; rows.push([el("b", group), "", "", "", ""]); }
-        rows.push([s.label, input, s["default"], s.hint, both(save, reset)]);
-      });
-      table("settingsTable", [["Setting"], ["Value"], ["Default"], ["Allowed"], [""]], rows, "No settings");
-    }).catch(function (e) { say("Settings: " + e.message, true); });
+  // ── Signing in and out ──
+  $("signin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = $("loginId").value.trim(), pw = $("loginPassword").value;
+    $("loginPassword").value = "";
+    if (!id || !pw) { $("error").textContent = "Type your admin ID and password."; return; }
+    fetch("/admin/login", { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ adminId: id, password: pw }) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || ("HTTP " + r.status)); return j; }); })
+      .then(function (res) { saveToken(res.token); start(res.admin); })
+      .catch(function (err) { $("error").textContent = err.message; });
+  });
+  $("signout").addEventListener("click", function () {
+    if (!leaveSettingsOk()) return;
+    var token = storedToken();
+    if (token) fetch("/admin/logout", { method: "POST", headers: { "Authorization": "Bearer " + token } }).catch(function () {});
+    clearToken(); showSignIn();
+  });
+
+  function start(admin) {
+    me = admin;
+    stopUptime();
+    $("signin").hidden = true; $("dash").hidden = false; $("signout").hidden = false;
+    $("whoami").textContent = "Signed in as " + me.adminId + (me.readOnly ? " (read only)" : "");
+    Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
+      var needs = b.getAttribute("data-needs");
+      b.hidden = !!needs && !can(needs);
+    });
+    showTab("overview");
   }
 
-  function loadUsers() {
-    api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
-      table("usersTable", [["Name"], ["Code"], ["Coins", true], ["XP", true], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
-        users.map(function (u) {
-          var block = u.blockedUntil
-            ? btn("Unblock", function () {
-                var name = who(); if (!name) return;
-                api("POST", "/admin/users/" + u.userId + "/unblock", { by: name, note: prompt("Why unblock? (optional)") || null })
-                  .then(function () { say(u.displayName + " unblocked"); loadUsers(); }).catch(function (e) { say(e.message, true); });
-              })
-            : btn("Block", function () {
-                var name = who(); if (!name) return;
-                var days = parseInt(prompt("Block " + u.displayName + " for how many days?", "1"), 10); if (!days) return;
-                api("POST", "/admin/users/" + u.userId + "/block", { days: days, by: name, note: prompt("Why? (optional)") || null })
-                  .then(function () { say(u.displayName + " blocked for " + days + " days"); loadUsers(); }).catch(function (e) { say(e.message, true); });
-              });
-          var coins = btn("Coins \u00b1", function () {
-            var name = who(); if (!name) return;
-            var delta = parseInt(prompt("Coins to give (e.g. 500) or take (e.g. -500) for " + u.displayName), 10); if (!delta) return;
-            var why = prompt("Why? (required)"); if (!why) return;
-            api("POST", "/admin/users/" + u.userId + "/coins", { delta: delta, by: name, note: why })
-              .then(function (r) { say(u.displayName + " now has " + fmt(r.coins) + " coins"); loadUsers(); }).catch(function (e) { say(e.message, true); });
-          }, true);
-          return [u.displayName, u.userCode || "\u2014", u.coins, u.xp, u.playGamesLinked ? "Linked" : "\u2014", when(u.blockedUntil), when(u.createdAt), both(block, coins)];
-        }), "No players found");
-    }).catch(function (e) { say("Players: " + e.message, true); });
+  function resume() {
+    if (!storedToken()) { showSignIn(); return; }
+    api("GET", "/admin/me").then(start).catch(function (e) { if (e.message !== "signed out") showSignIn("Server not reachable."); });
   }
 
+  // ── Overview ──
+  function loadOverview() {
+    api("GET", "/admin/stats").then(render).catch(function (e) { if (e.message !== "signed out") $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
+  }
+
+  // ── Reports, audit ──
   function loadReports() {
     api("GET", "/admin/reports").then(function (reports) {
       table("reportsTable", [["When"], ["Reported"], ["By"], ["Reason"], ["Decision"], [""]],
         reports.map(function (r) {
           var act = el("span");
-          if (r.upheld === null) {
+          if (r.upheld === null && can("moderate")) {
             [["Uphold", true], ["Reject", false]].forEach(function (d) {
               act.appendChild(btn(d[0], function () {
-                var name = who(); if (!name) return;
-                api("POST", "/admin/reports/" + r.reportId + "/decide", { upheld: d[1], by: name, note: prompt("Note (optional)") || null })
+                api("POST", "/admin/reports/" + r.reportId + "/decide", { upheld: d[1], note: prompt("Note (optional)") || null })
                   .then(function () { say("Report " + (d[1] ? "upheld" : "rejected")); loadReports(); }).catch(function (e) { say(e.message, true); });
-              }, !d[1]));
+              }, d[1] ? "" : "ghost"));
             });
           }
           return [when(r.createdAt), r.reportedName, r.reporterName, r.reason, r.upheld === null ? "Open" : (r.upheld ? "Upheld" : "Rejected"), act];
@@ -454,19 +424,139 @@
 
   function loadAudit() {
     api("GET", "/admin/audit").then(function (rows) {
-      table("auditTable", [["When"], ["Who"], ["What"], ["Target"], ["From"], ["To"], ["Note"]],
+      table("auditTable", [["When"], ["Admin"], ["What"], ["Target"], ["From"], ["To"], ["Note"]],
         rows.map(function (a) { return [when(a.changedAt), a.changedBy, a.action, a.target, a.oldValue || "", a.newValue || "", a.note || ""]; }),
         "No changes yet");
     }).catch(function (e) { say("Audit: " + e.message, true); });
   }
 
+  // ── Players ──
+  function loadUsers() {
+    api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
+      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
+        users.map(function (u) {
+          var block = null, coins = null, del = null;
+          if (can("moderate")) {
+            block = u.blockedUntil
+              ? btn("Unblock", function () {
+                  api("POST", "/admin/users/" + u.userId + "/unblock", { note: prompt("Why unblock " + u.displayName + "? (optional)") || null })
+                    .then(function () { say(u.displayName + " unblocked"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+                })
+              : btn("Block", function () {
+                  var days = parseInt(prompt("Block " + u.displayName + " for how many days?", "1"), 10); if (!days) return;
+                  api("POST", "/admin/users/" + u.userId + "/block", { days: days, note: prompt("Why? (optional)") || null })
+                    .then(function () { say(u.displayName + " blocked for " + days + " days"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+                });
+            coins = btn("Coins ±", function () {
+              var delta = parseInt(prompt("Coins to give (e.g. 500) or take (e.g. -500) for " + u.displayName), 10); if (!delta) return;
+              var why = prompt("Why? (required)"); if (!why) return;
+              api("POST", "/admin/users/" + u.userId + "/coins", { delta: delta, note: why })
+                .then(function (r) { say(u.displayName + " now has " + fmt(r.coins) + " coins"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+            }, "ghost");
+          }
+          if (can("removePlayers")) {
+            del = btn("Delete", function () {
+              if (!confirm("Delete " + u.displayName + " (" + (u.userCode || u.userId) + ") for good? Their friends, reports and coins go too. This can't be undone.")) return;
+              var why = prompt("Why? (optional)") || "";
+              api("DELETE", "/admin/users/" + u.userId + (why ? "?note=" + encodeURIComponent(why) : ""))
+                .then(function () { say(u.displayName + " deleted"); loadUsers(); }).catch(function (e) { say(e.message, true); });
+            }, "danger");
+          }
+          return [u.displayName, u.userCode || "—", u.userId, u.coins, u.xp, u.playGamesLinked ? "Linked" : "—", when(u.blockedUntil), when(u.createdAt), group(block, coins, del)];
+        }), "No players found");
+    }).catch(function (e) { say("Players: " + e.message, true); });
+  }
+
+  // ── Rooms ──
+  function loadRooms() {
+    api("GET", "/admin/rooms?q=" + encodeURIComponent($("roomQuery").value.trim())).then(function (rooms) {
+      table("roomsTable", [["Name"], ["Code"], ["Game"], ["Members", true], ["Leader"], ["Admin"], ["ID"], ["Created"], [""]],
+        rooms.map(function (r) {
+          var del = can("removePlayers") ? btn("Delete", function () {
+            if (!confirm("Delete the room " + r.name + " (" + r.code + ")? Its " + r.members + " members are removed. This can't be undone.")) return;
+            var why = prompt("Why? (optional)") || "";
+            api("DELETE", "/admin/rooms/" + r.roomId + (why ? "?note=" + encodeURIComponent(why) : ""))
+              .then(function () { say(r.name + " deleted"); loadRooms(); }).catch(function (e) { say(e.message, true); });
+          }, "danger") : null;
+          return [r.name, r.code, r.selectedGame || "—", r.members, r.leaderName, r.adminName, r.roomId, when(r.createdAt), group(del)];
+        }), "No rooms found");
+    }).catch(function (e) { say("Rooms: " + e.message, true); });
+  }
+
+  // ── Game settings: one sub-tab per group, saved together ──
+  var settingsList = [], settingGroup = null, dirty = {};
+  function hasDirty() { return Object.keys(dirty).length > 0; }
+  function leaveSettingsOk() {
+    if (!hasDirty()) return true;
+    if (!confirm("You have unsaved changes in " + settingGroup + ". Discard them?")) return false;
+    dirty = {};
+    return true;
+  }
+  function showSettingsState() {
+    var n = Object.keys(dirty).length;
+    $("settingsState").textContent = n ? n + " unsaved change" + (n > 1 ? "s" : "") : "";
+    $("saveSettings").disabled = !n;
+  }
+  function drawSettings() {
+    var groups = [];
+    settingsList.forEach(function (s) { if (groups.indexOf(s.group) < 0) groups.push(s.group); });
+    if (groups.indexOf(settingGroup) < 0) settingGroup = groups[0];
+    var nav = $("settingTabs"); nav.replaceChildren();
+    groups.forEach(function (g) {
+      var b = btn(g, function () { if (g === settingGroup || !leaveSettingsOk()) return; settingGroup = g; drawSettings(); });
+      b.setAttribute("aria-selected", String(g === settingGroup));
+      nav.appendChild(b);
+    });
+    var editable = can("editSettings");
+    $("saveSettings").hidden = !editable;
+    var rows = settingsList.filter(function (s) { return s.group === settingGroup; }).map(function (s) {
+      var input = el("input"); input.value = s.key in dirty ? dirty[s.key] : s.value; input.setAttribute("aria-label", s.label);
+      input.disabled = !editable;
+      if (s.key in dirty) input.classList.add("dirty");
+      input.addEventListener("input", function () {
+        if (input.value === s.value) delete dirty[s.key]; else dirty[s.key] = input.value;
+        input.classList.toggle("dirty", s.key in dirty);
+        showSettingsState();
+      });
+      var reset = editable ? btn("Default", function () { input.value = s["default"]; input.dispatchEvent(new Event("input")); }, "ghost") : null;
+      return [s.label, input, s["default"], s.hint, group(reset)];
+    });
+    table("settingsTable", [["Setting"], ["Value"], ["Default"], ["Allowed"], [""]], rows, "No settings");
+    showSettingsState();
+  }
+  function loadSettings() {
+    api("GET", "/admin/settings").then(function (list) { settingsList = list; dirty = {}; drawSettings(); })
+      .catch(function (e) { say("Settings: " + e.message, true); });
+  }
+  $("saveSettings").addEventListener("click", function () {
+    var keys = Object.keys(dirty), values = {};
+    for (var i = 0; i < keys.length; i++) {
+      var s = settingsList.filter(function (x) { return x.key === keys[i]; })[0];
+      try { values[keys[i]] = JSON.parse(dirty[keys[i]]); } catch (e) { say(s.label + ": not a number or [list]", true); return; }
+    }
+    var note = prompt("Why are you changing " + settingGroup + "? (optional)") || null;
+    var saved = [], failed = [];
+    keys.reduce(function (p, key) {
+      var s = settingsList.filter(function (x) { return x.key === key; })[0];
+      return p.then(function () {
+        return api("PUT", "/admin/settings/" + encodeURIComponent(key), { value: values[key], note: note })
+          .then(function (v) { s.value = v.value; delete dirty[key]; saved.push(s.label); })
+          .catch(function (e) { failed.push(s.label + ": " + e.message); });
+      });
+    }, Promise.resolve()).then(function () {
+      drawSettings();
+      if (failed.length) say("Not saved: " + failed.join("; "), true); else say("Saved: " + saved.join(", "));
+    });
+  });
+
+  // ── Bots ──
   function num(v) { return Math.round(v * 10) / 10; }
   function loadBotDecisions(m) {
     api("GET", "/admin/matches/" + m.matchId + "/bot").then(function (rows) {
       $("botTitle").hidden = false; $("botTitle").textContent = "Bot decisions: " + m.title + " (" + m.gameId + ")";
       var out = [];
       rows.forEach(function (d) {
-        out.push([el("b", d.decision), "\u2192 " + d.chosen, "", "", "", "risk \u00d7" + num(d.riskWeight)]);
+        out.push([el("b", d.decision), "→ " + d.chosen, "", "", "", "risk ×" + num(d.riskWeight)]);
         d.options.forEach(function (o) { out.push(["", o.option, num(o.gain), num(o.cost), num(o.risk), o.note]); });
       });
       table("botTable", [["Decision"], ["Option"], ["Gain"], ["Cost"], ["Risk"], ["Why"]], out, "No bot decisions yet");
@@ -475,24 +565,75 @@
   function loadMatches() {
     api("GET", "/admin/matches").then(function (list) {
       table("matchesTable", [["Started"], ["Game"], ["Title"], [""]],
-        list.map(function (m) { return [when(m.startedAt), m.gameId, m.title, btn("Bot decisions", function () { loadBotDecisions(m); }, true)]; }),
+        list.map(function (m) { return [when(m.startedAt), m.gameId, m.title, btn("Bot decisions", function () { loadBotDecisions(m); }, "ghost")]; }),
         "No live matches");
     }).catch(function (e) { say("Matches: " + e.message, true); });
   }
 
-  var LOADERS = { settings: loadSettings, players: loadUsers, reports: loadReports, audit: loadAudit, bots: loadMatches };
-  var TABS = ["overview", "settings", "players", "reports", "audit", "bots"];
-  Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function (b) {
+  // ── Create admin, change password ──
+  function syncPermBoxes() {
+    var ro = $("permReadOnly").checked;
+    ["permSettings", "permRemove", "permAdmins"].forEach(function (id) { $(id).disabled = ro; });
+  }
+  $("permReadOnly").addEventListener("change", syncPermBoxes);
+  function loadAdmins() {
+    syncPermBoxes();
+    api("GET", "/admin/admins").then(function (list) {
+      table("adminsTable", [["ID"], ["Access"], ["Created by"], ["Created"]],
+        list.map(function (a) {
+          var access = a.readOnly ? "Read only" : ["Moderate"].concat(a.editSettings ? ["Edit settings"] : [], a.removePlayers ? ["Remove players"] : [], a.createAdmins ? ["Create admins"] : []).join(", ");
+          return [a.adminId, access, a.createdBy, when(a.createdAt)];
+        }), "No admins");
+    }).catch(function (e) { say("Admins: " + e.message, true); });
+  }
+  $("createAdmin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var id = $("newAdminId").value.trim(), pw = $("newAdminPassword").value;
+    if (!id || !pw) { say("Type an ID and a password.", true); return; }
+    if (pw !== $("newAdminConfirm").value) { say("The passwords don't match.", true); return; }
+    var ro = $("permReadOnly").checked;
+    api("POST", "/admin/admins", {
+      adminId: id, password: pw, readOnly: ro,
+      editSettings: !ro && $("permSettings").checked, removePlayers: !ro && $("permRemove").checked, createAdmins: !ro && $("permAdmins").checked
+    }).then(function (a) {
+      say("Admin " + a.adminId + " created");
+      $("createAdmin").reset(); syncPermBoxes(); loadAdmins();
+    }).catch(function (err) { say(err.message, true); });
+  });
+  $("changePassword").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var cur = $("pwCurrent").value, pw = $("pwNew").value;
+    if (!cur || !pw) { say("Fill in every field.", true); return; }
+    if (pw !== $("pwConfirm").value) { say("The new passwords don't match.", true); return; }
+    api("POST", "/admin/password", { currentPassword: cur, newPassword: pw })
+      .then(function () { $("changePassword").reset(); say("Password changed"); })
+      .catch(function (err) { say(err.message, true); });
+  });
+
+  // ── Tabs ──
+  var LOADERS = { overview: loadOverview, reports: loadReports, audit: loadAudit, players: loadUsers, rooms: loadRooms,
+                  settings: loadSettings, bots: loadMatches, admins: loadAdmins };
+  function showTab(tab) {
+    currentTab = tab;
+    Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (x) { x.setAttribute("aria-selected", String(x.getAttribute("data-tab") === tab)); });
+    Object.keys(LOADERS).concat(["password"]).forEach(function (t) { $("tab-" + t).hidden = t !== tab; });
+    $("actionMsg").textContent = "";
+    if (timer) { clearInterval(timer); timer = null; }
+    if (tab === "overview") timer = setInterval(loadOverview, REFRESH_MS);
+    if (LOADERS[tab]) LOADERS[tab]();
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
     b.addEventListener("click", function () {
       var tab = b.getAttribute("data-tab");
-      Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"), function (x) { x.setAttribute("aria-selected", String(x === b)); });
-      TABS.forEach(function (t) { $("tab-" + t).hidden = t !== tab; });
-      $("actionMsg").textContent = "";
-      if (LOADERS[tab]) LOADERS[tab]();
+      if (tab === currentTab) return;
+      if (currentTab === "settings" && !leaveSettingsOk()) return;
+      showTab(tab);
     });
   });
+  window.addEventListener("beforeunload", function (e) { if (hasDirty()) { e.preventDefault(); e.returnValue = ""; } });
   $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); loadUsers(); });
-  load();
+  $("roomSearch").addEventListener("submit", function (e) { e.preventDefault(); loadRooms(); });
+  resume();
 })();
 </script>
 </body>

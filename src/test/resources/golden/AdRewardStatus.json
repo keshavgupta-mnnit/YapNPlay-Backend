@@ -1,7 +1,14 @@
 {
-    "coinsPerAd": 500,
+    "coinsPerAd": 300,
     "dailyLimit": 5,
     "adsLeftToday": 4,
     "nextAdAt": 1760007200000,
-    "serverTime": 1760000000000
+    "serverTime": 1760000000000,
+    "adRewards": [
+        200,
+        300,
+        400,
+        500,
+        700
+    ]
 }

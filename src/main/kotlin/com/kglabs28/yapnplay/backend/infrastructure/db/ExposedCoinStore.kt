@@ -7,6 +7,7 @@ import com.kglabs28.yapnplay.backend.domain.economy.AdClaim
 import org.jetbrains.exposed.sql.and
 import com.kglabs28.yapnplay.backend.domain.economy.CoinReason
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
+import com.kglabs28.yapnplay.backend.domain.economy.adRewardFor
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.CoinLedgerTable
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.UsersTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -53,7 +54,7 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
         userId: String,
         adId: String,
         day: Int,
-        amount: Int,
+        rewards: List<Int>,
         maxPerDay: Int,
         cooldownMillis: Long,
         at: Long,
@@ -69,6 +70,7 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
             if (seen) return@run AdClaimResult.Paid(AdClaim(0, (maxPerDay - usedToday).coerceAtLeast(0), lastAdAt))
             if (usedToday >= maxPerDay) return@run AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(usedToday, lastAdAt))
             if (lastAdAt > 0 && at - lastAdAt < cooldownMillis) return@run AdClaimResult.Refused(AdRefusal.COOLDOWN, AdUsage(usedToday, lastAdAt))
+            val amount = adRewardFor(rewards, usedToday)
             UsersTable.update({ UsersTable.id eq uuid }) {
                 it[coins] = row[UsersTable.coins] + amount
                 it[adRewardDay] = day

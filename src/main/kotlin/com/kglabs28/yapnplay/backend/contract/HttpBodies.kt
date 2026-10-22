@@ -220,7 +220,9 @@ data class ActiveMatch(
 /** `POST /rooms/{roomId}/invites`: friends to invite to the room. */
 @Serializable
 data class InviteToRoomBody(
-    val userIds: List<String>,
+    val userIds: List<String> = emptyList(),
+    /** 0.9.0: 6-character player codes (friends or not); unknown codes come back in `skipped` as the code. */
+    val userCodes: List<String> = emptyList(),
 )
 
 /** Who got an invite, and who was skipped (not a friend, blocked, already a member or invited, room full). */
@@ -277,6 +279,8 @@ data class CoinsReward(
     val dailyLimit: Int = 0,
     /** 0.5.0: when the next ad can pay (epoch ms); null = now. */
     val nextAdAt: Long? = null,
+    /** 0.7.0: the whole day's ladder in order ([granted] is the step just paid). */
+    val adRewards: List<Int> = emptyList(),
 )
 
 /**
@@ -286,11 +290,14 @@ data class CoinsReward(
  */
 @Serializable
 data class AdRewardStatus(
+    /** What the next ad pays (0 when none are left today). */
     val coinsPerAd: Int,
     val dailyLimit: Int,
     val adsLeftToday: Int,
     val nextAdAt: Long?,
     val serverTime: Long,
+    /** 0.7.0: the whole day's ladder in order, e.g. [200, 300, 400, 500, 700]. */
+    val adRewards: List<Int> = emptyList(),
 )
 
 /** 0.4.5 `GET /coins/leagues`: Quick Play leagues; [canEnter] is false when [coins] are short of the fee. */

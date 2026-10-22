@@ -29,7 +29,7 @@
     "discardPileCount": 6,
     "activeStackPenalty": 0,
     "stackTopValue": 0,
-    "monoCallWindowExpiry": 1760000002500,
+    "monoCallWindowExpiry": 0,
     "monoWindowSeat": 3,
     "monoCalledSeat": null,
     "reversed": false,
@@ -37,6 +37,31 @@
     "drawnCardExpiry": 1760000003000,
     "pendingSwapSeat": null,
     "eliminatedSeats": [],
-    "finishedSeats": [],
-    "ranking": []
+    "finishedSeats": [
+        4,
+        2
+    ],
+    "ranking": [],
+    "catchSeat": 3,
+    "catchClosedFor": [
+        2
+    ],
+    "caughtPenaltyCards": 5,
+    "falseCatchPenaltyCards": 2,
+    "callBeforePlay": true,
+    "noPowerFinish": true,
+    "continueVote": {
+        "endsAt": 1760000010000,
+        "voters": [
+            1,
+            2,
+            4
+        ],
+        "yes": [
+            1
+        ],
+        "no": [
+            4
+        ]
+    }
 }

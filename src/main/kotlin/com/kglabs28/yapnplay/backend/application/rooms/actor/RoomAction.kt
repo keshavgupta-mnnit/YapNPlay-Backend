@@ -23,6 +23,7 @@ sealed interface RoomAction {
     data class TransferLeader(val userId: String) : RoomAction
     data class TransferAdmin(val userId: String) : RoomAction
     data class RemoveMember(val userId: String) : RoomAction
+    data class RenameRoom(val name: String) : RoomAction
     data object Snapshot : RoomAction
     /** The member changed their name and/or avatar (null = unchanged). */
     data class UpdateProfile(val displayName: String?, val avatarId: String?) : RoomAction

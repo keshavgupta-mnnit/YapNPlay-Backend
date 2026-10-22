@@ -22,6 +22,7 @@ object MessageType {
     const val TRANSFER_LEADER = "TransferLeader"
     const val TRANSFER_ADMIN = "TransferAdmin"
     const val REMOVE_MEMBER = "RemoveMember"
+    const val RENAME_ROOM = "RenameRoom"
     const val APPROVE_JOIN = "ApproveJoin"
     const val DECLINE_JOIN = "DeclineJoin"
 

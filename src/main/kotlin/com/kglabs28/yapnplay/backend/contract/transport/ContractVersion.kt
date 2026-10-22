@@ -4,6 +4,18 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.9.0 — RenameRoom room message (admin only); InviteToRoomBody.userCodes (invite by
+ * player code, friends or not).
+ * 0.8.0 — MONO plays on after the first finisher: continueVote (MonoContinueVoteWire) on both
+ * MONO public states, VoteContinue action, ContinueVoted event; ranking = finish order, then
+ * fewest cards, then (Chaos) knocked-out seats, latest first.
+ * 0.7.0 — fixed MONO catch penalties in every mode (MONO 5 / 2, Chaos 7 / 4; the
+ * strict_catch house rule is gone); rewarded-ad ladder: AdRewardStatus and CoinsReward
+ * gain adRewards, coinsPerAd is the next ad's reward.
+ * 0.6.0 — MONO catching: Caught action; MonoCaught, FalseCatch, DeckReshuffled events;
+ * catchSeat, catchClosedFor, caughtPenaltyCards, falseCatchPenaltyCards, callBeforePlay,
+ * noPowerFinish on both MONO public states; MonoMissed no longer sent. MONO room house rules
+ * no_power_finish, call_before_play, strict_catch (stacking_allowed = stack upward).
  * 0.5.0 — coins and leagues (Me coins/levelXp/nextLevelXp/dailyBonus,
  * CoinsReward, Leagues, JoinQueue/QueueStatus/MatchFound entryCoins,
  * NOT_ENOUGH_COINS), keep-playing vote (ExtensionVoteInfo, VoteExtension,
@@ -17,4 +29,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.5.0"
+const val CONTRACT_VERSION: String = "0.9.0"

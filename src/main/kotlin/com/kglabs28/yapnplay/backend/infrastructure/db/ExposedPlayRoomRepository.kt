@@ -124,6 +124,12 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
         }
     }
 
+    override suspend fun updateName(roomId: String, name: String) {
+        db.run {
+            PlayRoomsTable.update({ PlayRoomsTable.id eq roomId.toUuid() }) { it[PlayRoomsTable.name] = name }
+        }
+    }
+
     override suspend fun delete(roomId: String) {
         db.run { PlayRoomsTable.deleteWhere { PlayRoomsTable.id eq roomId.toUuid() } }
     }

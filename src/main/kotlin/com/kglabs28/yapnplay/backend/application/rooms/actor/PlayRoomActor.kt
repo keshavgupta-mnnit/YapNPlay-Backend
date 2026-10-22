@@ -79,6 +79,7 @@ class PlayRoomActor(
             is RoomAction.UpdateProfile -> done { membership.updateProfile(userId, action.displayName, action.avatarId) }
             is RoomAction.SelectGame -> done { lobby.selectGame(userId, action.gameId) }
             is RoomAction.SetBotFill -> done { lobby.setBotFill(userId, action.enabled) }
+            is RoomAction.RenameRoom -> done { lobby.rename(userId, action.name) }
             is RoomAction.SetHouseRule -> done { lobby.setHouseRule(userId, action.key, action.enabled) }
             is RoomAction.SetReady -> done { lobby.setReady(userId, action.ready) }
             is RoomAction.SetWatching -> done { lobby.setWatching(userId, action.watching) }

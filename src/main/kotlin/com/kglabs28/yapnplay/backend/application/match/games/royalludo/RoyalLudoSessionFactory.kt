@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.royalludo
 
+import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBotTuning
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoBot
@@ -30,13 +31,19 @@ class RoyalLudoSessionFactory(
             sixBoostPerMissPct = settings[GameSettings.RL_SIX_BOOST_PER_MISS_PCT],
             sixChanceCapPct = settings[GameSettings.RL_SIX_CHANCE_CAP_PCT],
         )
-        return RoyalLudoSession(game, state, random, json, settings[GameSettings.RL_TURN_SECONDS], settings[GameSettings.RL_CPU_THINK_MS].toLong(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) })
+        return RoyalLudoSession(game, state, random, json, settings[GameSettings.RL_TURN_SECONDS], think(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) })
     }
+
+    private fun think() = BotThinkTime(
+        settings[GameSettings.RL_CPU_THINK_MS].toLong(),
+        settings[GameSettings.RL_CPU_THINK_JITTER_MS].toLong(),
+        settings[GameSettings.RL_CPU_DECISION_EXTRA_MS].toLong(),
+    )
 
     override fun restore(saved: JsonObject): GameSession =
         RoyalLudoSession(
             game, json.decodeFromJsonElement(RoyalLudoState.serializer(), saved), random, json,
-            settings[GameSettings.RL_TURN_SECONDS], settings[GameSettings.RL_CPU_THINK_MS].toLong(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) },
+            settings[GameSettings.RL_TURN_SECONDS], think(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) },
         )
 
     private fun bot(trace: BotTrace) = RoyalLudoBot(

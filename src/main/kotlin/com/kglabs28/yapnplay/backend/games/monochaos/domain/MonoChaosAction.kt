@@ -25,4 +25,7 @@ sealed class MonoChaosAction : Action {
 
     /** The server ends the match (an end-game vote passed). */
     data object EndMatch : MonoChaosAction()
+
+    /** Any other seat says the player on one card didn't call MONO!. */
+    data object Caught : MonoChaosAction()
 }

@@ -13,7 +13,10 @@ data class MonoChaosMandatoryRules(
     val deckSize: Int = MonoChaosConstants.DECK_SIZE,
     val knockoutThreshold: Int = MonoChaosConstants.KNOCKOUT_THRESHOLD,
     val drawUntilPlayable: Boolean = true,
-    val monoPenaltyCards: Int = 4,
+    /** Caught without calling MONO!: the player on one card draws this many. */
+    val monoPenaltyCards: Int = 7,
+    /** A wrong catch (they had called): the catcher draws this many. */
+    val falseCatchPenaltyCards: Int = 4,
 ) : MandatoryRules
 
 @Serializable

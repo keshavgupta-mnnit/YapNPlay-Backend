@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBotTuning
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBotProfile
@@ -62,7 +63,11 @@ class CityBazaarSessionFactory(
 
     private fun timing() = CityBazaarTiming(
         turnSeconds = settings[GameSettings.CB_TURN_SECONDS],
-        thinkMillis = settings[GameSettings.CB_CPU_THINK_MS].toLong(),
+        think = BotThinkTime(
+            settings[GameSettings.CB_CPU_THINK_MS].toLong(),
+            settings[GameSettings.CB_CPU_THINK_JITTER_MS].toLong(),
+            settings[GameSettings.CB_CPU_DECISION_EXTRA_MS].toLong(),
+        ),
         messageMillis = settings[GameSettings.CB_MESSAGE_PAUSE_MS].toLong(),
         maxMessageMillis = settings[GameSettings.CB_MESSAGE_PAUSE_CAP_MS].toLong(),
     )

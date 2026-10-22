@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendStrings
@@ -34,6 +35,17 @@ class LobbyHandler(
             throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_HOUSE_RULE)
         }
         state.houseRules = state.houseRules + (key to enabled)
+    }
+
+    /** The admin renames the room: trimmed, 1..ROOM_NAME_MAX_LENGTH characters, no control characters. */
+    suspend fun rename(userId: String, name: String) {
+        guards.requireAdmin(userId)
+        val trimmed = name.trim()
+        if (trimmed.isEmpty() || trimmed.length > BackendConstants.ROOM_NAME_MAX_LENGTH || trimmed.any { it.isISOControl() }) {
+            throw ServiceException(ErrorCode.BAD_REQUEST, "Room name: 1 to ${BackendConstants.ROOM_NAME_MAX_LENGTH} characters")
+        }
+        state.room = state.room.copy(name = trimmed)
+        deps.repository.updateName(state.room.id, trimmed)
     }
 
     suspend fun setBotFill(userId: String, enabled: Boolean) {

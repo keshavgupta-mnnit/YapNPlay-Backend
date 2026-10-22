@@ -51,8 +51,8 @@ class CoinsApiTest {
         val limit = GameSettings.AD_DAILY_LIMIT.default
         repeat(limit) { i ->
             val reward = client.adReward(token, "ad-$i")
-            assertEquals(GameSettings.AD_REWARD.default, reward.granted)
-            assertEquals(start + (i + 1) * GameSettings.AD_REWARD.default, reward.coins)
+            assertEquals(GameSettings.AD_REWARDS.default[i], reward.granted)
+            assertEquals(start + GameSettings.AD_REWARDS.default.take(i + 1).sum(), reward.coins)
             assertEquals(limit - i - 1, reward.adsLeftToday)
             assertEquals(limit, reward.dailyLimit)
         }
@@ -69,7 +69,7 @@ class CoinsApiTest {
     fun `one ad pays per 2 hours, and the status says when the next one can`() = serverTest { client ->
         val token = client.newGuestToken()
         val before = client.get("/coins/ad-status") { bearerAuth(token) }.body<AdRewardStatus>()
-        assertEquals(GameSettings.AD_REWARD.default, before.coinsPerAd)
+        assertEquals(GameSettings.AD_REWARDS.default.first(), before.coinsPerAd)
         assertEquals(GameSettings.AD_DAILY_LIMIT.default, before.adsLeftToday)
         assertNull(before.nextAdAt, "available now")
 
@@ -107,7 +107,7 @@ class CoinsApiTest {
         val token = client.newGuestToken()
         val first = client.adReward(token, "same")
         val again = client.adReward(token, "same")
-        assertEquals(GameSettings.AD_REWARD.default, first.granted)
+        assertEquals(GameSettings.AD_REWARDS.default.first(), first.granted)
         assertEquals(0, again.granted)
         assertEquals(first.coins, again.coins)
         assertEquals(first.adsLeftToday, again.adsLeftToday)

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBotProfile
@@ -89,6 +90,8 @@ class CityBazaarSession(
     /** How CPU, away and bot-held seats play (tuning from runtime settings). */
     private val cpuBot: CityBazaarBot = CityBazaarBot(CityBazaarBotProfile.CPU),
 ) : GameSession {
+    /** How long CPUs wait after the last bid before bidding again. */
+    private var bidGap: Long = CPU_BID_DELAY_MS
     private val mapper = CityBazaarWireMapper(json)
 
     override val currentSeat: Int get() = state.currentSeat
@@ -96,7 +99,8 @@ class CityBazaarSession(
     override val isFinished: Boolean get() = state.phase == CityBazaarPhase.FINISHED
     override val ranking: List<Int> get() = if (isFinished) CityBazaarEngine.ranking(state) else emptyList()
     override val turnSeconds: Int get() = timing.turnSeconds
-    override val thinkMillis: Long get() = timing.thinkMillis
+    /** A bot's think time: longer for buying, building, jail and debt. */
+    override val thinkMillis: Long get() = timing.think.millis(state.phase in THINK_DECISIONS)
     // An auction or the keep-playing vote: no turn timer, the tick closes them.
     override val waitsForTick: Boolean get() = state.phase == CityBazaarPhase.AUCTION || state.phase == CityBazaarPhase.EXTENSION_VOTE
 
@@ -132,7 +136,8 @@ class CityBazaarSession(
 
         val auction = state.auction ?: return null
         if (now >= auctionEndsAt) return apply(state.currentSeat, CloseAuction)
-        if (now - lastBidAt < CPU_BID_DELAY_MS) return null
+        // CPUs bid after a human-like, random pause (re-drawn after every bid).
+        if (now - lastBidAt < bidGap) return null
         // Seats the server plays: a player's Autoplay bids with its own profile, CPUs and held seats with the CPU's.
         val bidder = cpuSeats.filter { seat ->
             val bot = if (seat in botSeats) cpuBot else autoplayBot
@@ -255,6 +260,7 @@ class CityBazaarSession(
             val now = clock.nowMillis()
             auctionEndsAt = now + AUCTION_SECONDS * BackendConstants.MILLIS_PER_SECOND
             lastBidAt = now
+            bidGap = timing.think.millis(decision = false).coerceAtLeast(CPU_BID_DELAY_MS)
         }
         return result.events
     }
@@ -295,10 +301,17 @@ data class CityBazaarSaved(
     val lastBidAt: Long,
 )
 
-/** Turn time, CPU think time and reading time per table message (runtime settings). */
+/** Turn time, bot think time and reading time per table message (runtime settings). */
 data class CityBazaarTiming(
     val turnSeconds: Int = GameSettings.CB_TURN_SECONDS.default,
-    val thinkMillis: Long = GameSettings.CB_CPU_THINK_MS.default.toLong(),
+    val think: BotThinkTime = BotThinkTime(
+        GameSettings.CB_CPU_THINK_MS.default.toLong(),
+        GameSettings.CB_CPU_THINK_JITTER_MS.default.toLong(),
+        GameSettings.CB_CPU_DECISION_EXTRA_MS.default.toLong(),
+    ),
     val messageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_MS.default.toLong(),
     val maxMessageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_CAP_MS.default.toLong(),
 )
+
+/** City Royale phases where a bot weighs a real choice (it thinks a little longer). */
+private val THINK_DECISIONS = setOf(CityBazaarPhase.BUY, CityBazaarPhase.BUILD, CityBazaarPhase.JAIL_CHOICE, CityBazaarPhase.DEBT)

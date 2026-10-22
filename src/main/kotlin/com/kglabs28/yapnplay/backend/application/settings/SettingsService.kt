@@ -51,8 +51,8 @@ class SettingsService(
     override fun get(setting: IntListSetting): List<Int> =
         values[setting.key] as? List<Int> ?: defaults[setting.key] as? List<Int> ?: setting.default
 
-    /** Every setting with its current and default value, for the admin page. */
-    fun list(): List<SettingView> = GameSettings.ALL.map(::view)
+    /** Every setting with its current and default value, for the admin page, grouped in sub-tab order. */
+    fun list(): List<SettingView> = GameSettings.ALL.sortedBy { it.group.ordinal }.map(::view)
 
     /** Changes one setting after checking it; recorded in the admin audit. */
     suspend fun update(key: String, value: JsonElement, by: String, note: String?): SettingView {

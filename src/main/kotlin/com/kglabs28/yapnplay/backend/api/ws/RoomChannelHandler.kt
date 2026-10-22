@@ -9,6 +9,7 @@ import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.JoinRoom
 import com.kglabs28.yapnplay.backend.contract.JoinRoomResult
 import com.kglabs28.yapnplay.backend.contract.RemoveMember
+import com.kglabs28.yapnplay.backend.contract.RenameRoom
 import com.kglabs28.yapnplay.backend.contract.RoomSnapshot
 import com.kglabs28.yapnplay.backend.contract.SelectGame
 import com.kglabs28.yapnplay.backend.contract.SetBotFill
@@ -83,6 +84,7 @@ class RoomChannelHandler(
         MessageType.TRANSFER_LEADER -> RoomAction.TransferLeader(codec.payload(request, TransferLeader.serializer()).userId)
         MessageType.TRANSFER_ADMIN -> RoomAction.TransferAdmin(codec.payload(request, TransferAdmin.serializer()).userId)
         MessageType.REMOVE_MEMBER -> RoomAction.RemoveMember(codec.payload(request, RemoveMember.serializer()).userId)
+        MessageType.RENAME_ROOM -> RoomAction.RenameRoom(codec.payload(request, RenameRoom.serializer()).name)
         MessageType.APPROVE_JOIN -> RoomAction.ApproveJoin(codec.payload(request, ApproveJoin.serializer()).userId)
         MessageType.DECLINE_JOIN -> RoomAction.DeclineJoin(codec.payload(request, DeclineJoin.serializer()).userId)
         else -> throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_TYPE)

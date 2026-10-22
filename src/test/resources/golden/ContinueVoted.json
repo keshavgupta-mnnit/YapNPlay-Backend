@@ -1,0 +1,6 @@
+{
+    "type": "ContinueVoted",
+    "continued": true,
+    "yes": 2,
+    "voters": 3
+}

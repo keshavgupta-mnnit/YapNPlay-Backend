@@ -133,7 +133,10 @@ class RoyalLudoEngine : Game {
         val ranking = mutableListOf<RankedSeat>()
         for ((index, seat) in s.finishingOrder.withIndex())
             ranking.add(RankedSeat(SeatNumber(seat), SeatStatus.FINISHED, index + 1))
-        for (seat in s.seats.map { it.value }.filter { it !in s.finishingOrder })
+        // Not finished (an early end): the furthest along first.
+        val unfinished = s.seats.map { it.value }.filter { it !in s.finishingOrder }
+            .sortedByDescending { seat -> s.piecesForSeat(seat).sumOf { it.coerceAtLeast(0) } }
+        for (seat in unfinished)
             ranking.add(RankedSeat(SeatNumber(seat), SeatStatus.FINISHED, ranking.size + 1))
         for (seat in s.removalOrder.reversed())
             ranking.add(RankedSeat(SeatNumber(seat), SeatStatus.REMOVED, ranking.size + 1))

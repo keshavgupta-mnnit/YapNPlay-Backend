@@ -20,7 +20,7 @@ class CoinsPayoutTest {
         override suspend fun balance(userId: String) = 0
         override suspend fun change(userId: String, delta: Int, reason: CoinReason, matchId: String?, at: Long): Int? = 0
         override suspend fun claimDaily(userId: String, day: Int, amount: Int, at: Long) = false
-        override suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult =
+        override suspend fun claimAdReward(userId: String, adId: String, day: Int, rewards: List<Int>, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult =
             AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(0, 0))
         override suspend fun adUsage(userId: String, day: Int) = AdUsage(0, 0)
         override suspend fun entriesFor(matchId: String) = emptyMap<String, Int>()

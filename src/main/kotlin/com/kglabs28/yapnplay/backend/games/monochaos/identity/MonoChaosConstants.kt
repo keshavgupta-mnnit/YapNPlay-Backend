@@ -45,8 +45,10 @@ object MonoChaosConstants {
         "Penalty stacking: stack +2, +4, +6, +10 on draw cards",
         "25-Card Knockout: 25+ cards eliminates you",
         "Draw until playable: draw cards until you can play (max 25)",
-        "MONO! callout: tap MONO! within 2.5s when down to 1 card",
-        "Missed MONO!: draw +4 penalty cards",
-        "15 seconds per turn; win by emptying hand or being last standing",
+        "Call MONO! on your turn while holding 2 cards, before playing",
+        "CAUGHT!: anyone can catch a player on 1 card who didn't call, until the next player's turn ends",
+        "Caught: draw 7. A wrong catch: the catcher draws 4",
+        "Play goes on after the first player finishes; from the 2nd finisher (3rd in rooms of 5+) the table votes to keep playing or end",
+        "15 seconds per turn; rank by finishing order, then fewest cards; knocked-out players last",
     )
 }

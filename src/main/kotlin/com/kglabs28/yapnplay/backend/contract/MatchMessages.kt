@@ -268,7 +268,7 @@ data class RankedSeat(
     val status: MatchSeatStatus,
     /** 1-based finishing place. */
     val place: Int,
-    /** 0.5.0: coins won from the pot (0 for free games, CPUs and leavers). */
+    /** 0.5.0: coins won from the pot (0 for free games and leavers). A CPU shows what its place pays (display only, nothing credited). */
     val coinsWon: Int = 0,
     /** 0.5.0: coins for finishing the match (0 for CPUs, leavers, bot-held seats, short matches or past the daily cap). */
     val completionCoins: Int = 0,

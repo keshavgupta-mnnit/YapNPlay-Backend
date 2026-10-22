@@ -96,7 +96,7 @@ fun cityBazaarArena(games: Int, tuningB: CityBazaarBotTuning, tuningA: CityBazaa
         length += s.round
     }
     val perSet = games * CITY_BAZAAR_SEATS / 2.0
-    return ArenaReport("City Bazaar (net worth, rounds)", games, winsA, winsB, scoreA / perSet, scoreB / perSet, length / games)
+    return ArenaReport("City Royale (net worth, rounds)", games, winsA, winsB, scoreA / perSet, scoreB / perSet, length / games)
 }
 
 fun ludoArena(games: Int, tuningB: RoyalLudoBotTuning, tuningA: RoyalLudoBotTuning = RoyalLudoBotTuning()): ArenaReport {

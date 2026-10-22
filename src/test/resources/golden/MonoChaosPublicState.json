@@ -40,5 +40,12 @@
     ],
     "finishedSeats": [],
     "ranking": [],
-    "knockoutThreshold": 25
+    "knockoutThreshold": 25,
+    "catchSeat": null,
+    "catchClosedFor": [],
+    "caughtPenaltyCards": 2,
+    "falseCatchPenaltyCards": 0,
+    "callBeforePlay": false,
+    "noPowerFinish": false,
+    "continueVote": null
 }

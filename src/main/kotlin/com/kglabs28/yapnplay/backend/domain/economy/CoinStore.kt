@@ -29,7 +29,8 @@ interface CoinStore {
      * Grants [amount] for the ad view [adId], at most [maxPerDay] times on
      * [day]. A repeated [adId] grants nothing. Null when today's cap is used up.
      */
-    suspend fun claimAdReward(userId: String, adId: String, day: Int, amount: Int, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult
+    /** Pays the day's next step of [rewards] (the Nth ad today pays rewards[N-1]; past the end, the last). */
+    suspend fun claimAdReward(userId: String, adId: String, day: Int, rewards: List<Int>, maxPerDay: Int, cooldownMillis: Long, at: Long): AdClaimResult
 
     /** Rewarded ads used on [day] and when the last one paid. */
     suspend fun adUsage(userId: String, day: Int): AdUsage
@@ -58,3 +59,6 @@ sealed interface AdClaimResult {
     data class Paid(val claim: AdClaim) : AdClaimResult
     data class Refused(val reason: AdRefusal, val usage: AdUsage) : AdClaimResult
 }
+
+/** What the ad at [index] today (0 = first) pays: that ladder step, or the last one past the end. */
+fun adRewardFor(rewards: List<Int>, index: Int): Int = rewards.getOrElse(index) { rewards.lastOrNull() ?: 0 }

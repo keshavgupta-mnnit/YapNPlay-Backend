@@ -26,7 +26,9 @@ object MonoConstants {
     val DECK_SIZE = 108
 
     val HOUSE_RULES = listOf(
-        HouseRuleOption("stacking_allowed", "Stacking Allowed", "Stack +2 on +2", false),
+        HouseRuleOption("stacking_allowed", "Stack Upward", "Stack an equal or higher draw card: +2 on +2, +4 on +2 or +4", true),
+        HouseRuleOption("no_power_finish", "No Power Finish", "Your last card must be a number card", true),
+        HouseRuleOption("call_before_play", "Call Before Play", "Call MONO! on your turn before playing your second-last card", true),
         HouseRuleOption("seven_swap", "Seven Swap", "Playing a 7 swaps hands with an opponent", false),
         HouseRuleOption("zero_pass", "Zero Pass", "Playing a 0 passes all hands to the next player", false),
     )
@@ -36,9 +38,11 @@ object MonoConstants {
         "Match by color, number, or symbol — or play any Prism card",
         "Prism Color Wild: choose the next color",
         "Prism +4: next player draws 4 and loses their turn",
-        "MONO! callout: tap MONO! within 2.5s when down to 1 card",
-        "Missed MONO!: draw +2 penalty cards",
+        "Call MONO! on your turn while holding 2 cards, before playing",
+        "CAUGHT!: anyone can catch a player on 1 card who didn't call, until the next player's turn ends",
+        "Caught: draw 5. A wrong catch: the catcher draws 2",
         "15 seconds per turn; the bot plays when time runs out",
-        "First to empty their hand wins",
+        "Play goes on after the first player finishes; from the 2nd finisher (3rd in rooms of 5+) the table votes to keep playing or end",
+        "Ranked by finishing order, then fewest cards",
     )
 }

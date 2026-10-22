@@ -13,7 +13,10 @@ data class MonoMandatoryRules(
     val deckSize: Int = MonoConstants.DECK_SIZE,
     val knockoutThreshold: Int = 0,
     val drawUntilPlayable: Boolean = false,
-    val monoPenaltyCards: Int = 2,
+    /** Caught without calling MONO!: the player on one card draws this many. */
+    val monoPenaltyCards: Int = 5,
+    /** A wrong catch (they had called): the catcher draws this many. */
+    val falseCatchPenaltyCards: Int = 2,
 ) : MandatoryRules
 
 @Serializable
@@ -21,6 +24,10 @@ data class MonoHouseRules(
     val stackingAllowed: Boolean = false,
     val sevenSwap: Boolean = false,
     val zeroPass: Boolean = false,
+    /** A power card (anything but a number) may never be the last card played. */
+    val noPowerFinish: Boolean = false,
+    /** MONO! must be called on your own turn with two cards, before playing the second-last. */
+    val callBeforePlay: Boolean = false,
 ) : HouseRules
 
 @Serializable

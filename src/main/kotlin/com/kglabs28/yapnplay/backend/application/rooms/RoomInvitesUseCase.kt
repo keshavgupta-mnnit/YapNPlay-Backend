@@ -46,8 +46,13 @@ class RoomInvitesUseCase(
     private val clock: Clock,
     private val maxRoomsPerUser: Int,
 ) {
-    /** `POST /rooms/{roomId}/invites` (and CreateRoom's invitees): who got an invite, who was skipped. */
-    suspend fun invite(inviterId: String, roomId: String, userIds: List<String>): InviteToRoomReply {
+    /**
+     * `POST /rooms/{roomId}/invites` (and CreateRoom's invitees): who got an
+     * invite, who was skipped. [userIds] must be friends; a player found by
+     * one of [userCodes] (typed in the room) needn't be. An unknown code is
+     * skipped as the code itself.
+     */
+    suspend fun invite(inviterId: String, roomId: String, userIds: List<String>, userCodes: List<String> = emptyList()): InviteToRoomReply {
         val room = rooms.findById(roomId) ?: throw ServiceException(ErrorCode.NOT_FOUND, BackendStrings.NOT_FOUND)
         val members = rooms.members(roomId).map { it.userId }.toSet()
         if (inviterId !in members) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_MEMBER)
@@ -56,9 +61,14 @@ class RoomInvitesUseCase(
         val pending = invites.invitedTo(roomId).toMutableSet()
         val invited = mutableListOf<String>()
         val skipped = mutableListOf<String>()
-        userIds.distinct().forEach { userId ->
+        val byCode = mutableSetOf<String>()
+        userCodes.map { it.trim().uppercase() }.filter { it.isNotEmpty() }.distinct().forEach { code ->
+            val user = users.findByCode(code)
+            if (user == null) skipped += code else byCode += user.id
+        }
+        (userIds + byCode).distinct().forEach { userId ->
             val ok = userId != inviterId &&
-                userId in myFriends &&
+                (userId in myFriends || userId in byCode) &&
                 userId !in members &&
                 userId !in pending &&
                 members.size + pending.size < BackendConstants.MAX_MEMBERS_PER_ROOM &&

@@ -44,7 +44,8 @@ fun Route.userRoutes(
     get(HttpPaths.ROOM_INVITES) { call.respond(roomInvites.list(call.userId)) }
     post(HttpPaths.INVITE_TO_ROOM) {
         val roomId = call.parameters[HttpPaths.ROOM_ID_PARAM].orEmpty()
-        call.respond(roomInvites.invite(call.userId, roomId, call.receive<InviteToRoomBody>().userIds))
+        val body = call.receive<InviteToRoomBody>()
+        call.respond(roomInvites.invite(call.userId, roomId, body.userIds, body.userCodes))
     }
     post(HttpPaths.ACCEPT_INVITE) {
         call.respond(roomInvites.accept(call.userId, call.parameters[HttpPaths.INVITE_ID_PARAM].orEmpty()))

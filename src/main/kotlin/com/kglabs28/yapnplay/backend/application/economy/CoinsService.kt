@@ -17,6 +17,7 @@ import com.kglabs28.yapnplay.backend.contract.Leagues
 import com.kglabs28.yapnplay.backend.domain.common.Clock
 import com.kglabs28.yapnplay.backend.domain.economy.CoinReason
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
+import com.kglabs28.yapnplay.backend.domain.economy.adRewardFor
 import com.kglabs28.yapnplay.backend.domain.match.FinishedMatch
 import java.time.Instant
 import java.time.ZoneId
@@ -42,7 +43,8 @@ class CoinsService(
     }
 
     /**
-     * A fully watched rewarded ad: +500, a few times a day. [adId] is unique
+     * A fully watched rewarded ad: the day's next step of the ladder
+     * (200, 300, 400, 500, 700 by default), a few times a day. [adId] is unique
      * per ad view, so a retry or replay pays nothing. [ads] is the hook for
      * AdMob server-side verification (SSV) later; today it accepts every view.
      */
@@ -51,7 +53,7 @@ class CoinsService(
         if (!ads.verify(userId, adId)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_AD_ID)
         val now = clock.nowMillis()
         val limit = settings[GameSettings.AD_DAILY_LIMIT]
-        val claim = when (val result = store.claimAdReward(userId, adId, dayOf(now), settings[GameSettings.AD_REWARD], limit, cooldownMillis(), now)) {
+        val claim = when (val result = store.claimAdReward(userId, adId, dayOf(now), rewards(limit), limit, cooldownMillis(), now)) {
             is AdClaimResult.Paid -> result.claim
             is AdClaimResult.Refused -> throw ServiceException(
                 ErrorCode.RATE_LIMITED,
@@ -64,16 +66,25 @@ class CoinsService(
             adsLeftToday = claim.adsLeftToday,
             dailyLimit = limit,
             nextAdAt = nextAdAt(claim.adsLeftToday, claim.lastAdAt, now),
+            adRewards = rewards(limit),
         )
     }
 
-    /** `GET /coins/ad-status`: what an ad pays, how many are left today, and when the next one can pay. */
+    /** `GET /coins/ad-status`: what the next ad pays, the day's ladder, how many are left today, and when the next one can pay. */
     suspend fun adStatus(userId: String): AdRewardStatus {
         val now = clock.nowMillis()
         val limit = settings[GameSettings.AD_DAILY_LIMIT]
         val usage = store.adUsage(userId, dayOf(now))
         val left = (limit - usage.usedToday).coerceAtLeast(0)
-        return AdRewardStatus(settings[GameSettings.AD_REWARD], limit, left, nextAdAt(left, usage.lastAdAt, now), now)
+        val ladder = rewards(limit)
+        val next = if (left > 0) adRewardFor(ladder, usage.usedToday) else 0
+        return AdRewardStatus(next, limit, left, nextAdAt(left, usage.lastAdAt, now), now, ladder)
+    }
+
+    /** The day's ladder, one amount per allowed ad (ads past the setting's end pay its last amount). */
+    private fun rewards(limit: Int): List<Int> {
+        val ladder = settings[GameSettings.AD_REWARDS]
+        return List(limit) { adRewardFor(ladder, it) }
     }
 
     /** Null when an ad can pay now; the next India-time day when today's are used up; else the end of the gap since the last one. */

@@ -18,6 +18,8 @@ sealed class MonoChaosEvent : GameEvent {
     data class StackAccepted(val seat: SeatNumber, val penaltyCards: Int) : MonoChaosEvent()
     data class MonoCalled(val seat: SeatNumber) : MonoChaosEvent()
     data class MonoMissed(val seat: SeatNumber, val penaltyCards: Int) : MonoChaosEvent()
+    data class MonoCaught(val catcher: SeatNumber, val seat: SeatNumber, val penaltyCards: Int) : MonoChaosEvent()
+    data class FalseCatch(val seat: SeatNumber, val target: SeatNumber, val penaltyCards: Int) : MonoChaosEvent()
     data class HandSwapped(val from: SeatNumber, val to: SeatNumber) : MonoChaosEvent()
     data class HandsPassed(val direction: String) : MonoChaosEvent()
     data class PlayerEliminated(val seat: SeatNumber) : MonoChaosEvent()

@@ -73,12 +73,12 @@ class CityBazaarEngine : Game {
     override fun defaultRules(): GameRules = CityBazaarRules.STANDARD
 
     override fun rulesSummary(): String =
-        "City Bazaar for 3–6 players (random tables 4): buy cities, build on your own, " +
+        "City Royale for 3–6 players (random tables 4): buy cities, build on your own, " +
             "double rent with 3 of a colour, ₹1,500 at START; sell or auction to pay debts; " +
             "last one solvent wins, or the richest when time or rounds run out."
 
     override fun start(rules: GameRules, seatCount: Int, random: GameRandom): GameState {
-        require(seatCount in 2..CITY_BAZAAR_MAX_PLAYERS) { "City Bazaar needs 2-6 seats" }
+        require(seatCount in 2..CITY_BAZAAR_MAX_PLAYERS) { "City Royale needs 2-6 seats" }
         val cbRules = rules as? CityBazaarRules ?: CityBazaarRules.STANDARD
         val seats = (1..seatCount).toList()
         return CityBazaarState(
@@ -130,7 +130,7 @@ class CityBazaarEngine : Game {
             DeclareBankruptcy -> (s.phase == CityBazaarPhase.DEBT).also { if (it) turn.bankrupt(me, s.debt?.payees.orEmpty()) }
             LateRollFine -> (s.phase == CityBazaarPhase.ROLL || s.phase == CityBazaarPhase.JAIL_ROLL).also { if (it) turn.lateRollFine(me) }
             EndMatch -> true.also { turn.finish() }
-            else -> return reject("BAD_REQUEST", "Unknown action for City Bazaar")
+            else -> return reject("BAD_REQUEST", "Unknown action for City Royale")
         }
         return if (ok) turn.result() else reject("ILLEGAL_ACTION", "Not allowed now")
     }

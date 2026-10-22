@@ -121,4 +121,29 @@ class MonoRulesTest {
         val s = table(mapOf(1 to listOf(MonoChaosCard.NumberCard(Color.RED, 7)), 2 to List(3) { MonoChaosCard.NumberCard(Color.GREEN, it) }))
         assertEquals(MonoChaosPhase.FINISHED, (play(s, 1, MonoChaosAction.PlayCard(0)).state as MonoChaosState).phase)
     }
+
+    @Test
+    fun `a modified client can't draw or pass its way out of a penalty`() {
+        val chaosStack = table(
+            mapOf(1 to listOf(MonoChaosCard.NumberCard(Color.RED, 1), MonoChaosCard.NumberCard(Color.RED, 2)), 2 to List(3) { MonoChaosCard.NumberCard(Color.GREEN, it) }),
+            top = MonoChaosCard.DrawTwoCard(Color.RED), phase = MonoChaosPhase.AWAITING_STACK_CHOICE, stack = 2,
+        )
+        for (cheat in listOf(MonoChaosAction.DrawUntilPlayable, MonoChaosAction.Pass, MonoChaosAction.ChooseColor(Color.GOLD), MonoChaosAction.ChooseRouletteColor(Color.GOLD), MonoChaosAction.ChooseSwapTarget(2))) {
+            val r = assertIs<ApplyResult.Rejected>(chaos.apply(chaosStack, SeatNumber(1), cheat, Seeded(1)), "$cheat under a stack")
+            assertEquals("BAD_PHASE", r.rejection.code)
+        }
+        val playing = table(mapOf(1 to listOf(MonoChaosCard.NumberCard(Color.RED, 1), MonoChaosCard.NumberCard(Color.RED, 2)), 2 to List(3) { MonoChaosCard.NumberCard(Color.GREEN, it) }))
+        for (cheat in listOf(MonoChaosAction.AcceptStack, MonoChaosAction.Pass, MonoChaosAction.StackDraw(0))) {
+            assertEquals("BAD_PHASE", assertIs<ApplyResult.Rejected>(chaos.apply(playing, SeatNumber(1), cheat, Seeded(1)), "$cheat with no stack").rejection.code)
+        }
+
+        val standard = MonoEngine()
+        val s0 = standard.start(MonoRules.TRADITIONAL, 2, Seeded(4)) as MonoState
+        val stacked = s0.copy(phase = com.kglabs28.yapnplay.backend.games.mono.domain.MonoPhase.AWAITING_STACK_CHOICE, activeStackPenalty = 2, stackTopValue = 2)
+        val seat = SeatNumber(s0.currentSeat)
+        for (cheat in listOf(com.kglabs28.yapnplay.backend.games.mono.domain.MonoAction.DrawCard, com.kglabs28.yapnplay.backend.games.mono.domain.MonoAction.Pass)) {
+            assertEquals("BAD_PHASE", assertIs<ApplyResult.Rejected>(standard.apply(stacked, seat, cheat, Seeded(1)), "$cheat under a stack").rejection.code)
+        }
+        assertEquals("BAD_PHASE", assertIs<ApplyResult.Rejected>(standard.apply(s0, seat, com.kglabs28.yapnplay.backend.games.mono.domain.MonoAction.Pass, Seeded(1)), "a free skip").rejection.code)
+    }
 }
