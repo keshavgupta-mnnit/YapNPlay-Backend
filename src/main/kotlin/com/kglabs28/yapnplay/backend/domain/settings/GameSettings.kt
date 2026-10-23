@@ -162,7 +162,7 @@ object GameSettings {
     val CHAOS_CPU_THINK_JITTER_MS = IntSetting("chaos.cpu_think_jitter_ms", SettingGroup.CHAOS, "Bots: extra random think time, up to (ms); 3000 + 4000 = 3-7 s", 4_000, 0, 10_000)
     val CHAOS_CPU_DECISION_EXTRA_MS = IntSetting("chaos.cpu_decision_extra_ms", SettingGroup.CHAOS, "Bots: extra time for a real choice (colour, roulette, stack, swap) (ms); 0 keeps every decision within 3-7 s", 0, 0, 10_000)
     val CHAOS_PENALTY_CARDS = IntSetting("chaos.penalty_cards", SettingGroup.CHAOS, "Cards drawn when caught without calling MONO!", 7, 0, 15)
-    val CHAOS_FALSE_CATCH_CARDS = IntSetting("chaos.false_catch_cards", SettingGroup.CHAOS, "Cards the catcher draws for a wrong catch", 4, 0, 15)
+    val CHAOS_FALSE_CATCH_CARDS = IntSetting("chaos.false_catch_cards", SettingGroup.CHAOS, "Cards the catcher draws for a wrong catch", 2, 0, 15)
     val CHAOS_KNOCKOUT_CARDS = IntSetting("chaos.knockout_cards", SettingGroup.CHAOS, "A hand this big knocks the player out", 25, 10, 100)
     val MONO_BOT_CARD_COST = IntSetting("mono.bot_card_cost", SettingGroup.MONO, "Bots: what one card in hand costs", 10, 1, 100)
     val MONO_BOT_SHED_PCT = IntSetting("mono.bot_shed_pct", SettingGroup.MONO, "Bots: shed high cards early, % of card points when a rival is near MONO", 100, 0, 500)

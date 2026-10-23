@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.plugins
 
+import com.kglabs28.yapnplay.backend.api.http.roomStatsRoutes
+import com.kglabs28.yapnplay.backend.api.http.openLinkRoutes
+import com.kglabs28.yapnplay.backend.api.http.feedbackRoutes
 import io.ktor.server.plugins.ratelimit.rateLimit
 import com.kglabs28.yapnplay.backend.api.auth.BearerUserAuthProvider
 import com.kglabs28.yapnplay.backend.api.http.adminRoutes
@@ -15,12 +18,15 @@ import org.koin.core.Koin
 /** All routes, with their use cases taken from the dependency graph. */
 fun Application.configureRouting(koin: Koin) {
     routing {
-        publicRoutes(koin.get(), koin.get(), GUEST_RATE_LIMIT)
-        adminRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
+        publicRoutes(koin.get(), koin.get(), koin.get(), GUEST_RATE_LIMIT)
+        openLinkRoutes()
+        adminRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         authenticate(BearerUserAuthProvider.NAME) {
             rateLimit(PLAYER_RATE_LIMIT) {
                 userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
                 socialRoutes(koin.get(), koin.get(), koin.get(), koin.get())
+                feedbackRoutes(koin.get())
+                roomStatsRoutes(koin.get())
             }
             webSocketRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         }

@@ -12,6 +12,8 @@ object BackendConstants {
     const val GUEST_NAME_NUMBER_MIN = 1000
     const val GUEST_NAME_NUMBER_MAX = 9999
     const val SECRET_BYTES = 32
+    /** A phone id sent at sign-up (Android's per-app id is 16 hex digits). */
+    val DEVICE_ID_PATTERN = Regex("[A-Za-z0-9_-]{8,64}")
     const val BEARER_SEPARATOR = '.'
 
     // ── Profile (contract 0.3.1) ─────────────────────────────────────────
@@ -23,7 +25,19 @@ object BackendConstants {
     /** Preset avatars a01..a18 (the app ships 18; the contract lists the first 12). */
     const val AVATAR_COUNT = 18
     /** The robot avatars CPU seats use, in turn. */
-    val CPU_AVATARS = listOf("a09", "a18")
+    /** Robot avatars: odd-numbered CPUs (1, 3, 5, 7) get the first, even-numbered (2, 4, 6, 8) the second. */
+    const val CPU_AVATAR_ODD = "a09"
+    const val CPU_AVATAR_EVEN = "a18"
+    val CPU_AVATARS = listOf(CPU_AVATAR_ODD, CPU_AVATAR_EVEN)
+    /** A table never has more CPUs than this. */
+    const val MAX_CPUS = 8
+
+    /** Shared invite links (`/open/...`): the app they open, its link scheme, and the store page without it. */
+    const val APP_PACKAGE = "com.kglabs28.yapnplay"
+    const val APP_SCHEME = "yapnplay"
+    const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=$APP_PACKAGE"
+    val LINK_KINDS = setOf("friend", "join")
+    const val LINK_CODE_MAX_LENGTH = 12
 
     // ── Rooms ────────────────────────────────────────────────────────────
     const val ROOM_CODE_LENGTH = 6

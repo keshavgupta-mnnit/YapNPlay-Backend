@@ -117,7 +117,9 @@ class MatchService(
         return restored.size
     }
 
-    private suspend fun open(request: MatchSetup): String {
+    private suspend fun open(asked: MatchSetup): String {
+        // A table never has more than MAX_CPUS CPUs.
+        val request = asked.copy(cpuCount = asked.cpuCount.coerceIn(0, BackendConstants.MAX_CPUS))
         // Everyone who has the coins pays in now; anyone short plays for free but wins nothing.
         val paid = fees.charge(request.players.map { it.userId }, request.matchId, request.entryCoins)
         val split = settings.potShares()[request.players.size + request.cpuCount].orEmpty()

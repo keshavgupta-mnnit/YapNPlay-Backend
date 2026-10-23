@@ -11,6 +11,14 @@ data class AdminUser(
     val playGamesLinked: Boolean,
     /** End of the block running now (epoch millis), or null. */
     val blockedUntil: Long?,
+    val friends: Int = 0,
+    /** The groups (rooms) they belong to, by name. */
+    val groups: List<String> = emptyList(),
+    /** Finished matches they played. */
+    val gamesPlayed: Int = 0,
+    /** Time connected to the app in all (millis), and when they last left (0: not yet). */
+    val onlineMs: Long = 0,
+    val lastSeenAt: Long = 0,
 )
 
 /** A voice-chat report as the admin dashboard shows it. */

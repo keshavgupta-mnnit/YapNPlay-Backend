@@ -5,6 +5,8 @@ data class PlayedMatch(
     val matchId: String,
     val gameId: String,
     val roomMatch: Boolean,
+    /** The room it was played in, by name ("" for Quick Play or a deleted room). */
+    val roomName: String = "",
     val startedAt: Long,
     val endedAt: Long,
     val seats: List<FinishedSeat>,

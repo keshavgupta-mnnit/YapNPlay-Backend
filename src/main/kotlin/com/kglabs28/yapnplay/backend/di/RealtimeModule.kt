@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.identity.OnlineTimeTracker
 import com.kglabs28.yapnplay.backend.api.ws.ConnectionRegistry
 import com.kglabs28.yapnplay.backend.api.ws.EnvelopeRouter
 import com.kglabs28.yapnplay.backend.api.ws.ConnectionHooks
@@ -30,6 +31,7 @@ val realtimeModule = module {
     single { MatchmakingChannelHandler(get(), get()) }
     single { ModerationChannelHandler(get(), get()) }
     single { EnvelopeRouter(get(), get(), get(), get(), get()) }
-    single { ConnectionHooks(get(), get(), get()) }
+    single { OnlineTimeTracker(get(), get()) }
+    single { ConnectionHooks(get(), get(), get(), get()) }
     single { GetOnlineStatsUseCase(get()) }
 }

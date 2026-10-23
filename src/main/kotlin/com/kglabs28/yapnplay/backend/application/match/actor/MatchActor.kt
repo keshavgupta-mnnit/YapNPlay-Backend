@@ -105,6 +105,16 @@ class MatchActor(
     var presentUsers: Set<String> = seatedUsers
         private set
 
+    /** Players and spectators with their mic on (admin dashboard), as of the last update. */
+    @Volatile
+    var micOnUsers: Set<String> = emptySet()
+        private set
+
+    /** Spectators watching (admin dashboard), as of the last update. */
+    @Volatile
+    var spectatorCount: Int = 0
+        private set
+
     /** Stops play; the last checkpoint is still written ([awaitSaved]). */
     fun stop() {
         ticker.cancel()
@@ -478,6 +488,9 @@ class MatchActor(
         rescheduleNeeded = true
         seatedUsers = state.seats.filter { !it.cpu && !it.left }.map { it.userId }.toSet()
         presentUsers = state.seats.filter { !it.cpu && !it.left && it.connected }.map { it.userId }.toSet() + state.spectators.keys
+        micOnUsers = state.seats.filter { !it.cpu && !it.left && it.micOn }.map { it.userId }.toSet() +
+            state.spectators.filterValues { it.micOn }.keys
+        spectatorCount = state.spectators.size
         // The vote's result is the same for every game: added after the game's own events.
         val voteWire = events.filterIsInstance<ExtensionDecided>().map {
             json.encodeToJsonElement(ExtensionVoted.serializer(), ExtensionVoted(it.continued, it.yes, it.voters)).jsonObject

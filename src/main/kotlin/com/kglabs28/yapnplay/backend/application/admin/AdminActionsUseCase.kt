@@ -30,7 +30,11 @@ class AdminActionsUseCase(
     suspend fun users(query: String): List<AdminUserView> {
         val now = clock.nowMillis()
         return directory.searchUsers(query, now, USER_LIMIT).map {
-            AdminUserView(it.userId, it.displayName, it.userCode, it.coins, it.xp, it.createdAt, it.playGamesLinked, it.blockedUntil)
+            AdminUserView(
+                it.userId, it.displayName, it.userCode, it.coins, it.xp, it.createdAt, it.playGamesLinked, it.blockedUntil,
+                friends = it.friends, groups = it.groups, gamesPlayed = it.gamesPlayed,
+                appMinutes = it.onlineMs / MILLIS_PER_MINUTE, lastSeenAt = it.lastSeenAt,
+            )
         }
     }
 
@@ -114,7 +118,17 @@ data class AdminUserView(
     val createdAt: Long,
     val playGamesLinked: Boolean,
     val blockedUntil: Long?,
+    val friends: Int = 0,
+    val groups: List<String> = emptyList(),
+    val gamesPlayed: Int = 0,
+    /** Time in the app, in minutes. */
+    val appMinutes: Long = 0,
+    /** When they last left the app (epoch millis; 0: not yet counted). */
+    val lastSeenAt: Long = 0,
 )
+
+/** A minute in millis (time in the app is shown in minutes). */
+private const val MILLIS_PER_MINUTE = 60_000L
 
 @Serializable
 data class AdminReportView(

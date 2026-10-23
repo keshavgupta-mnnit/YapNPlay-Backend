@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import com.kglabs28.yapnplay.backend.domain.identity.User
 import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.UsersTable
@@ -53,6 +55,26 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
 
     override suspend fun findByCode(userCode: String): User? =
         db.run { UsersTable.selectAll().where { UsersTable.userCode eq userCode }.singleOrNull()?.toUser() }
+
+    override suspend fun findByDeviceId(deviceId: String): User? = db.run {
+        UsersTable.selectAll().where { UsersTable.deviceId eq deviceId }
+            .orderBy(UsersTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toUser()
+    }
+
+    override suspend fun setDeviceId(id: String, deviceId: String) {
+        val uuid = id.toUuidOrNull() ?: return
+        db.run { UsersTable.update({ UsersTable.id eq uuid }) { it[UsersTable.deviceId] = deviceId } }
+    }
+
+    override suspend fun addOnlineTime(id: String, millis: Long, at: Long) {
+        val uuid = id.toUuidOrNull() ?: return
+        db.run {
+            UsersTable.update({ UsersTable.id eq uuid }) {
+                with(SqlExpressionBuilder) { it[onlineMs] = onlineMs + millis }
+                it[lastSeenAt] = at
+            }
+        }
+    }
 
     override suspend fun updateProfile(id: String, displayName: String?, avatarId: String?) {
         val uuid = id.toUuidOrNull() ?: return

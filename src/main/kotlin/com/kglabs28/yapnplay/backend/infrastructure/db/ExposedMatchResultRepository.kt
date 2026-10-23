@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import org.jetbrains.exposed.sql.and
+import com.kglabs28.yapnplay.backend.domain.match.RoomTotals
+import com.kglabs28.yapnplay.backend.infrastructure.db.tables.PlayRoomsTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.selectAll
@@ -71,16 +74,36 @@ class ExposedMatchResultRepository(private val db: DbQuery) : MatchResultReposit
                     stake = row[MatchResultSeatsTable.stake],
                 )
             }
+        val roomIds = matches.mapNotNull { it[MatchResultsTable.roomId] }.distinct()
+        val roomNames = if (roomIds.isEmpty()) emptyMap() else PlayRoomsTable.selectAll().where { PlayRoomsTable.id inList roomIds }
+            .associate { it[PlayRoomsTable.id] to it[PlayRoomsTable.name] }
         matches.map { row ->
             val id = row[MatchResultsTable.id]
             PlayedMatch(
                 matchId = id.toString(),
                 gameId = row[MatchResultsTable.gameId],
                 roomMatch = row[MatchResultsTable.roomId] != null,
+                roomName = row[MatchResultsTable.roomId]?.let { roomNames[it] }.orEmpty(),
                 startedAt = row[MatchResultsTable.startedAt],
                 endedAt = row[MatchResultsTable.endedAt],
                 seats = seats[id].orEmpty().sortedBy { it.place },
             )
+        }
+    }
+
+    override suspend fun roomTotals(roomId: String): Map<String, RoomTotals> {
+        val room = roomId.toUuidOrNull() ?: return emptyMap()
+        return db.run {
+            (MatchResultsTable innerJoin MatchResultSeatsTable).selectAll()
+                .where { (MatchResultsTable.roomId eq room) and MatchResultSeatsTable.userId.isNotNull() }
+                .groupBy { it[MatchResultSeatsTable.userId].toString() }
+                .mapValues { (_, rows) ->
+                    RoomTotals(
+                        played = rows.size,
+                        wins = rows.count { it[MatchResultSeatsTable.place] == 1 },
+                        coins = rows.sumOf { it[MatchResultSeatsTable.coinsWon] + it[MatchResultSeatsTable.completionCoins] },
+                    )
+                }
         }
     }
 

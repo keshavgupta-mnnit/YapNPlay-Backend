@@ -27,6 +27,9 @@ class RoomPresence {
     /** Rooms with at least one person present (admin dashboard). */
     fun activeRoomCount(): Int = roomByUser.values.toSet().size
 
+    /** Everyone present in a room (admin dashboard). */
+    fun presentUsers(): Set<String> = roomByUser.keys.toSet()
+
     /** People present in any room (admin dashboard). */
     fun presentUserCount(): Int = roomByUser.size
 }

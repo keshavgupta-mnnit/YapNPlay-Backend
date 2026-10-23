@@ -112,13 +112,14 @@ class MonoSession(
     /** The server plays [seat]'s step (any mode: CPU, Autoplay, away, or a timed-out turn), and calls MONO! for it. */
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? {
         if (vote.active) return null
-        // Two cards and about to play: call MONO! first (required under Call Before Play, allowed always).
-        val early = if (state.handForSeat(seat).size == 2 && state.monoCalledSeat != seat) {
+        val action = bot.choose(state, seat, misses) ?: return take(engine.autoplay(state, SeatNumber(seat), random))
+        // Call Before Play: MONO! just before playing the second-last card. Otherwise
+        // (and never when drawing) it is called after the play leaves one card.
+        val early = if (state.monoRules.house.callBeforePlay && action is MonoAction.PlayCard && state.handForSeat(seat).size == 2 && state.monoCalledSeat != seat) {
             take(engine.apply(state, SeatNumber(seat), MonoAction.CallMono, random)).orEmpty()
         } else {
             emptyList()
         }
-        val action = bot.choose(state, seat, misses) ?: return take(engine.autoplay(state, SeatNumber(seat), random))
         val events = take(engine.apply(state, SeatNumber(seat), action, random))
             ?: take(engine.autoplay(state, SeatNumber(seat), random))
             ?: return null

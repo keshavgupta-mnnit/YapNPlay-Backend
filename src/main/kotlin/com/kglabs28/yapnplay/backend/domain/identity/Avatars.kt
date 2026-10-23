@@ -16,7 +16,7 @@ object Avatars {
     /** Any person preset, for a new guest (never a robot avatar). */
     fun random(random: RandomSource): String = forPeople[random.nextInt(0, forPeople.size)]
 
-    /** CPU seats take turns between the two robot avatars: CPU 1 → a09, CPU 2 → a18, CPU 3 → a09… */
+    /** Odd-numbered CPUs get one robot avatar, even-numbered the other: CPU 1 → a09, CPU 2 → a18, CPU 3 → a09… */
     fun forCpu(cpuNumber: Int): String =
-        BackendConstants.CPU_AVATARS[(cpuNumber - 1).mod(BackendConstants.CPU_AVATARS.size)]
+        if (cpuNumber % 2 == 1) BackendConstants.CPU_AVATAR_ODD else BackendConstants.CPU_AVATAR_EVEN
 }

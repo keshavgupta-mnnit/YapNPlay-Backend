@@ -7,4 +7,7 @@ interface MatchResultRepository {
 
     /** The latest [limit] matches [userId] played in, newest first, with every seat. */
     suspend fun history(userId: String, limit: Int): List<PlayedMatch>
+
+    /** Every player's record in the room [roomId], by user id (players with no finished match there are absent). */
+    suspend fun roomTotals(roomId: String): Map<String, RoomTotals>
 }

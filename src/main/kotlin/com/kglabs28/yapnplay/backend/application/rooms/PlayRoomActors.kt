@@ -27,6 +27,9 @@ class PlayRoomActors(
     /** The live actor without loading it (null when the room is not active). */
     fun peek(roomId: String): PlayRoomActor? = actors[roomId]
 
+    /** Every room loaded now (admin dashboard). */
+    fun all(): Collection<PlayRoomActor> = actors.values
+
     fun shutdown() {
         actors.values.forEach { it.stop() }
         actors.clear()

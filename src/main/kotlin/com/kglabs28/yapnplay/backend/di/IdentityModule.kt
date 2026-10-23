@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.identity.FindDeviceAccountUseCase
 import com.kglabs28.yapnplay.backend.application.identity.PlayGamesSignInUseCase
 import com.kglabs28.yapnplay.backend.application.identity.AuthenticateUseCase
 import com.kglabs28.yapnplay.backend.application.identity.CreateGuestUseCase
@@ -22,6 +23,7 @@ val identityModule = module {
     single { UserCodeGenerator(get()) }
     single { UserCodeAssigner(get(), get()) }
     single { CreateGuestUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { FindDeviceAccountUseCase(get(), get()) }
     single { PlayGamesSignInUseCase(get(), get(), get(), get(), get(), get()) }
     single { AuthenticateUseCase(get(), get()) }
     single { GetMeUseCase(get(), get(), get(), get()) }

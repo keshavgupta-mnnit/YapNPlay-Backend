@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import com.kglabs28.yapnplay.backend.application.admin.StoredAppTime
+import com.kglabs28.yapnplay.backend.application.admin.StoredMatchTotals
 import com.kglabs28.yapnplay.backend.application.admin.AccountType
 import com.kglabs28.yapnplay.backend.application.admin.AccountTypeCount
 import com.kglabs28.yapnplay.backend.application.admin.AdminStatsQueries
@@ -57,6 +59,14 @@ class ExposedAdminStatsQueries(private val db: DbQuery) : AdminStatsQueries {
         }
     }
 
+    override suspend fun matchTotals(): StoredMatchTotals = db.run {
+        single(MATCH_TOTALS) { StoredMatchTotals(it.getInt(1), it.getInt(2), it.getLong(3)) }
+    }
+
+    override suspend fun appTime(): StoredAppTime = db.run {
+        single(APP_TIME) { StoredAppTime(it.getLong(1), it.getInt(2)) }
+    }
+
     /** Rows of [table] (a constant, never input) by the calendar day of `created_at` in [zone]. */
     private fun Transaction.perDay(table: String, sinceMillis: Long, zone: String): List<DayCount> = rows(
         """
@@ -110,6 +120,13 @@ class ExposedAdminStatsQueries(private val db: DbQuery) : AdminStatsQueries {
                    count(*) FILTER (WHERE resolved_at IS NULL)
             FROM reports
             """
+        const val MATCH_TOTALS = """
+            SELECT count(*) FILTER (WHERE status = 'COMPLETED'),
+                   count(*) FILTER (WHERE status LIKE 'ABORTED%'),
+                   coalesce(sum(ended_at - started_at) FILTER (WHERE status = 'COMPLETED' AND ended_at IS NOT NULL), 0)
+            FROM match_outcomes
+            """
+        const val APP_TIME = "SELECT coalesce(sum(online_ms), 0), count(*) FILTER (WHERE online_ms > 0) FROM users"
         const val PENALTY_COUNTS =
             "SELECT count(*), count(*) FILTER (WHERE cleared_at IS NULL AND blocked_until > ?) FROM penalties"
         const val MOST_REPORTED = """

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.admin
 
+import com.kglabs28.yapnplay.backend.application.rooms.PlayRoomActors
 import com.kglabs28.yapnplay.backend.config.BuildInfo
 import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.matchmaking.MatchmakingService
@@ -17,6 +18,7 @@ class GetAdminStatsUseCase(
     private val matchmaking: MatchmakingService,
     private val games: GameRegistry,
     private val clock: Clock,
+    private val rooms: PlayRoomActors,
 ) {
     suspend operator fun invoke(): AdminStats {
         val now = clock.nowMillis()
@@ -36,6 +38,9 @@ class GetAdminStatsUseCase(
                 usersInRoomsNow = presence.presentUserCount(),
                 roomsActiveNow = roomsActive,
                 searchingQuickPlayNow = waiting.values.sum(),
+                onMicNow = (liveMatches.flatMap { it.micOnUsers } + rooms.all().flatMap { it.micOnUsers }).toSet().size,
+                chattingInLobbyNow = (presence.presentUsers() - liveMatches.flatMap { it.seatedUsers }.toSet()).size,
+                spectatorsNow = liveMatches.sumOf { it.spectatorCount },
             ),
             users = users(since),
             rooms = RoomStats(queries.roomCount(), roomsActive, queries.roomsPerDay(since, TIME_ZONE)),
@@ -46,12 +51,18 @@ class GetAdminStatsUseCase(
                 waiting = waiting,
             ),
             moderation = moderation(now),
+            matches = queries.matchTotals().let { MatchTotals(it.completed, it.abandoned, it.playMillis / MILLIS_PER_MINUTE) },
         )
     }
 
     private suspend fun users(since: Long): UserStats {
         val byType = queries.userCountsByType()
-        return UserStats(byType.sumOf { it.count }, byType, queries.usersPerDay(since, TIME_ZONE))
+        val time = queries.appTime()
+        return UserStats(
+            byType.sumOf { it.count }, byType, queries.usersPerDay(since, TIME_ZONE),
+            appMinutesTotal = time.totalMillis / MILLIS_PER_MINUTE,
+            appMinutesAverage = if (time.players == 0) 0 else time.totalMillis / time.players / MILLIS_PER_MINUTE,
+        )
     }
 
     /** Every built-in game (even unplayed ones) plus any id only the history knows, busiest first. */
@@ -106,3 +117,6 @@ class GetAdminStatsUseCase(
         const val MOST_REPORTED_LIMIT = 10
     }
 }
+
+/** A minute in millis (the dashboard shows minutes). */
+private const val MILLIS_PER_MINUTE = 60_000L

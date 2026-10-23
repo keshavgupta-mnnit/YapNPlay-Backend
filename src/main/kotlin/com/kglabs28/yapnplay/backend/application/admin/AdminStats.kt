@@ -16,6 +16,17 @@ data class AdminStats(
     val rooms: RoomStats,
     val games: List<GameUsage>,
     val moderation: ModerationStats,
+    val matches: MatchTotals = MatchTotals(),
+)
+
+/** Every match ever started, by how it ended, and the time spent playing. */
+@Serializable
+data class MatchTotals(
+    val completed: Int = 0,
+    /** Ended by an error or a server restart before a result. */
+    val abandoned: Int = 0,
+    /** Minutes of play over all completed matches. */
+    val minutesPlayed: Long = 0,
 )
 
 /** `GET /admin/uptime` (no token): when this server process started, and its clock now. */
@@ -34,6 +45,11 @@ data class LiveStats(
     val usersInRoomsNow: Int,
     val roomsActiveNow: Int,
     val searchingQuickPlayNow: Int,
+    /** People with their mic on, at a table or in a room lobby. */
+    val onMicNow: Int = 0,
+    /** People in a room lobby who are not in a match: just chatting. */
+    val chattingInLobbyNow: Int = 0,
+    val spectatorsNow: Int = 0,
 )
 
 /** Player accounts. Today every account is an auto-created guest; no one has signed up. */
@@ -44,6 +60,9 @@ data class UserStats(
     val byType: List<AccountTypeCount>,
     /** New accounts of every type per day. */
     val newPerDay: List<DayCount>,
+    /** Time in the app over every player, in minutes, and per player who has used it. */
+    val appMinutesTotal: Long = 0,
+    val appMinutesAverage: Long = 0,
 )
 
 @Serializable
@@ -115,6 +134,12 @@ data class StoredGameCounts(
     val quickPlay: Int,
     val humanSeats: Int,
 )
+
+/** Matches by how they ended, and the play time of completed ones (millis), as stored. */
+data class StoredMatchTotals(val completed: Int, val abandoned: Int, val playMillis: Long)
+
+/** Time in the app over every player (millis), and how many players have any. */
+data class StoredAppTime(val totalMillis: Long, val players: Int)
 
 /** Report and penalty totals, as stored. */
 data class StoredModerationCounts(

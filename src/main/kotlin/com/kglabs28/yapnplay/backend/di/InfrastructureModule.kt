@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedFeedbackRepository
+import com.kglabs28.yapnplay.backend.domain.feedback.FeedbackRepository
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.application.settings.SettingsService
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminAuditRepository
@@ -61,6 +63,7 @@ fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = m
     single<PlayRoomRepository> { ExposedPlayRoomRepository(get()) }
     single<MatchResultRepository> { ExposedMatchResultRepository(get()) }
     single<FriendRepository> { ExposedFriendRepository(get()) }
+    single<FeedbackRepository> { ExposedFeedbackRepository(get()) }
     single<FriendRequestRepository> { ExposedFriendRequestRepository(get()) }
     single<BlockRepository> { ExposedBlockRepository(get()) }
     single<DeviceRepository> { ExposedDeviceRepository(get()) }

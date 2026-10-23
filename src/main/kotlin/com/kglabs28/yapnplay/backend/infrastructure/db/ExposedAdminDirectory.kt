@@ -47,6 +47,13 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
             .where { (PenaltiesTable.userId inList ids) and (PenaltiesTable.blockedUntil greater now) and PenaltiesTable.clearedAt.isNull() }
             .groupBy({ it[PenaltiesTable.userId] }, { it[PenaltiesTable.blockedUntil] })
             .mapValues { it.value.max() }
+        val friends = if (ids.isEmpty()) emptyMap() else FriendshipsTable.selectAll().where { FriendshipsTable.userId inList ids }
+            .groupingBy { it[FriendshipsTable.userId] }.eachCount()
+        val groups = if (ids.isEmpty()) emptyMap() else (PlayRoomMembersTable innerJoin PlayRoomsTable).selectAll()
+            .where { PlayRoomMembersTable.userId inList ids }
+            .groupBy({ it[PlayRoomMembersTable.userId] }, { it[PlayRoomsTable.name] })
+        val games = if (ids.isEmpty()) emptyMap() else MatchResultSeatsTable.selectAll().where { MatchResultSeatsTable.userId inList ids }
+            .groupingBy { it[MatchResultSeatsTable.userId] }.eachCount()
         users.map {
             AdminUser(
                 userId = it[UsersTable.id].toString(),
@@ -57,6 +64,11 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
                 createdAt = it[UsersTable.createdAt],
                 playGamesLinked = it[UsersTable.playGamesPlayerId] != null,
                 blockedUntil = blocks[it[UsersTable.id]],
+                friends = friends[it[UsersTable.id]] ?: 0,
+                groups = groups[it[UsersTable.id]].orEmpty().sorted(),
+                gamesPlayed = games[it[UsersTable.id]] ?: 0,
+                onlineMs = it[UsersTable.onlineMs],
+                lastSeenAt = it[UsersTable.lastSeenAt],
             )
         }
     }

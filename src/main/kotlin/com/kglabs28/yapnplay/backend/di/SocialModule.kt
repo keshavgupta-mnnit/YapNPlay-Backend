@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.rooms.GetRoomLeaderboardUseCase
+import com.kglabs28.yapnplay.backend.application.feedback.FeedbackUseCase
 import com.kglabs28.yapnplay.backend.application.moderation.BlockChecker
 import com.kglabs28.yapnplay.backend.application.moderation.ModerationService
 import com.kglabs28.yapnplay.backend.application.push.PushSender
@@ -28,5 +30,7 @@ fun socialModule(config: BackendConfig) = module {
     single { IssueVoiceTokenUseCase(config.voice?.let { LiveKitTokenSigner(it) }, get(), get(), get(), get()) }
     single { ModerationService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }
     single { RegisterDeviceUseCase(get(), get()) }
+    single { FeedbackUseCase(get(), get(), get()) }
+    single { GetRoomLeaderboardUseCase(get(), get()) }
     single { FriendsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }

@@ -11,6 +11,15 @@ interface UserRepository {
 
     suspend fun findByCode(userCode: String): User?
 
+    /** The newest account made on the phone [deviceId], or null. */
+    suspend fun findByDeviceId(deviceId: String): User?
+
+    /** Records the phone the account was made on. */
+    suspend fun setDeviceId(id: String, deviceId: String)
+
+    /** Adds [millis] connected to the user's time in the app; [at] is when they left. */
+    suspend fun addOnlineTime(id: String, millis: Long, at: Long)
+
     /** Changes only the fields that are not null. */
     suspend fun updateProfile(id: String, displayName: String?, avatarId: String?)
 

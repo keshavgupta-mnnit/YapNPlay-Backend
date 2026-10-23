@@ -112,17 +112,12 @@ class MonoChaosSession(
 
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? {
         if (vote.active) return null
-        // Two cards and about to play: call MONO! first (required under Call Before Play, allowed always).
-        val early = if (state.handForSeat(seat).size == 2 && state.monoCalledSeat != seat) {
-            take(engine.apply(state, SeatNumber(seat), MonoChaosAction.CallMono, random)).orEmpty()
-        } else {
-            emptyList()
-        }
         val action = bot.choose(state, seat, misses) ?: return take(engine.autoplay(state, SeatNumber(seat), random))
         val events = take(engine.apply(state, SeatNumber(seat), action, random))
             ?: take(engine.autoplay(state, SeatNumber(seat), random))
             ?: return null
-        return early + events + callMonoFor(seat)
+        // MONO! once the play leaves one card (never with two, or when drawing).
+        return events + callMonoFor(seat)
     }
 
     override fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int>): List<GameEvent>? {

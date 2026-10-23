@@ -121,8 +121,14 @@ class PlayRoomActor(
         return RoomResult.Done
     }
 
+    /** Members online in the lobby with their mic on (admin dashboard), as of the last update. */
+    @Volatile
+    var micOnUsers: Set<String> = emptySet()
+        private set
+
     private suspend fun broadcast() {
         state.version++
+        micOnUsers = state.members.values.filter { it.online && it.micOn }.map { it.userId }.toSet()
         (state.onlineIds() + state.extraRecipients).distinct().forEach { sendSnapshot(it) }
         state.extraRecipients.clear()
     }

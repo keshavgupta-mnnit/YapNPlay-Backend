@@ -26,6 +26,12 @@ class InMemoryUserRepository : UserRepository {
 
     override suspend fun findByCode(userCode: String): User? = users.values.firstOrNull { it.userCode == userCode }
 
+    override suspend fun addOnlineTime(id: String, millis: Long, at: Long) = Unit
+
+    override suspend fun findByDeviceId(deviceId: String): User? = null
+
+    override suspend fun setDeviceId(id: String, deviceId: String) = Unit
+
     override suspend fun updateProfile(id: String, displayName: String?, avatarId: String?) {
         val user = findById(id)!!
         users[id] = user.copy(

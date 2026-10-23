@@ -16,7 +16,7 @@ data class MonoChaosMandatoryRules(
     /** Caught without calling MONO!: the player on one card draws this many. */
     val monoPenaltyCards: Int = 7,
     /** A wrong catch (they had called): the catcher draws this many. */
-    val falseCatchPenaltyCards: Int = 4,
+    val falseCatchPenaltyCards: Int = 2,
 ) : MandatoryRules
 
 @Serializable

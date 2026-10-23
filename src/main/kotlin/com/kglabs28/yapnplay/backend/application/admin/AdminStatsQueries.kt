@@ -19,4 +19,10 @@ interface AdminStatsQueries {
     suspend fun moderationCounts(nowMillis: Long): StoredModerationCounts
 
     suspend fun mostReported(limit: Int): List<ReportedUser>
+
+    /** Matches by how they ended, and the play time of the completed ones. */
+    suspend fun matchTotals(): StoredMatchTotals
+
+    /** Time in the app over every player. */
+    suspend fun appTime(): StoredAppTime
 }

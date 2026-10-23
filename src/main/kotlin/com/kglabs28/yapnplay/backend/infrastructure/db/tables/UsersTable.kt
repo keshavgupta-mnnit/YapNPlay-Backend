@@ -24,10 +24,16 @@ object UsersTable : Table("users") {
     val completionsToday = integer("completions_today")
     /** V13: when the last rewarded ad paid (epoch millis). */
     val lastAdAt = long("last_ad_at")
+    /** V17: time connected to the app in all (millis), and when they last left. */
+    val onlineMs = long("online_ms")
+    val lastSeenAt = long("last_seen_at")
+    /** V18: the phone the guest was made on (Android's per-app id), or null. */
+    val deviceId = varchar("device_id", DEVICE_ID_MAX_LENGTH).nullable()
 
     override val primaryKey = PrimaryKey(id)
 
     private const val SHA256_HEX_LENGTH = 64
+    private const val DEVICE_ID_MAX_LENGTH = 64
     private const val USER_CODE_LENGTH = 6
     private const val AVATAR_ID_MAX_LENGTH = 8
     private const val PLAY_GAMES_ID_MAX_LENGTH = 128

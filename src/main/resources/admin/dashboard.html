@@ -106,6 +106,7 @@
   <nav class="tabs" id="tabs" role="tablist">
     <button type="button" data-tab="overview">Overview</button>
     <button type="button" data-tab="reports">Reports</button>
+    <button type="button" data-tab="feedback">Feedback</button>
     <button type="button" data-tab="audit">Audit</button>
     <button type="button" data-tab="players">Players</button>
     <button type="button" data-tab="rooms">Rooms</button>
@@ -139,6 +140,13 @@
     <h2>Reports</h2>
     <div class="note">Open reports can be decided here; upholding one blocks the reported player like a vote would.</div>
     <div class="panel"><table id="reportsTable"></table></div>
+  </section>
+
+  <section id="tab-feedback" hidden>
+    <h2>Feedback</h2>
+    <div class="note">What players sent from the app (new game ideas, features, issues, bugs, feedback). Open one to read it and reply; the player sees your reply in the app.</div>
+    <div class="panel"><table id="feedbackTable"></table></div>
+    <div id="feedbackThread" class="panel" style="margin-top:8px;padding:10px" hidden></div>
   </section>
 
   <section id="tab-audit" hidden>
@@ -272,11 +280,15 @@
   var ACCOUNT_LABELS = { guest: "Guest players" };
   function accountLabel(type) { return ACCOUNT_LABELS[type] || type + " players"; }
 
+  /** 95 → "1h 35m", 40 → "40m". */
+  function minutes(m) { m = Math.round(m || 0); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m"; }
+
   function render(s) {
     var L = s.live, M = s.moderation;
     cards("liveCards", [
       ["Online now", L.onlineNow], ["In a match", L.playersInMatchNow], ["Live matches", L.liveMatches],
-      ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow]
+      ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow],
+      ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching a match", L.spectatorsNow || 0]
     ]);
     cards("totalCards", [
     ].concat(s.users.byType.length > 1 ? [["All players", s.users.total]] : [])
@@ -284,6 +296,11 @@
                                    : [[accountLabel("guest"), 0]]).concat([
       ["Rooms (existing)", s.rooms.total],
       ["Matches finished", s.games.reduce(function (a, g) { return a + g.matchesFinished; }, 0)],
+      ["Matches completed", (s.matches || {}).completed || 0, "good"],
+      ["Matches abandoned", (s.matches || {}).abandoned || 0, "bad"],
+      ["Time played", minutes((s.matches || {}).minutesPlayed || 0)],
+      ["Time in app (all)", minutes(s.users.appMinutesTotal || 0)],
+      ["Time in app (avg player)", minutes(s.users.appMinutesAverage || 0)],
       ["Reports filed", M.reportsFiled]
     ]));
     table("games",
@@ -422,6 +439,45 @@
     }).catch(function (e) { say("Reports: " + e.message, true); });
   }
 
+  // ── Feedback ──
+  var FEEDBACK_KINDS = { NEW_GAME: "New game", NEW_FEATURE: "New feature", ISSUE: "Issue", BUG: "Bug", FEEDBACK: "Feedback" };
+  function loadFeedback() {
+    api("GET", "/admin/feedback").then(function (tickets) {
+      table("feedbackTable", [["Last activity"], ["Player"], ["Code"], ["Type"], ["Status"], ["Message"], [""]],
+        tickets.map(function (t) {
+          return [when(t.updatedAt), t.userName, t.userCode || "—", FEEDBACK_KINDS[t.kind] || t.kind,
+                  t.status === "ANSWERED" ? "Answered" : "Open", t.preview.length > 90 ? t.preview.slice(0, 90) + "…" : t.preview,
+                  btn("Open", function () { openFeedback(t.ticketId); }, "ghost")];
+        }), "No feedback yet");
+    }).catch(function (e) { say("Feedback: " + e.message, true); });
+  }
+
+  function openFeedback(ticketId) {
+    api("GET", "/admin/feedback/" + ticketId).then(showFeedback).catch(function (e) { say(e.message, true); });
+  }
+
+  /** The conversation, oldest first, then (for admins who can moderate) a reply box. */
+  function showFeedback(thread) {
+    var box = $("feedbackThread"), t = thread.ticket;
+    box.textContent = ""; box.hidden = false;
+    box.appendChild(el("h3", (FEEDBACK_KINDS[t.kind] || t.kind) + " from " + t.userName + " (" + (t.userCode || t.userId) + ")"));
+    thread.messages.forEach(function (m) {
+      var row = el("div", null, "note");
+      row.appendChild(el("strong", (m.fromAdmin ? "Admin " + m.author : t.userName) + " · " + when(m.createdAt)));
+      var body = el("div", m.body); body.style.whiteSpace = "pre-wrap"; body.style.color = "var(--text, inherit)"; body.style.margin = "2px 0 8px";
+      row.appendChild(body);
+      box.appendChild(row);
+    });
+    if (!can("moderate")) return;
+    var text = el("textarea"); text.rows = 4; text.maxLength = 2000; text.style.width = "100%"; text.placeholder = "Your reply (the player sees it in the app)";
+    box.appendChild(text);
+    box.appendChild(btn("Send reply", function () {
+      if (!text.value.trim()) { say("Write a reply first", true); return; }
+      api("POST", "/admin/feedback/" + t.ticketId + "/reply", { message: text.value })
+        .then(function (updated) { say("Reply sent"); showFeedback(updated); loadFeedback(); }).catch(function (e) { say(e.message, true); });
+    }));
+  }
+
   function loadAudit() {
     api("GET", "/admin/audit").then(function (rows) {
       table("auditTable", [["When"], ["Admin"], ["What"], ["Target"], ["From"], ["To"], ["Note"]],
@@ -433,7 +489,7 @@
   // ── Players ──
   function loadUsers() {
     api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
-      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
+      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app", true], ["Last seen"], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
         users.map(function (u) {
           var block = null, coins = null, del = null;
           if (can("moderate")) {
@@ -448,8 +504,11 @@
                     .then(function () { say(u.displayName + " blocked for " + days + " days"); loadUsers(); }).catch(function (e) { say(e.message, true); });
                 });
             coins = btn("Coins ±", function () {
-              var delta = parseInt(prompt("Coins to give (e.g. 500) or take (e.g. -500) for " + u.displayName), 10); if (!delta) return;
-              var why = prompt("Why? (required)"); if (!why) return;
+              var raw = prompt("Coins to give (e.g. 500) or take (e.g. -500) for " + u.displayName + " (" + (u.userCode || u.userId) + ")");
+              if (raw === null) return;
+              var delta = parseInt(raw, 10); if (!delta) { say("Coins not changed: enter a number like 500 or -500", true); return; }
+              var why = prompt("Why? (required)"); if (why === null) return;
+              if (!why.trim()) { say("Coins not changed: a reason is required", true); return; }
               api("POST", "/admin/users/" + u.userId + "/coins", { delta: delta, note: why })
                 .then(function (r) { say(u.displayName + " now has " + fmt(r.coins) + " coins"); loadUsers(); }).catch(function (e) { say(e.message, true); });
             }, "ghost");
@@ -462,7 +521,10 @@
                 .then(function () { say(u.displayName + " deleted"); loadUsers(); }).catch(function (e) { say(e.message, true); });
             }, "danger");
           }
-          return [u.displayName, u.userCode || "—", u.userId, u.coins, u.xp, u.playGamesLinked ? "Linked" : "—", when(u.blockedUntil), when(u.createdAt), group(block, coins, del)];
+          var groups = (u.groups || []);
+          return [u.displayName, u.userCode || "—", u.userId, u.coins, u.xp, u.gamesPlayed || 0, u.friends || 0,
+                  groups.length ? groups.length + ": " + groups.join(", ") : "—", minutes(u.appMinutes || 0),
+                  u.lastSeenAt ? when(u.lastSeenAt) : "—", u.playGamesLinked ? "Linked" : "—", when(u.blockedUntil), when(u.createdAt), group(block, coins, del)];
         }), "No players found");
     }).catch(function (e) { say("Players: " + e.message, true); });
   }
@@ -611,7 +673,7 @@
   });
 
   // ── Tabs ──
-  var LOADERS = { overview: loadOverview, reports: loadReports, audit: loadAudit, players: loadUsers, rooms: loadRooms,
+  var LOADERS = { overview: loadOverview, reports: loadReports, feedback: loadFeedback, audit: loadAudit, players: loadUsers, rooms: loadRooms,
                   settings: loadSettings, bots: loadMatches, admins: loadAdmins };
   function showTab(tab) {
     currentTab = tab;

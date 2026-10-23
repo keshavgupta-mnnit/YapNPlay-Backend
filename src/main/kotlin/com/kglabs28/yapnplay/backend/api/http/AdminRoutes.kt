@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackReplyBody
+import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackUseCase
 import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
 import com.kglabs28.yapnplay.backend.api.auth.AdminTokenCheck
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
@@ -54,6 +56,7 @@ fun Route.adminRoutes(
     removal: AdminRemovalUseCase,
     adminMatches: AdminMatchesUseCase,
     audit: AdminAuditRepository,
+    feedback: AdminFeedbackUseCase,
 ) {
     val page by lazy {
         AdminTokenCheck::class.java.getResource(DASHBOARD_RESOURCE)?.readText() ?: error(DASHBOARD_RESOURCE)
@@ -149,6 +152,17 @@ fun Route.adminRoutes(
         }
     }
     get(HttpPaths.ADMIN_REPORTS) { guard.run(call, AdminPermission.VIEW) { call.respond(actions.reports()) } }
+    get(HttpPaths.ADMIN_FEEDBACK) { guard.run(call, AdminPermission.VIEW) { call.respond(feedback.list()) } }
+    get(HttpPaths.ADMIN_FEEDBACK_TICKET) {
+        guard.run(call, AdminPermission.VIEW) { call.respond(feedback.thread(call.parameters[HttpPaths.TICKET_ID_PARAM].orEmpty())) }
+    }
+    // Replying is moderation work: read-only admins can read but not answer.
+    post(HttpPaths.ADMIN_FEEDBACK_REPLY) {
+        guard.run(call, AdminPermission.MODERATE) { admin ->
+            val body = call.receive<AdminFeedbackReplyBody>()
+            call.respond(feedback.reply(call.parameters[HttpPaths.TICKET_ID_PARAM].orEmpty(), admin.adminId, body.message))
+        }
+    }
     post(HttpPaths.ADMIN_REPORT_DECIDE) {
         guard.run(call, AdminPermission.MODERATE) { admin ->
             val body = call.receive<AdminReportBody>()

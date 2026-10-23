@@ -14,6 +14,7 @@ class GetMatchHistoryUseCase(private val results: MatchResultRepository) {
                     matchId = match.matchId,
                     gameId = match.gameId,
                     roomMatch = match.roomMatch,
+                    roomName = match.roomName,
                     startedAt = match.startedAt,
                     endedAt = match.endedAt,
                     mySeat = match.seats.firstOrNull { it.userId == userId }?.seat ?: 0,

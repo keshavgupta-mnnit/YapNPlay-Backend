@@ -6,6 +6,55 @@ import kotlinx.serialization.Serializable
 // HTTP request/response bodies (REST API, not WebSocket)
 // ══════════════════════════════════════════════════════════════════════════
 
+/**
+ * `POST /auth/guest` (optional body): the account the app picked and saved
+ * before asking, so a retry after a crash gets the same account back
+ * instead of a new one. Without a body the server picks both.
+ */
+@Serializable
+data class CreateGuestBody(
+    /** A random UUID chosen by the app. */
+    val userId: String,
+    /** A random secret chosen by the app (only its hash is stored). */
+    val secret: String,
+    /** The phone (Android's per-app id), recorded with the account. */
+    val deviceId: String? = null,
+    /** With [deviceId]: true hands back the account already made on that phone (the player chose to continue it); false makes a new one. */
+    val restore: Boolean = true,
+)
+
+/** One member's record in a room (`GET /rooms/{roomId}/leaderboard`). */
+@Serializable
+data class RoomStanding(
+    val userId: String,
+    val displayName: String,
+    val avatarId: String = "",
+    val played: Int = 0,
+    val wins: Int = 0,
+    val coins: Int = 0,
+)
+
+/** `GET /rooms/{roomId}/leaderboard`: every member with their record in the room (the app sorts by wins or coins). */
+@Serializable
+data class RoomLeaderboard(
+    val standings: List<RoomStanding>,
+)
+
+/** `POST /auth/device`: is there an account made on this phone already? */
+@Serializable
+data class DeviceAccountBody(
+    val deviceId: String,
+)
+
+/** What the app shows when offering the phone's account back: never its secret. */
+@Serializable
+data class DeviceAccount(
+    val found: Boolean,
+    val displayName: String = "",
+    val avatarId: String = "",
+    val level: Int = 0,
+)
+
 /** Response after creating a new guest account. */
 @Serializable
 data class GuestCreated(
@@ -328,6 +377,8 @@ data class MatchHistoryItem(
     val matchId: String,
     val gameId: String,
     val roomMatch: Boolean,
+    /** The room's name for a room match ("" for Quick Play or a deleted room). */
+    val roomName: String = "",
     val startedAt: Long,
     val endedAt: Long,
     /** The caller's own seat. */
