@@ -67,8 +67,12 @@ class MonoChaosSession(
     override val isFinished: Boolean get() = state.phase == MonoChaosPhase.FINISHED
     override val ranking: List<Int> get() = if (isFinished) engine.outcome(state).ranking.map { it.seat.value } else emptyList()
     override val turnSeconds: Int get() = timing.turnSeconds
-    /** A bot's think time: longer for a colour, the Roulette, a stack or a swap partner. */
-    override val thinkMillis: Long get() = timing.think.millis(state.phase in DECISIONS)
+    /**
+     * A bot's think time: longer for a colour, the Roulette, a stack or a swap
+     * partner; none between the cards of a one-at-a-time draw (no choice in
+     * it: the card's own pause paces it).
+     */
+    override val thinkMillis: Long get() = if (state.phase in DRAW_STEPS) 0L else timing.think.millis(state.phase in DECISIONS)
     /** The continue vote holds the table: no turn timer, no bot turns. */
     override val waitsForTick: Boolean get() = vote.active
     override val stillIn: Set<Int> get() = state.seats.map { it.value }.filter { !state.isEliminated(it) && it !in state.finishOrder }.toSet()
@@ -183,10 +187,12 @@ class MonoChaosSession(
     override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
         when (event) {
             is MonoChaosEvent.CardPlayed, is MonoChaosEvent.StackDraw -> PLAY_MS
-            is MonoChaosEvent.CardsDrawn -> DRAW_MS * event.count
+            // Drawing until a card fits, and the Roulette, come one card per step: each is seen before the next.
+            is MonoChaosEvent.CardDrawn -> STEP_MS
             is MonoChaosEvent.CardsDiscarded -> DRAW_MS * event.count
             is MonoChaosEvent.StackAccepted -> DRAW_MS * event.penaltyCards
             is MonoChaosEvent.HandSwapped, is MonoChaosEvent.HandsPassed, is MonoChaosEvent.PlayerEliminated -> SWAP_MS
+            is MonoChaosEvent.ColorChosen, is MonoChaosEvent.RouletteColorChosen, is MonoChaosEvent.MonoCaught, is MonoChaosEvent.FalseCatch -> NOTICE_MS
             else -> 0L
         }
     }.coerceAtMost(MAX_PAUSE_MS)
@@ -279,7 +285,10 @@ class MonoChaosSession(
         }
         result.events.forEach { event ->
             when (event) {
-                is MonoChaosEvent.CardsDrawn -> before.topCardColor?.let { if (event.seat.value == before.currentSeat) misses.getOrPut(event.seat.value) { mutableSetOf() } += it }
+                // Drawing (not the Roulette's flips) says the drawer had nothing of the live colour.
+                is MonoChaosEvent.CardDrawn -> before.topCardColor?.let {
+                    if (event.seat.value == before.currentSeat && before.phase != MonoChaosPhase.AWAITING_ROULETTE_DRAW) misses.getOrPut(event.seat.value) { mutableSetOf() } += it
+                }
                 is MonoChaosEvent.CardPlayed -> event.card.playColor()?.let { misses[event.seat.value]?.remove(it) }
                 else -> Unit
             }
@@ -303,9 +312,15 @@ class MonoChaosSession(
         const val CATCH_JITTER_MS = 250L
         const val WINDOW_OPEN = -1L
         const val PLAY_MS = 700L
-        const val DRAW_MS = 250L
+        const val DRAW_MS = 300L
+        /** One card of a one-at-a-time draw. */
+        const val STEP_MS = 800L
         const val SWAP_MS = 1_200L
-        const val MAX_PAUSE_MS = 4_000L
+        /** A colour change or a catch: long enough for the table's message to be read. */
+        const val NOTICE_MS = 1_200L
+        const val MAX_PAUSE_MS = 7_000L
+        /** The phases where a seat draws one card after another. */
+        val DRAW_STEPS = setOf(MonoChaosPhase.AWAITING_DRAW_UNTIL_PLAYABLE, MonoChaosPhase.AWAITING_ROULETTE_DRAW)
         val DECISIONS = setOf(
             MonoChaosPhase.AWAITING_COLOR_CHOICE, MonoChaosPhase.AWAITING_ROULETTE_COLOR,
             MonoChaosPhase.AWAITING_STACK_CHOICE, MonoChaosPhase.AWAITING_SWAP_CHOICE,

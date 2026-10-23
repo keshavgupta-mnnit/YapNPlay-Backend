@@ -36,19 +36,24 @@ fun main(args: Array<String>) {
     val options = args.flatMap { it.split(' ') }.filter { '=' in it }.associate { it.substringBefore('=') to it.substringAfter('=') }
     val games = options["games"]?.toInt() ?: DEFAULT_GAMES
     val variant = options.filterKeys { it.startsWith("B.") }.mapKeys { it.key.removePrefix("B.") }.mapValues { it.value.toInt() }
+    val seats = options["seats"]?.toInt() ?: MONO_SEATS
     val report = when (options["game"] ?: "citybazaar") {
         "ludo" -> ludoArena(games, ludoTuning(variant))
+        // Rule checks over whole bot games (see MonoSimulation): ./gradlew arena -Parena="game=mono games=200 seats=4"
+        "mono" -> MonoSimulation(games, seats, options["catches"]?.toInt() ?: 60).mono()
+        "chaos" -> MonoSimulation(games, seats, options["catches"]?.toInt() ?: 60).chaos()
         else -> cityBazaarArena(games, cityBazaarTuning(variant))
     }
     println(report)
 }
 
 private const val DEFAULT_GAMES = 100
+private const val MONO_SEATS = 4
 private const val CITY_BAZAAR_SEATS = 4
 private const val ROUND_LIMIT = 20
 private const val MAX_STEPS = 50_000
 
-private class SeededRandom(seed: Long) : GameRandom {
+internal class SeededRandom(seed: Long) : GameRandom {
     private val random = Random(seed)
     override fun nextInt(bound: Int): Int = random.nextInt(bound)
 }

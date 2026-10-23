@@ -363,6 +363,7 @@ class MatchActor(
         val events = session.botPlay(owner.seat, mode) ?: session.botPlay(owner.seat, BotMode.FULL)
         if (events == null) {
             log.warn("Match $matchId: no bot move for seat ${owner.seat}")
+            state.botWakeAt = null
             return
         }
         publish(events)
@@ -414,14 +415,37 @@ class MatchActor(
         val wait = if (owner.playedByServer) {
             // The bot's think time counts inside its turn: never past the deadline.
             val deadlineLeft = state.deadline?.let { it - now } ?: Long.MAX_VALUE
-            (state.pauseMs + state.session.thinkMillis).coerceAtMost(deadlineLeft)
+            val wakeAt = state.botWakeAt ?: (now + state.pauseMs + state.session.thinkMillis).also { state.botWakeAt = it }
+            (wakeAt - now).coerceAtMost(deadlineLeft)
         } else {
+            state.botWakeAt = null
             (state.deadline ?: now) - now
         }
         scope.launch {
             delay(wait.coerceAtLeast(0))
             inbox.trySend(MatchCommand.Wake(token))
         }
+    }
+
+    /**
+     * A seat the server plays thinks a while before each move, as a person
+     * would (the game's think time, e.g. 3-7 s at random): picked once per
+     * step, when its own move or a new turn is published. It always fits in
+     * the turn's time limit: with less time left than it drew, it moves a
+     * little before the deadline instead. Another seat's out-of-turn event
+     * (a catch) only waits for its animation.
+     */
+    private fun planBotMove(now: Long, ownStep: Boolean) {
+        val session = state.session
+        val owner = state.seats.firstOrNull { it.seat == session.currentSeat }
+        if (owner == null || !owner.playedByServer || session.isFinished) {
+            state.botWakeAt = null
+            return
+        }
+        val afterAnimation = now + state.pauseMs
+        val planned = state.botWakeAt.takeUnless { ownStep }?.let { maxOf(it, afterAnimation) } ?: (afterAnimation + session.thinkMillis)
+        val latest = state.deadline?.let { it - BOT_DEADLINE_MARGIN_MS } ?: planned
+        state.botWakeAt = minOf(planned, latest).coerceAtLeast(afterAnimation)
     }
 
     /**
@@ -436,7 +460,8 @@ class MatchActor(
         val newTurn = session.currentSeat != state.turnOwner
         if (newTurn) closeTurn()
         val now = deps.clock.nowMillis()
-        if (events.isNotEmpty()) state.pauseMs = session.pauseAfter(events)
+        // A new turn starts only after the last one's animation and the gap between turns.
+        if (events.isNotEmpty()) state.pauseMs = session.pauseAfter(events) + if (newTurn) deps.settings[GameSettings.TURN_GAP_MS] else 0
         val deadline = state.deadline
         val fullTurn = now + state.pauseMs + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
         state.deadline = when {
@@ -446,6 +471,7 @@ class MatchActor(
             session.restartsClockOn(events) -> fullTurn
             else -> now + state.pauseMs + maxOf(deadline - now, deps.settings[GameSettings.TURN_FOLLOW_UP_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
         }
+        planBotMove(now, events.isNotEmpty() && !outOfTurn)
         state.version++
         rescheduleNeeded = true
         seatedUsers = state.seats.filter { !it.cpu && !it.left }.map { it.userId }.toSet()
@@ -560,6 +586,8 @@ class MatchActor(
     private companion object {
         val log = LoggerFactory.getLogger(MatchActor::class.java)
         const val MILLIS_PER_MINUTE = 60_000L
+        /** A bot moves at least this long before its turn's deadline, so the move never races it. */
+        const val BOT_DEADLINE_MARGIN_MS = 500L
     }
 }
 

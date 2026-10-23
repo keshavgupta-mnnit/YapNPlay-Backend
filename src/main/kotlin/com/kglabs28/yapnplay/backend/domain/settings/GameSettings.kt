@@ -108,15 +108,15 @@ object GameSettings {
     // ── XP ────────────────────────────────────────────────────────────────
     val XP_PER_PLAY = IntSetting("xp.per_play", SettingGroup.XP, "XP for finishing a match", 100, 0, 10_000)
     val XP_PLACE_BONUS = IntListSetting(
-        "xp.place_bonus", SettingGroup.XP, "Extra XP by place (1st first)", listOf(300, 200, 100), "Up to 6 numbers, none negative",
-    ) { bonus -> if (bonus.size > 6 || bonus.any { it !in 0..10_000 }) "Up to 6 numbers from 0 to 10000" else null }
-    val XP_REFERENCE_MINUTES = IntSetting("xp.reference_minutes", SettingGroup.XP, "A match this long gives the full XP; shorter less, longer more (minutes)", 10, 1, 120)
-    val XP_MIN_TIME_FACTOR_PCT = IntSetting("xp.min_time_factor_pct", SettingGroup.XP, "Shortest matches still give this % of the XP", 50, 0, 100)
-    val XP_MAX_TIME_FACTOR_PCT = IntSetting("xp.max_time_factor_pct", SettingGroup.XP, "Long matches give at most this % of the XP (1200 = up to 2 hours keeps counting)", 1_200, 100, 5_000)
+        "xp.place_bonus", SettingGroup.XP, "Fixed extra XP by end position (1st first; places past the list get none)", listOf(400, 300, 200, 150, 100, 50, 25, 0), "Up to 8 numbers, none negative",
+    ) { bonus -> if (bonus.size > 8 || bonus.any { it !in 0..10_000 }) "Up to 8 numbers from 0 to 10000" else null }
+    val XP_PER_MINUTE = IntSetting("xp.per_minute", SettingGroup.XP, "Variable XP for every minute the match ran", 10, 0, 1_000)
+    val XP_TIME_CAP_MINUTES = IntSetting("xp.time_cap_minutes", SettingGroup.XP, "Minutes past this give no more time XP", 60, 1, 600)
     val XP_PER_LEVEL = IntSetting("xp.per_level", SettingGroup.XP, "XP per level", 1_000, 100, 1_000_000)
 
     // ── Every match ───────────────────────────────────────────────────────
     val VOTE_SECONDS = IntSetting("match.vote_seconds", SettingGroup.MATCH, "Keep-playing vote (seconds)", 10, 5, MAX_SECONDS)
+    val TURN_GAP_MS = IntSetting("match.turn_gap_ms", SettingGroup.MATCH, "Pause between one player's turn ending (its animation done) and the next turn starting (ms)", 1_000, 0, 10_000)
     val TURN_FOLLOW_UP_SECONDS = IntSetting("match.turn_follow_up_seconds", SettingGroup.MATCH, "Least time for a follow-up step in the same turn (seconds)", 5, 1, MAX_SECONDS)
     val END_VOTE_SECONDS = IntSetting("match.end_vote_seconds", SettingGroup.MATCH, "End-game vote (seconds)", 20, 5, MAX_SECONDS)
     val END_VOTE_COOLDOWN_MINUTES = IntSetting("match.end_vote_cooldown_minutes", SettingGroup.MATCH, "Minutes before a player may ask to end again", 3, 0, 60)
@@ -134,9 +134,9 @@ object GameSettings {
     val CB_CLUB_REST_EACH = IntSetting("cb.club_rest_each", SettingGroup.CITY_BAZAAR, "Club / Rest House amount per player (₹)", 50, 0, 100_000)
     val CB_MESSAGE_PAUSE_MS = IntSetting("cb.message_pause_ms", SettingGroup.CITY_BAZAAR, "Reading time per table message (ms)", 2_500, 0, 10_000)
     val CB_MESSAGE_PAUSE_CAP_MS = IntSetting("cb.message_pause_cap_ms", SettingGroup.CITY_BAZAAR, "Most reading time per update (ms)", 8_000, 0, MAX_PAUSE_MS)
-    val CB_CPU_THINK_MS = IntSetting("cb.cpu_think_ms", SettingGroup.CITY_BAZAAR, "Bots: think time before each move (ms)", 1_200, 0, 10_000)
-    val CB_CPU_THINK_JITTER_MS = IntSetting("cb.cpu_think_jitter_ms", SettingGroup.CITY_BAZAAR, "Bots: extra random think time, up to (ms)", 1_300, 0, 10_000)
-    val CB_CPU_DECISION_EXTRA_MS = IntSetting("cb.cpu_decision_extra_ms", SettingGroup.CITY_BAZAAR, "Bots: extra time for a real choice (buy, build, jail, debt) (ms)", 1_000, 0, 10_000)
+    val CB_CPU_THINK_MS = IntSetting("cb.cpu_think_ms", SettingGroup.CITY_BAZAAR, "Bots: least think time before each decision (ms)", 3_000, 0, 10_000)
+    val CB_CPU_THINK_JITTER_MS = IntSetting("cb.cpu_think_jitter_ms", SettingGroup.CITY_BAZAAR, "Bots: extra random think time, up to (ms); 3000 + 4000 = 3-7 s", 4_000, 0, 10_000)
+    val CB_CPU_DECISION_EXTRA_MS = IntSetting("cb.cpu_decision_extra_ms", SettingGroup.CITY_BAZAAR, "Bots: extra time for a real choice (buy, build, jail, debt) (ms); 0 keeps every decision within 3-7 s", 0, 0, 10_000)
     val CB_CPU_RESERVE = IntSetting("cb.cpu_reserve", SettingGroup.CITY_BAZAAR, "CPU: least cash kept after paying (₹)", 2_000, 0, 100_000)
     val CB_CPU_SAFETY_BUFFER = IntSetting("cb.bot_safety_buffer", SettingGroup.CITY_BAZAAR, "CPU: cushion on top of the expected bills (₹)", 1_000, 0, 100_000)
     val CB_AUTO_BUY_RESERVE = IntSetting("cb.auto_buy_reserve", SettingGroup.CITY_BAZAAR, "Autoplay: least cash kept after paying (₹)", 500, 0, 100_000)
@@ -153,14 +153,14 @@ object GameSettings {
     val MONO_TURN_SECONDS = IntSetting("mono.turn_seconds", SettingGroup.MONO, "Turn time (seconds)", 15, 5, MAX_SECONDS)
     val MONO_CALL_WINDOW_MS = IntSetting("mono.call_window_ms", SettingGroup.MONO, "Time to call MONO! after going down to one card (ms)", 2_500, 500, 10_000)
     val MONO_DRAW_PLAY_WINDOW_MS = IntSetting("mono.draw_play_window_ms", SettingGroup.MONO, "Time to play a playable drawn card before the turn passes (ms)", 3_000, 500, 15_000)
-    val MONO_CPU_THINK_MS = IntSetting("mono.cpu_think_ms", SettingGroup.MONO, "Bots: think time before each move (ms)", 1_200, 0, 10_000)
-    val MONO_CPU_THINK_JITTER_MS = IntSetting("mono.cpu_think_jitter_ms", SettingGroup.MONO, "Bots: extra random think time, up to (ms)", 1_300, 0, 10_000)
-    val MONO_CPU_DECISION_EXTRA_MS = IntSetting("mono.cpu_decision_extra_ms", SettingGroup.MONO, "Bots: extra time for a real choice (colour, stack, swap) (ms)", 800, 0, 10_000)
+    val MONO_CPU_THINK_MS = IntSetting("mono.cpu_think_ms", SettingGroup.MONO, "Bots: least think time before each decision (ms)", 3_000, 0, 10_000)
+    val MONO_CPU_THINK_JITTER_MS = IntSetting("mono.cpu_think_jitter_ms", SettingGroup.MONO, "Bots: extra random think time, up to (ms); 3000 + 4000 = 3-7 s", 4_000, 0, 10_000)
+    val MONO_CPU_DECISION_EXTRA_MS = IntSetting("mono.cpu_decision_extra_ms", SettingGroup.MONO, "Bots: extra time for a real choice (colour, stack, swap) (ms); 0 keeps every decision within 3-7 s", 0, 0, 10_000)
     val MONO_PENALTY_CARDS = IntSetting("mono.penalty_cards", SettingGroup.MONO, "Cards drawn when caught without calling MONO!", 5, 0, 10)
     val MONO_FALSE_CATCH_CARDS = IntSetting("mono.false_catch_cards", SettingGroup.MONO, "Cards the catcher draws for a wrong catch", 2, 0, 10)
-    val CHAOS_CPU_THINK_MS = IntSetting("chaos.cpu_think_ms", SettingGroup.CHAOS, "Bots: think time before each move (ms)", 1_200, 0, 10_000)
-    val CHAOS_CPU_THINK_JITTER_MS = IntSetting("chaos.cpu_think_jitter_ms", SettingGroup.CHAOS, "Bots: extra random think time, up to (ms)", 1_300, 0, 10_000)
-    val CHAOS_CPU_DECISION_EXTRA_MS = IntSetting("chaos.cpu_decision_extra_ms", SettingGroup.CHAOS, "Bots: extra time for a real choice (colour, roulette, stack, swap) (ms)", 800, 0, 10_000)
+    val CHAOS_CPU_THINK_MS = IntSetting("chaos.cpu_think_ms", SettingGroup.CHAOS, "Bots: least think time before each decision (ms)", 3_000, 0, 10_000)
+    val CHAOS_CPU_THINK_JITTER_MS = IntSetting("chaos.cpu_think_jitter_ms", SettingGroup.CHAOS, "Bots: extra random think time, up to (ms); 3000 + 4000 = 3-7 s", 4_000, 0, 10_000)
+    val CHAOS_CPU_DECISION_EXTRA_MS = IntSetting("chaos.cpu_decision_extra_ms", SettingGroup.CHAOS, "Bots: extra time for a real choice (colour, roulette, stack, swap) (ms); 0 keeps every decision within 3-7 s", 0, 0, 10_000)
     val CHAOS_PENALTY_CARDS = IntSetting("chaos.penalty_cards", SettingGroup.CHAOS, "Cards drawn when caught without calling MONO!", 7, 0, 15)
     val CHAOS_FALSE_CATCH_CARDS = IntSetting("chaos.false_catch_cards", SettingGroup.CHAOS, "Cards the catcher draws for a wrong catch", 4, 0, 15)
     val CHAOS_KNOCKOUT_CARDS = IntSetting("chaos.knockout_cards", SettingGroup.CHAOS, "A hand this big knocks the player out", 25, 10, 100)
@@ -174,9 +174,9 @@ object GameSettings {
 
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
-    val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: think time before each move (ms)", 1_200, 0, 10_000)
-    val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms)", 1_300, 0, 10_000)
-    val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms)", 500, 0, 10_000)
+    val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 3_000, 0, 10_000)
+    val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 3000 + 4000 = 3-7 s", 4_000, 0, 10_000)
+    val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms); 0 keeps every decision within 3-7 s", 0, 0, 10_000)
     val RL_SIX_BOOST_PER_MISS_PCT = IntSetting("ludo.six_boost_per_miss_pct", SettingGroup.ROYAL_LUDO, "All pieces in base: each roll without a six adds this many % to the next six's chance (0 = fair dice)", 8, 0, 30)
     val RL_SIX_CHANCE_CAP_PCT = IntSetting("ludo.six_chance_cap_pct", SettingGroup.ROYAL_LUDO, "All pieces in base: the chance of a six never goes above this %", 50, 17, 90)
     val RL_BOT_BASE_COST = IntSetting("ludo.bot_base_cost", SettingGroup.ROYAL_LUDO, "Bots: what a piece in play is worth beyond its progress (squares)", 30, 0, 200)
@@ -192,8 +192,8 @@ object GameSettings {
     val ALL: List<GameSetting<*>> = listOf(
         DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
-        XP_PER_PLAY, XP_PLACE_BONUS, XP_REFERENCE_MINUTES, XP_MIN_TIME_FACTOR_PCT, XP_MAX_TIME_FACTOR_PCT, XP_PER_LEVEL,
-        VOTE_SECONDS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
+        XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
+        VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
         CB_TURN_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,

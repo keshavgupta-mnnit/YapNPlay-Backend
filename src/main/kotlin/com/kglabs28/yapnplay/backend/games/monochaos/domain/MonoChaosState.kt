@@ -51,6 +51,8 @@ data class MonoChaosState(
     val catchClosedFor: Set<Int> = emptySet(),
     /** Seats that emptied their hand, in the order they did (play goes on without them). */
     val finishOrder: List<Int> = emptyList(),
+    /** The colour the Roulette victim is flipping cards for; null when no Roulette is on. */
+    val rouletteColor: MonoChaosConstants.Color? = null,
 ) : GameState {
     override val gameId: GameId get() = _gameId
     override val rules: GameRules get() = _rules
@@ -89,11 +91,12 @@ data class MonoChaosState(
         catchNextSeat: Int? = this.catchNextSeat,
         catchClosedFor: Set<Int> = this.catchClosedFor,
         finishOrder: List<Int> = this.finishOrder,
+        rouletteColor: MonoChaosConstants.Color? = this.rouletteColor,
     ): MonoChaosState = MonoChaosState(
         _gameId, _rules, _seats, _turn, hands, drawPile, discardPile,
         currentSeat, phase, topCardColor, turnCounter, monoCallWindowExpiry,
         monoWindowSeat, monoCalledSeat, lastActionSeat, lastActionCard,
         activeStackPenalty, stackTopValue, reversed, drawnCardIndex, pendingSwapSeat,
-        eliminatedSeats, removedSeats, catchSeat, catchNextSeat, catchClosedFor, finishOrder,
+        eliminatedSeats, removedSeats, catchSeat, catchNextSeat, catchClosedFor, finishOrder, rouletteColor,
     )
 }

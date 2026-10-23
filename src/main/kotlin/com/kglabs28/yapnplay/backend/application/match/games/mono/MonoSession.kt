@@ -190,6 +190,7 @@ class MonoSession(
             is MonoEvent.CardPlayed -> PLAY_MS
             is MonoEvent.CardDrawn -> DRAW_MS
             is MonoEvent.HandSwapped, is MonoEvent.HandsPassed -> SWAP_MS
+            is MonoEvent.ColorChosen, is MonoEvent.MonoCaught, is MonoEvent.FalseCatch -> NOTICE_MS
             else -> 0L
         }
     }.coerceAtMost(MAX_PAUSE_MS)
@@ -317,9 +318,11 @@ class MonoSession(
         const val CATCH_JITTER_MS = 250L
         const val WINDOW_OPEN = -1L
         const val PLAY_MS = 700L
-        const val DRAW_MS = 250L
+        const val DRAW_MS = 300L
         const val SWAP_MS = 1_200L
-        const val MAX_PAUSE_MS = 3_000L
+        /** A colour change or a catch: long enough for the table's message to be read. */
+        const val NOTICE_MS = 1_200L
+        const val MAX_PAUSE_MS = 7_000L
         val DECISIONS = setOf(MonoPhase.AWAITING_COLOR_CHOICE, MonoPhase.AWAITING_STACK_CHOICE, MonoPhase.AWAITING_SWAP_CHOICE)
     }
 }

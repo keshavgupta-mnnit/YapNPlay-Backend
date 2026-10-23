@@ -20,8 +20,14 @@ class MatchState(
     var version = 0L
     /** Turn deadline (epoch millis), or null before the first one. */
     var deadline: Long? = null
-    /** How long the table animates the last real play. */
+    /** How long the table animates the last real play (and, on a new turn, the gap before it). */
     var pauseMs = 0L
+    /**
+     * When the seat the server plays makes its move: after the animation and
+     * its think time (picked once per step, so a replan never re-rolls it);
+     * null when a person holds the turn.
+     */
+    var botWakeAt: Long? = null
     var offer: SeatOfferState? = null
     /** Spectators who passed on the current handover. */
     val declined = mutableSetOf<String>()

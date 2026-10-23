@@ -37,6 +37,8 @@ class MonoChaosBot(private val tuning: MonoBotTuning = MonoBotTuning(), private 
             MonoChaosPhase.AWAITING_PLAY, MonoChaosPhase.AWAITING_DRAW_UNTIL_PLAYABLE -> PlayChoice(s, me).choose(trace)
             MonoChaosPhase.AWAITING_COLOR_CHOICE -> ColourChoice(s, me, misses).choose(trace)?.let { MonoChaosAction.ChooseColor(it) }
             MonoChaosPhase.AWAITING_ROULETTE_COLOR -> RouletteChoice(s, me).choose(trace)?.let { MonoChaosAction.ChooseRouletteColor(it) }
+            // The Roulette's flips have no choice in them: flip again.
+            MonoChaosPhase.AWAITING_ROULETTE_DRAW -> MonoChaosAction.DrawUntilPlayable
             MonoChaosPhase.AWAITING_STACK_CHOICE -> StackChoice(s, me).choose(trace)
             MonoChaosPhase.AWAITING_SWAP_CHOICE -> SwapChoice(s, me).choose(trace)?.let { MonoChaosAction.ChooseSwapTarget(it) }
             MonoChaosPhase.FINISHED -> null

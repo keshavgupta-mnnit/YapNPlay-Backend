@@ -18,6 +18,8 @@ enum class MonoChaosPhase {
     AWAITING_DRAW_UNTIL_PLAYABLE,
     /** The Roulette victim is naming the colour they must draw to. */
     AWAITING_ROULETTE_COLOR,
+    /** The Roulette victim flips cards one at a time until their colour comes ([MonoChaosState.rouletteColor]). */
+    AWAITING_ROULETTE_DRAW,
     /** The Rule of 7 is waiting for its player to pick a partner. */
     AWAITING_SWAP_CHOICE,
     FINISHED,

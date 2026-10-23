@@ -134,15 +134,15 @@ class MonoEngine : Game {
 
     /**
      * The catch window, after every move: it opens when [actor] goes down to
-     * one card (called or not) and stays open until the next seat's turn is
-     * over, or the hand is no longer one card. A pending call that didn't
-     * end on one card is dropped when the turn moves on.
+     * one card (called or not) and stays open for as long as they hold that
+     * one card, whoever's turn it is: anyone may catch an uncalled MONO at
+     * any time. A pending call that didn't end on one card is dropped when
+     * the turn moves on.
      */
     private fun catchWindow(before: MonoState, after: MonoState, actor: Int): MonoState {
         var s = after
         s.catchSeat?.let { target ->
-            val turnDone = s.catchNextSeat != null && actor == s.catchNextSeat && s.currentSeat != actor
-            if (s.handForSeat(target).size != 1 || turnDone) s = s.copy(catchSeat = null, catchNextSeat = null, catchClosedFor = emptySet())
+            if (s.handForSeat(target).size != 1) s = s.copy(catchSeat = null, catchNextSeat = null, catchClosedFor = emptySet())
         }
         if (before.handForSeat(actor).size > 1 && s.handForSeat(actor).size == 1) {
             s = s.copy(catchSeat = actor, catchNextSeat = null, catchClosedFor = emptySet(), monoCalledSeat = if (before.monoCalledSeat == actor) actor else null)
@@ -156,15 +156,17 @@ class MonoEngine : Game {
 
     /** Caught: the player on one card hadn't called (they draw), or had (the presser draws, once per window). */
     private fun caught(s: MonoState, seat: SeatNumber, random: GameRandom): ApplyResult {
-        val target = s.catchSeat ?: return rejected("NO_WINDOW", "Nobody to catch")
+        val target = s.catchSeat
         if (seat.value == target || seat.value !in s.seats.map { it.value } || seat.value in s.finishOrder) return rejected("BAD_TARGET", "You can't catch yourself")
-        if (seat.value in s.catchClosedFor) return rejected("ALREADY_TRIED", "One try per player")
-        return if (s.monoCalledSeat == target) {
+        if (target != null && seat.value in s.catchClosedFor) return rejected("ALREADY_TRIED", "One try per player")
+        // Pressing CAUGHT with nobody to catch, or on a player who called MONO, is a wrong catch: the presser pays.
+        return if (target == null || s.monoCalledSeat == target) {
             val penalty = s.monoRules.mandatory.falseCatchPenaltyCards
             val drawn = drawCards(s, penalty, random)
+            val closed = if (target == null) s.catchClosedFor else s.catchClosedFor + seat.value
             ApplyResult.Success(
-                drawn.state.copy(hands = s.hands + (seat.value to s.handForSeat(seat.value) + drawn.cards), catchClosedFor = s.catchClosedFor + seat.value),
-                drawn.cards.map { MonoEvent.CardDrawn(seat, it) } + MonoEvent.FalseCatch(seat, SeatNumber(target), drawn.cards.size),
+                drawn.state.copy(hands = s.hands + (seat.value to s.handForSeat(seat.value) + drawn.cards), catchClosedFor = closed),
+                drawn.cards.map { MonoEvent.CardDrawn(seat, it) } + MonoEvent.FalseCatch(seat, SeatNumber(target ?: seat.value), drawn.cards.size),
             )
         } else {
             val penalty = s.monoRules.mandatory.monoPenaltyCards
@@ -206,8 +208,19 @@ class MonoEngine : Game {
 
     override fun currentActor(state: GameState): SeatNumber = SeatNumber((state as MonoState).currentSeat)
 
+    /**
+     * Plays [seat]'s turn for them (a timeout, a bot's fallback). It ends the
+     * way every move does — a seat that empties its hand finishes, and the
+     * catch window moves on — exactly as through [apply].
+     */
     override fun autoplay(state: GameState, seat: SeatNumber, random: GameRandom): ApplyResult {
         val s = state as MonoState
+        val result = autoMove(s, seat, random)
+        return if (result is ApplyResult.Success) settle(catchWindow(s, result.state as MonoState, seat.value), result.events) else result
+    }
+
+    /** The move [autoplay] makes, before the end-of-move bookkeeping. */
+    private fun autoMove(s: MonoState, seat: SeatNumber, random: GameRandom): ApplyResult {
         if (s.phase == MonoPhase.FINISHED) return rejected("MATCH_ENDED", "Match ended")
         if (seat.value != s.currentSeat) return rejected("NOT_YOUR_TURN", "Not your turn")
 
