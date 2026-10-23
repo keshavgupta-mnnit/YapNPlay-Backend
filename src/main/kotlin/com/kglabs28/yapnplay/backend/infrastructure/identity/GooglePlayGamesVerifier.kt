@@ -30,7 +30,8 @@ class GooglePlayGamesVerifier(
     override val available: Boolean get() = !clientSecret.isNullOrBlank()
 
     override suspend fun playerIdFor(serverAuthCode: String): String? = withContext(Dispatchers.IO) {
-        val secret = clientSecret ?: return@withContext null
+        val secret = clientSecret ?: return@withContext null.also { log.warn("Play Games: no client secret set (PLAY_GAMES_CLIENT_SECRET)") }
+        log.info("Play Games: exchanging a server code (client ${clientId.take(CLIENT_PREFIX)}…)")
         val form = mapOf(
             "code" to serverAuthCode,
             "client_id" to clientId,
@@ -48,7 +49,8 @@ class GooglePlayGamesVerifier(
             HttpResponse.BodyHandlers.ofString(),
         )
         if (tokenResponse.statusCode() != HTTP_OK) {
-            log.warn("Play Games code exchange refused: HTTP ${tokenResponse.statusCode()}")
+            // Google's reply names the reason (invalid_grant, invalid_client, redirect_uri_mismatch…); it holds no secret.
+            log.warn("Play Games code exchange refused: HTTP ${tokenResponse.statusCode()} ${tokenResponse.body().take(REPLY_MAX)}")
             return@withContext null
         }
         val accessToken = json.decodeFromString(TokenReply.serializer(), tokenResponse.body()).access_token
@@ -61,10 +63,11 @@ class GooglePlayGamesVerifier(
             HttpResponse.BodyHandlers.ofString(),
         )
         if (playerResponse.statusCode() != HTTP_OK) {
-            log.warn("Play Games player lookup refused: HTTP ${playerResponse.statusCode()}")
+            log.warn("Play Games player lookup refused: HTTP ${playerResponse.statusCode()} ${playerResponse.body().take(REPLY_MAX)}")
             return@withContext null
         }
         json.decodeFromString(PlayerReply.serializer(), playerResponse.body()).playerId.takeIf { it.isNotBlank() }
+            .also { log.info("Play Games: player ${if (it == null) "missing in Google's reply" else "found (${it.take(ID_PREFIX)}…)"}") }
     }
 
     @Suppress("PropertyName")
@@ -80,5 +83,9 @@ class GooglePlayGamesVerifier(
         const val PLAYER_URL = "https://www.googleapis.com/games/v1/players/me"
         const val TIMEOUT_SECONDS = 10L
         const val HTTP_OK = 200
+        /** How much of Google's error reply, a player id and the client id go in the logs. */
+        const val REPLY_MAX = 300
+        const val ID_PREFIX = 6
+        const val CLIENT_PREFIX = 12
     }
 }

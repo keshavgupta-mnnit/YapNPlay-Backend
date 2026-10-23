@@ -31,7 +31,6 @@ class GetMeUseCase(
             nextLevelXp = progression.levelStartXp(level + 1),
             coins = coins?.balance(user.id) ?: 0,
             dailyBonus = bonus,
-            username = user.username,
             userCode = user.userCode.orEmpty(),
             avatarId = user.avatarId,
             gamesPlayed = stats.played,

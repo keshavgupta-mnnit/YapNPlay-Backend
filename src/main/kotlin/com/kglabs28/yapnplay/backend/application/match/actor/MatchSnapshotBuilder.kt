@@ -38,7 +38,7 @@ class MatchSnapshotBuilder(private val state: MatchState) {
             title = state.setup.title,
             roomId = state.roomId,
             startedAt = state.startedAt,
-            spectators = state.spectators.values.map { SpectatorInfo(it.userId, it.displayName, it.micOn) },
+            spectators = state.spectators.values.map { SpectatorInfo(it.userId, it.displayName, it.micOn, it.avatarId) },
             seatOffer = if (session.isFinished) null else state.offer?.toWire(),
             events = events,
             pot = state.setup.takeIf { it.paid.isNotEmpty() }?.let { setup ->

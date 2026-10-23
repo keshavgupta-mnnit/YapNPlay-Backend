@@ -27,8 +27,6 @@ data class Me(
     val coins: Int = 0,
     /** Provisional: economy not designed yet. */
     val gems: Int = 0,
-    /** Shown as "@username"; anyone may pick any (not unique). */
-    val username: String = "",
     /** The user's 6-character ID that friends type to add them (unique). */
     val userCode: String = "",
     /** One of the app's preset avatars ("" = default). */
@@ -53,7 +51,6 @@ data class FriendSummary(
     val userId: String,
     val displayName: String,
     val online: Boolean,
-    val username: String = "",
     val userCode: String = "",
     val avatarId: String = "",
 )
@@ -140,11 +137,10 @@ data class JoinRoomResult(
     val room: RoomSummary? = null,
 )
 
-/** `PATCH /me`: change the user's name, username or avatar (null = keep as is). */
+/** `PATCH /me`: change the user's name or avatar (null = keep as is). */
 @Serializable
 data class UpdateProfileBody(
     val displayName: String? = null,
-    val username: String? = null,
     val avatarId: String? = null,
 )
 
@@ -197,7 +193,6 @@ data class BlockedUsers(
 data class BlockedUserSummary(
     val userId: String,
     val displayName: String,
-    val username: String = "",
     val avatarId: String = "",
     /** When the user blocked them (epoch millis). */
     val blockedAt: Long,
@@ -318,4 +313,38 @@ data class League(
 @Serializable
 data class AdRewardBody(
     val adId: String,
+)
+
+/**
+ * `GET /matches/history`: the caller's latest matches, newest first, each
+ * with every seat as the result showed it (place, coins, XP), so the app
+ * can list them and open each one's leaderboard again.
+ */
+@Serializable
+data class MatchHistoryResponse(val matches: List<MatchHistoryItem>)
+
+@Serializable
+data class MatchHistoryItem(
+    val matchId: String,
+    val gameId: String,
+    val roomMatch: Boolean,
+    val startedAt: Long,
+    val endedAt: Long,
+    /** The caller's own seat. */
+    val mySeat: Int,
+    val seats: List<MatchHistorySeat>,
+)
+
+/** One seat of a past match. [userId] is null for a CPU; coins: the pot share, the finishing coins and the entry staked. */
+@Serializable
+data class MatchHistorySeat(
+    val seat: Int,
+    val userId: String? = null,
+    val name: String,
+    val avatarId: String = "",
+    val place: Int,
+    val coinsWon: Int = 0,
+    val completionCoins: Int = 0,
+    val stake: Int = 0,
+    val xp: Int = 0,
 )

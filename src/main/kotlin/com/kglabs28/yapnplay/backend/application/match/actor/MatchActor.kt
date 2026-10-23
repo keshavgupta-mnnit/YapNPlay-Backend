@@ -539,6 +539,8 @@ class MatchActor(
                     left = s.left,
                     completed = !s.cpu && !s.left && !s.removed && s.presence != SeatPresence.BOT,
                     xp = if (s.cpu) 0 else deps.progression.xpFor(place, s.left, now - state.startedAt),
+                    displayName = s.displayName,
+                    avatarId = s.avatarId,
                 )
             },
             entryCoins = state.setup.entryCoins,
@@ -576,7 +578,14 @@ class MatchActor(
             state.viewers().forEach { deps.notifier.send(it, envelope) }
             runCatching { deps.outcomes.ended(matchId, MatchOutcomeStatus.COMPLETED, now) }
                 .onFailure { log.warn("Match $matchId: recording the outcome failed", it) }
-            runCatching { deps.listener.onFinished(record) }.onFailure { log.error("Match $matchId: saving results failed", it) }
+            // The stored result keeps each seat's coins as the table showed them (for the player's history).
+            val shown = ended.ranking.associateBy { it.seat }
+            val stored = record.copy(
+                seats = record.seats.map { seat ->
+                    shown[seat.seat]?.let { seat.copy(coinsWon = it.coinsWon, completionCoins = it.completionCoins, stake = it.stake) } ?: seat
+                },
+            )
+            runCatching { deps.listener.onFinished(stored) }.onFailure { log.error("Match $matchId: saving results failed", it) }
             delay(BackendConstants.FINISHED_MATCH_KEEP_MS)
             onClosed(matchId)
             stop()

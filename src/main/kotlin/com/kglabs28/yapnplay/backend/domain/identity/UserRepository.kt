@@ -12,7 +12,7 @@ interface UserRepository {
     suspend fun findByCode(userCode: String): User?
 
     /** Changes only the fields that are not null. */
-    suspend fun updateProfile(id: String, displayName: String?, username: String?, avatarId: String?)
+    suspend fun updateProfile(id: String, displayName: String?, avatarId: String?)
 
     /** Gives the user [code] if they have none yet; false when the code is taken. */
     suspend fun assignCode(id: String, code: String): Boolean

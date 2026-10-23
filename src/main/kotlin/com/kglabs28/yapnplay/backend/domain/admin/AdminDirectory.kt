@@ -40,7 +40,7 @@ data class AdminRoom(
 
 /** Admin-only reads and the one report write the dashboard needs. */
 interface AdminDirectory {
-    /** By name, user code, username, Play Games id or id (any part); newest first when [query] is blank. */
+    /** By name, user code, Play Games id or id (any part); newest first when [query] is blank. */
     suspend fun searchUsers(query: String, now: Long, limit: Int): List<AdminUser>
     /** By name, code, description, game or id (any part); newest first when [query] is blank. */
     suspend fun searchRooms(query: String, limit: Int): List<AdminRoom>

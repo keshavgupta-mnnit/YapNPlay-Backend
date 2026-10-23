@@ -20,6 +20,7 @@ object HttpPaths {
     const val ROOM_VOICE_TOKEN = "/rooms/{roomId}/voice-token"
     const val MATCH_VOICE_TOKEN = "/matches/{matchId}/voice-token"
     const val ACTIVE_MATCH = "/matches/active"
+    const val MATCH_HISTORY = "/matches/history"
     const val PLAY_GAMES_SIGN_IN = "/auth/play-games"
     const val AD_REWARD = "/coins/ad-reward"
     const val AD_STATUS = "/coins/ad-status"

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.match.GetMatchHistoryUseCase
 import com.kglabs28.yapnplay.backend.games.monochaos.engine.MonoChaosEngine
 import com.kglabs28.yapnplay.backend.games.mono.engine.MonoEngine
 import com.kglabs28.yapnplay.backend.application.match.games.mono.MonoChaosSessionFactory
@@ -51,6 +52,7 @@ val matchModule = module {
         )
     }
     factory { GetActiveMatchUseCase(get()) }
+    factory { GetMatchHistoryUseCase(get()) }
     single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>(), get<Settings>()) }
     single { SendMatchActionUseCase(get()) }
     single { MatchPresenceUseCase(get()) }

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.application.match.GetMatchHistoryUseCase
 import com.kglabs28.yapnplay.backend.contract.AdRewardBody
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import io.ktor.server.routing.post
@@ -30,6 +31,7 @@ fun Route.userRoutes(
     activeMatch: GetActiveMatchUseCase,
     roomInvites: RoomInvitesUseCase,
     coins: CoinsService,
+    history: GetMatchHistoryUseCase,
 ) {
     get(HttpPaths.ME) { call.respond(getMe(call.userId)) }
     patch(HttpPaths.ME) { call.respond(updateProfile(call.userId, call.receive<UpdateProfileBody>())) }
@@ -54,6 +56,7 @@ fun Route.userRoutes(
         roomInvites.decline(call.userId, call.parameters[HttpPaths.INVITE_ID_PARAM].orEmpty())
         call.respond(HttpStatusCode.NoContent)
     }
+    get(HttpPaths.MATCH_HISTORY) { call.respond(history(call.userId)) }
     get(HttpPaths.ACTIVE_MATCH) {
         val match = activeMatch(call.userId)
         if (match == null) call.respond(HttpStatusCode.NoContent) else call.respond(match)

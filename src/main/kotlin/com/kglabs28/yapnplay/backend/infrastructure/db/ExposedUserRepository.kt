@@ -23,7 +23,6 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
                 it[secretHash] = user.secretHash
                 it[createdAt] = user.createdAt
                 it[xp] = user.xp
-                it[username] = user.username
                 it[userCode] = user.userCode
                 it[avatarId] = user.avatarId
             }
@@ -55,12 +54,11 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
     override suspend fun findByCode(userCode: String): User? =
         db.run { UsersTable.selectAll().where { UsersTable.userCode eq userCode }.singleOrNull()?.toUser() }
 
-    override suspend fun updateProfile(id: String, displayName: String?, username: String?, avatarId: String?) {
+    override suspend fun updateProfile(id: String, displayName: String?, avatarId: String?) {
         val uuid = id.toUuidOrNull() ?: return
         db.run {
             UsersTable.update({ UsersTable.id eq uuid }) {
                 displayName?.let { name -> it[UsersTable.displayName] = name }
-                username?.let { name -> it[UsersTable.username] = name }
                 avatarId?.let { avatar -> it[UsersTable.avatarId] = avatar }
             }
         }
@@ -105,7 +103,6 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
         secretHash = this[UsersTable.secretHash],
         createdAt = this[UsersTable.createdAt],
         xp = this[UsersTable.xp],
-        username = this[UsersTable.username],
         userCode = this[UsersTable.userCode],
         avatarId = this[UsersTable.avatarId],
     )

@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.identity
 
+import org.slf4j.LoggerFactory
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendStrings
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
@@ -29,18 +30,27 @@ class PlayGamesSignInUseCase(
     /** [bearerToken] is the caller's `<userId>.<secret>`, when they sent one. */
     suspend operator fun invoke(serverAuthCode: String, bearerToken: String?): PlayGamesSignedIn {
         if (serverAuthCode.isBlank()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_REQUEST)
-        if (!verifier.available) throw ServiceException(ErrorCode.PLAY_GAMES_UNAVAILABLE, BackendStrings.PLAY_GAMES_UNAVAILABLE)
+        if (!verifier.available) {
+            log.warn("Play Games sign-in: unavailable (no client secret on the server)")
+            throw ServiceException(ErrorCode.PLAY_GAMES_UNAVAILABLE, BackendStrings.PLAY_GAMES_UNAVAILABLE)
+        }
         val playerId = verifier.playerIdFor(serverAuthCode.trim())
-            ?: throw ServiceException(ErrorCode.NOT_AUTHENTICATED, BackendStrings.PLAY_GAMES_REJECTED)
+            ?: throw ServiceException(ErrorCode.NOT_AUTHENTICATED, BackendStrings.PLAY_GAMES_REJECTED).also { log.warn("Play Games sign-in: Google did not accept the code") }
         val caller = bearerToken?.let { authenticate(it) }
+        log.info("Play Games sign-in: caller ${caller?.id?.take(ID_PREFIX) ?: "none"}")
 
-        users.findByPlayGamesId(playerId)?.let { return signInAs(it.id, caller?.id, bearerToken) }
+        users.findByPlayGamesId(playerId)?.let {
+            log.info("Play Games sign-in: player already linked to ${it.id.take(ID_PREFIX)} (${if (it.id == caller?.id) "same account" else "restoring it"})")
+            return signInAs(it.id, caller?.id, bearerToken)
+        }
 
         // Link the caller's account; it fails when that account already belongs to
         // another Play Games player, or this player was linked a moment ago.
         if (caller != null && users.linkPlayGames(caller.id, playerId)) {
+            log.info("Play Games sign-in: linked the caller's account ${caller.id.take(ID_PREFIX)}")
             return PlayGamesSignedIn(caller.id, secretOf(bearerToken), restored = false)
         }
+        log.info("Play Games sign-in: could not link the caller's account (none, or linked to another player)")
         users.findByPlayGamesId(playerId)?.let { return signInAs(it.id, caller?.id, bearerToken) }
         // No usable caller account: a fresh one for this player.
         val guest = createGuest()
@@ -62,5 +72,8 @@ class PlayGamesSignInUseCase(
 
     private companion object {
         const val SEPARATOR = "."
+        /** How much of an id goes in the logs. */
+        const val ID_PREFIX = 8
+        val log = LoggerFactory.getLogger(PlayGamesSignInUseCase::class.java)
     }
 }

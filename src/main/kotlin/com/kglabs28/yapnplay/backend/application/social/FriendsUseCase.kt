@@ -102,7 +102,7 @@ class FriendsUseCase(
     suspend fun blocked(userId: String): BlockedUsers = BlockedUsers(
         blocks.blockedBy(userId).mapNotNull { record ->
             users.findById(record.blockedId)?.let {
-                BlockedUserSummary(it.id, it.displayName, it.username, it.avatarId, record.blockedAt)
+                BlockedUserSummary(it.id, it.displayName, it.avatarId, record.blockedAt)
             }
         },
     )
@@ -129,7 +129,6 @@ class FriendsUseCase(
         userId = id,
         displayName = displayName,
         online = connections.isConnected(id),
-        username = username,
         userCode = userCode.orEmpty(),
         avatarId = avatarId,
     )

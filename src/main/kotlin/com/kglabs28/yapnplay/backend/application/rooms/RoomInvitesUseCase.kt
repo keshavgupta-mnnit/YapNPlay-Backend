@@ -104,7 +104,6 @@ class RoomInvitesUseCase(
                         userId = inviter.id,
                         displayName = inviter.displayName,
                         online = connections.isConnected(inviter.id),
-                        username = inviter.username,
                         userCode = inviter.userCode.orEmpty(),
                         avatarId = inviter.avatarId,
                     ),

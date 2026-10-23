@@ -33,7 +33,7 @@ const val RESALE_DIVISOR = 2
 /** Owning this many tiles of one colour doubles their rent (whatever it is). */
 const val SET_FOR_DOUBLE = 3
 /** Default round limit; the server setting CITY_BAZAAR_ROUND_LIMIT overrides it. */
-const val ROUND_LIMIT = 5
+const val ROUND_LIMIT = 30
 const val TIME_LIMIT_MINUTES = 30
 /** Rounds added when the players vote to keep going (server setting CITY_BAZAAR_EXTENSION_ROUNDS). */
 const val EXTENSION_ROUNDS = 30

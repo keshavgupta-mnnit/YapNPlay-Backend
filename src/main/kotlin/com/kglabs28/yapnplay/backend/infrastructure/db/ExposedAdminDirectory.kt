@@ -39,7 +39,7 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
         val part = "%${q.lowercase()}%"
         val where: Op<Boolean> = if (q.isEmpty()) Op.TRUE else
             (UsersTable.displayName.lowerCase() like part) or (UsersTable.userCode.lowerCase() like part) or
-                (UsersTable.username.lowerCase() like part) or (UsersTable.playGamesPlayerId.lowerCase() like part) or
+                (UsersTable.playGamesPlayerId.lowerCase() like part) or
                 (UsersTable.id.castTo<String>(TextColumnType()) like part)
         val users = UsersTable.selectAll().where(where).orderBy(UsersTable.createdAt, SortOrder.DESC).limit(limit).toList()
         val ids = users.map { it[UsersTable.id] }

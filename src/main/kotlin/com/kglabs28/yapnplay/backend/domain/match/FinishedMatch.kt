@@ -25,4 +25,11 @@ data class FinishedSeat(
     val completed: Boolean = false,
     /** XP this seat earned (0 for CPUs and leavers), decided when the match ended. */
     val xp: Int = 0,
+    /** The name and avatar the seat played under. */
+    val displayName: String = "",
+    val avatarId: String = "",
+    /** Coins as the result showed them: the place's pot share, the finishing coins, and the entry staked. */
+    val coinsWon: Int = 0,
+    val completionCoins: Int = 0,
+    val stake: Int = 0,
 )

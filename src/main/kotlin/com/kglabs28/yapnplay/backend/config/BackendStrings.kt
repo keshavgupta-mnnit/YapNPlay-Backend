@@ -85,7 +85,6 @@ object BackendStrings {
     const val CANNOT_REPORT = "At least two other people must be present to confirm a report."
     const val NO_SUCH_REPORT = "This vote is closed."
     const val CANNOT_FRIEND_SELF = "You cannot add yourself."
-    const val INVALID_USERNAME = "Usernames are 3-20 letters, digits, _ or ."
     const val INVALID_AVATAR = "Unknown avatar."
     const val NO_FRIEND_REQUEST = "This friend request no longer exists."
 

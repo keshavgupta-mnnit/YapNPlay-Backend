@@ -18,7 +18,6 @@ object BackendConstants {
     const val USER_CODE_LENGTH = 6
     const val USER_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     const val USER_CODE_MAX_ATTEMPTS = 20
-    const val USERNAME_PATTERN = "[A-Za-z0-9_.]{3,20}"
     const val AVATAR_PREFIX = "a"
     const val AVATAR_DIGITS = 2
     /** Preset avatars a01..a18 (the app ships 18; the contract lists the first 12). */
