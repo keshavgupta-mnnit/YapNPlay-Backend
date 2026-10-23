@@ -88,12 +88,12 @@ class MonoRulesTest {
     }
 
     @Test
-    fun `with two players a Wild Reverse +4 comes back to the one who played it`() {
+    fun `with two players a Wild Reverse +4 hits the other player`() {
         val s = table(mapOf(1 to listOf(MonoChaosCard.PrismReverseDrawFour, MonoChaosCard.NumberCard(Color.RED, 1), MonoChaosCard.NumberCard(Color.RED, 2)), 2 to List(5) { MonoChaosCard.NumberCard(Color.GREEN, it) }))
         val played = play(s, 1, MonoChaosAction.PlayCard(0)).state as MonoChaosState
         val chosen = play(played, 1, MonoChaosAction.ChooseColor(Color.GOLD)).state as MonoChaosState
         assertEquals(MonoChaosPhase.AWAITING_STACK_CHOICE, chosen.phase)
-        assertEquals(1, chosen.currentSeat)
+        assertEquals(2, chosen.currentSeat)
         assertEquals(4, chosen.activeStackPenalty)
     }
 

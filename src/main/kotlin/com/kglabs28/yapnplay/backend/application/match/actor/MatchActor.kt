@@ -232,6 +232,8 @@ class MatchActor(
             if (!enabled && presence == SeatPresence.BOT) copy(autoplay = false, presence = SeatPresence.PLAYING) else copy(autoplay = enabled)
         }
         state.idleTurns.remove(seat.seat)
+        // Switched on during their own turn: it plays right after any animation, with no bot "thinking" first.
+        if (enabled && state.session.currentSeat == seat.seat) state.botWakeAt = deps.clock.nowMillis()
         publish(emptyList())
     }
 

@@ -532,8 +532,8 @@ class MonoChaosEngine : Game {
         val events = mutableListOf<MonoChaosEvent>(MonoChaosEvent.ColorChosen(seat, color))
 
         if (reverses) chosen = chosen.copy(reversed = !chosen.reversed)
-        // Two players: the reverse acts as a skip, so the +4 comes back to its player.
-        val victim = if (reverses && activeSeats(chosen).size <= 2) seat.value else nextActive(chosen, seat.value)
+        // The next player in the new direction takes it: with two players, always the other one.
+        val victim = nextActive(chosen, seat.value)
 
         if (penalty > 0) {
             // A stacked wild card carries the whole stack on; a fresh one opens it at its own value.
@@ -691,7 +691,7 @@ class MonoChaosEngine : Game {
         }
         val reverses = card is MonoChaosCard.PrismReverseDrawFour
         val turned = if (reverses) s.copy(reversed = !s.reversed) else s
-        val victim = if (reverses && activeSeats(turned).size <= 2) seat.value else nextActive(turned, seat.value)
+        val victim = nextActive(turned, seat.value)
         var after = turned.copy(
             hands = s.hands + (seat.value to newHand),
             discardPile = s.discardPile + card,
