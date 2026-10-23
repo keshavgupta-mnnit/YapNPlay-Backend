@@ -141,7 +141,7 @@ object GameSettings {
     val CB_CPU_SAFETY_BUFFER = IntSetting("cb.bot_safety_buffer", SettingGroup.CITY_BAZAAR, "CPU: cushion on top of the expected bills (₹)", 1_000, 0, 100_000)
     val CB_AUTO_BUY_RESERVE = IntSetting("cb.auto_buy_reserve", SettingGroup.CITY_BAZAAR, "Autoplay: least cash kept after paying (₹)", 500, 0, 100_000)
     val CB_AUTO_SAFETY_BUFFER = IntSetting("cb.auto_safety_buffer", SettingGroup.CITY_BAZAAR, "Autoplay: cushion on top of the expected bills (₹)", 500, 0, 100_000)
-    val CB_BOT_RUIN_WEIGHT_PCT = IntSetting("cb.bot_ruin_weight_pct", SettingGroup.CITY_BAZAAR, "Bots: weight of the risk of going broke (chance × net worth), %", 100, 0, 1_000)
+    val CB_BOT_RUIN_WEIGHT_PCT = IntSetting("cb.bot_ruin_weight_pct", SettingGroup.CITY_BAZAAR, "Bots: weight of the risk of going broke (chance × net worth), %", 200, 0, 1_000)
     val CB_BOT_DENIAL_WEIGHT_PCT = IntSetting("cb.bot_denial_weight_pct", SettingGroup.CITY_BAZAAR, "Bots: value of keeping a city from a rival it helps, % of their gain", 100, 0, 500)
     val CB_BOT_RUIN_TARGET_PCT = IntSetting("cb.bot_ruin_target_pct", SettingGroup.CITY_BAZAAR, "Bots: cash kept so the chance of going broke in 2 turns stays under this %", 10, 0, 100)
     val CB_BOT_PRESSURE_VALUE = IntSetting("cb.bot_pressure_value", SettingGroup.CITY_BAZAAR, "Bots: value of a house a rival who can't pay may land on soon", 2_000, 0, 100_000)

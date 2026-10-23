@@ -26,11 +26,10 @@ class InMemoryUserRepository : UserRepository {
 
     override suspend fun findByCode(userCode: String): User? = users.values.firstOrNull { it.userCode == userCode }
 
-    override suspend fun updateProfile(id: String, displayName: String?, username: String?, avatarId: String?) {
+    override suspend fun updateProfile(id: String, displayName: String?, avatarId: String?) {
         val user = findById(id)!!
         users[id] = user.copy(
             displayName = displayName ?: user.displayName,
-            username = username ?: user.username,
             avatarId = avatarId ?: user.avatarId,
         )
     }

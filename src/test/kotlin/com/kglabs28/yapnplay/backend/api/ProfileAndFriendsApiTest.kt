@@ -55,15 +55,14 @@ class ProfileAndFriendsApiTest {
         val updated = client.patch("/me") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
-            setBody(UpdateProfileBody(username = "keshav_28", avatarId = "a03"))
+            setBody(UpdateProfileBody(displayName = "Keshav", avatarId = "a03"))
         }.body<Me>()
-        assertEquals("keshav_28", updated.username)
+        assertEquals("Keshav", updated.displayName)
         assertEquals("a03", updated.avatarId)
-        assertTrue(updated.displayName.startsWith("Player-"))
         val bad = client.patch("/me") {
             bearerAuth(token)
             contentType(ContentType.Application.Json)
-            setBody(UpdateProfileBody(username = "x"))
+            setBody(UpdateProfileBody(avatarId = "x"))
         }
         assertEquals(HttpStatusCode.BadRequest, bad.status)
         assertEquals(ErrorCode.BAD_REQUEST, bad.body<ErrorBody>().code)

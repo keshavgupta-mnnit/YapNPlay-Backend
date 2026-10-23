@@ -47,17 +47,17 @@ import kotlinx.serialization.json.buildJsonObject
  */
 object GoldenSamples {
     private val f = GoldenFixtures
-    private val asha = FriendSummary(FRIEND, "Asha", online = true, username = "asha.k", userCode = "P4RT8X", avatarId = "a07")
+    private val asha = FriendSummary(FRIEND, "Asha", online = true, userCode = "P4RT8X", avatarId = "a07")
 
     val all: List<GoldenCase<*>> = listOf(
         // ── HTTP ────────────────────────────────────────────────────────
         GoldenCase("HealthResponse", HealthResponse.serializer(), HealthResponse("ok", CONTRACT_VERSION, "1.0.1")),
         GoldenCase("GuestCreated", GuestCreated.serializer(), GuestCreated(USER, "s3cr3t-example-not-real")),
-        GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, username = "keshav_28", userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
+        GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
         GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 1_800, granted = 200, adsLeftToday = 4, dailyLimit = 5, nextAdAt = 1_760_007_200_000, adRewards = listOf(200, 300, 400, 500, 700))),
         GoldenCase("AdRewardStatus", AdRewardStatus.serializer(), AdRewardStatus(coinsPerAd = 300, dailyLimit = 5, adsLeftToday = 4, nextAdAt = 1_760_007_200_000, serverTime = 1_760_000_000_000, adRewards = listOf(200, 300, 400, 500, 700))),
         GoldenCase("Leagues", Leagues.serializer(), Leagues(coins = 600, leagues = listOf(League(0, "Starter", true), League(100, "Bronze", true), League(500, "Silver", true), League(1_000, "Gold", false)))),
-        GoldenCase("UpdateProfileBody", UpdateProfileBody.serializer(), UpdateProfileBody(username = "keshav_28", avatarId = "a03")),
+        GoldenCase("UpdateProfileBody", UpdateProfileBody.serializer(), UpdateProfileBody(displayName = "Keshav", avatarId = "a03")),
         GoldenCase("UpdateName", UpdateName.serializer(), UpdateName("Keshav")),
         GoldenCase("MyRooms", MyRooms.serializer(), MyRooms(listOf(f.summary))),
         GoldenCase("RoomPreview", RoomPreview.serializer(), RoomPreview(ROOM, "482193", "College Crew", null, 2, 1, isMember = false)),
@@ -70,7 +70,7 @@ object GoldenSamples {
         GoldenCase("ActiveMatch", ActiveMatch.serializer(), ActiveMatch("m-42", "royal-ludo", "Quick Play")),
         GoldenCase("SendFriendRequestReply", SendFriendRequestReply.serializer(), SendFriendRequestReply(FriendRequestOutcomeCode.SENT)),
         GoldenCase("BlockUserBody", BlockUserBody.serializer(), BlockUserBody(FRIEND)),
-        GoldenCase("BlockedUsers", BlockedUsers.serializer(), BlockedUsers(listOf(BlockedUserSummary(FRIEND, "Asha", "asha.k", "a07", 1_760_000_200_000)))),
+        GoldenCase("BlockedUsers", BlockedUsers.serializer(), BlockedUsers(listOf(BlockedUserSummary(FRIEND, "Asha", "a07", 1_760_000_200_000)))),
         GoldenCase("VoiceToken", VoiceToken.serializer(), VoiceToken("wss://example.livekit.cloud", "eyJhbGciOiJIUzI1NiJ9.example.sig", 1_760_000_600_000)),
         // ── WebSocket framing ───────────────────────────────────────────
         GoldenCase(
@@ -109,7 +109,7 @@ object GoldenSamples {
         GoldenCase(
             "RoomInvites",
             RoomInvites.serializer(),
-            RoomInvites(listOf(RoomInviteSummary("inv-1", "room-1", "Hostel Night", "dice", 3, FriendSummary("u-asha", "Asha", online = true, username = "asha", userCode = "K7Q2M9", avatarId = "a03"), 1_760_000_000_000))),
+            RoomInvites(listOf(RoomInviteSummary("inv-1", "room-1", "Hostel Night", "dice", 3, FriendSummary("u-asha", "Asha", online = true, userCode = "K7Q2M9", avatarId = "a03"), 1_760_000_000_000))),
         ),
         GoldenCase("JoinRoom", JoinRoom.serializer(), JoinRoom("482193")),
         GoldenCase("LeaveRoom", LeaveRoom.serializer(), LeaveRoom),

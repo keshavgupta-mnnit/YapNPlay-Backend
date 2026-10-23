@@ -39,12 +39,12 @@ class CityBazaarScenarioTest {
     @Test
     fun `in debt it won't sell the city that completes a rival's set`() {
         val inDebt = start().copy(
-            currentSeat = 1, phase = CityBazaarPhase.DEBT, owners = mapOf(14 to 1, 11 to 1),
+            currentSeat = 1, phase = CityBazaarPhase.DEBT, owners = mapOf(14 to 1, 10 to 1),
             cash = start().cash + (1 to 0), debt = CityBazaarDebt(700, mapOf(2 to 700), MoneyReason.RENT, 3),
         )
-        assertEquals(14 to false, CityBazaarDebtPlanner.next(inDebt, 1), "alone, Shimla costs least to give up")
+        assertEquals(14 to false, CityBazaarDebtPlanner.next(inDebt, 1), "alone, Shimla costs less to give up than Delhi")
         val rivalNeedsShimla = inDebt.copy(owners = inDebt.owners + mapOf(15 to 2, 17 to 2))
-        assertEquals(11 to false, CityBazaarDebtPlanner.next(rivalNeedsShimla, 1), "but not when a rival would complete yellow with it")
+        assertEquals(10 to false, CityBazaarDebtPlanner.next(rivalNeedsShimla, 1), "but not when a rival would complete yellow with it")
     }
 
     @Test

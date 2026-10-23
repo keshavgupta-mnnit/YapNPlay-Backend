@@ -93,7 +93,9 @@ class CityBazaarBot(val profile: CityBazaarBotProfile, private val trace: BotTra
 
     /**
      * Buy (or win an auction) at [cost], or pass. Worth: the rent it should
-     * bring in, or what keeping it from a rival is worth, whichever is more.
+     * bring in, or what keeping it from a rival is worth, whichever is more,
+     * counted only for the chance of still being in the game after the next
+     * two turns (a seat that goes broke never collects it).
      * A city counts at its full price in net worth, so the real cost is
      * [cost] − price (paying less is profit: bidding low on a rival's debt
      * auction).
@@ -109,8 +111,9 @@ class CityBazaarBot(val profile: CityBazaarBotProfile, private val trace: BotTra
                 val after = s.copy(owners = s.owners + (tile to seat), cash = s.cash + (seat to s.cashOf(seat) - cost))
                 val own = gain(s, seat, tile)
                 val denial = denial(s, seat, tile)
+                val survives = 1 - CityBazaarOutlook.ruinChance(after, seat, s.cashOf(seat) - cost - profile.reserve)
                 Evaluation(
-                    gain = maxOf(own, denial),
+                    gain = maxOf(own, denial) * survives,
                     cost = (cost - CityBazaarBoard.tile(tile).price).toDouble(),
                     risk = ruinRisk(after, seat, s.cashOf(seat) - cost),
                     note = "rent ${own.toInt()}, denial ${denial.toInt()}",

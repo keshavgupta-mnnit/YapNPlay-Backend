@@ -14,6 +14,7 @@ import com.kglabs28.yapnplay.backend.games.monochaos.domain.MonoChaosState
 import com.kglabs28.yapnplay.backend.games.monochaos.domain.MonoChaosTurnState
 import com.kglabs28.yapnplay.backend.games.monochaos.domain.MonoChaosView
 import com.kglabs28.yapnplay.backend.games.monochaos.domain.buildMonoChaosDeck
+import com.kglabs28.yapnplay.backend.games.monochaos.domain.canStackOnto
 import com.kglabs28.yapnplay.backend.games.monochaos.domain.isPlayableOn
 import com.kglabs28.yapnplay.backend.games.monochaos.domain.rules.MonoChaosRules
 import com.kglabs28.yapnplay.backend.games.monochaos.identity.MonoChaosConstants
@@ -246,14 +247,9 @@ class MonoChaosEngine : Game {
             MonoChaosPhase.AWAITING_COLOR_CHOICE -> chooseColor(s, seat, bestColour(s, seat.value), random)
             MonoChaosPhase.AWAITING_ROULETTE_COLOR -> chooseRouletteColor(s, seat, bestColour(s, seat.value), random)
             MonoChaosPhase.AWAITING_STACK_CHOICE -> {
-                // A draw card can only be stacked on if it matches the
-                // discard as well as being worth enough.
+                // Any draw card worth at least the last one stacks, whatever its colour (as in [stackDraw]).
                 val stackable = s.handForSeat(seat.value).withIndex()
-                    .filter { (_, card) ->
-                        card.penaltyValue() >= s.stackTopValue &&
-                            card.penaltyValue() > 0 &&
-                            card.isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor)
-                    }
+                    .filter { (_, card) -> card.canStackOnto(s.stackTopValue) }
                 if (stackable.isNotEmpty()) {
                     stackDraw(s, seat, stackable.maxByOrNull { it.value.penaltyValue() }!!.index, random)
                 } else {

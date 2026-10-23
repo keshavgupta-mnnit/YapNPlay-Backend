@@ -41,7 +41,7 @@ data class CityBazaarBotProfile(
  * rounds are assumed left.
  */
 data class CityBazaarBotTuning(
-    val ruinWeightPct: Int = 100,
+    val ruinWeightPct: Int = 200,
     val denialWeightPct: Int = 100,
     val ruinTargetPct: Int = 10,
     val pressureValue: Int = 2_000,
