@@ -90,8 +90,13 @@ class RoyalLudoSession(
         }
     }
 
-    /** Every human left: the match ends here, finishers first, then by how far each seat's pieces got. */
-    override fun endWithoutHumans(): List<GameEvent>? {
+    override val canEndEarly: Boolean get() = !isFinished
+
+    /**
+     * Ended by the players' vote (or every human left): the match ends here,
+     * finishers first, then by how far each seat's pieces got.
+     */
+    override fun endEarly(): List<GameEvent>? {
         if (isFinished) return null
         state = state.copy(phase = Phase.FINISHED, legalPieces = emptyList())
         return emptyList()

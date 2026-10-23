@@ -179,8 +179,15 @@ class MonoChaosSession(
      * allows when the drawn card can be played (play it or pass, in a whole
      * turn's time; the turn timer passes for them at the end).
      */
+    /**
+     * A full turn clock again: after the keep-playing vote, a drawn card that
+     * can be played, or a played card that leaves the turn with the same
+     * player (Skip Everyone, a two-player Skip or Reverse, a wild's colour).
+     */
     override fun restartsClockOn(events: List<GameEvent>): Boolean =
-        events.any { it is MonoContinueVoted } || (state.drawnCardIndex != null && events.any { it is MonoChaosEvent.CardDrawn })
+        events.any { it is MonoContinueVoted } ||
+            (state.drawnCardIndex != null && events.any { it is MonoChaosEvent.CardDrawn }) ||
+            events.any { it is MonoChaosEvent.CardPlayed && it.seat.value == state.currentSeat }
 
     override fun endEarly(): List<GameEvent>? = take(engine.apply(state, SeatNumber(state.currentSeat), MonoChaosAction.EndMatch, random))
 
