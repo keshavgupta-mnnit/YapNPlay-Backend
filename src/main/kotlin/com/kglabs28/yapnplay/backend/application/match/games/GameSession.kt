@@ -82,6 +82,13 @@ interface GameSession {
      */
     fun endWithoutHumans(): List<GameEvent>? = endEarly()
 
+    /**
+     * True when [events] (a step by the seat whose turn it is, the turn staying
+     * with them) earn a fresh full turn clock, e.g. a roll in a dice game. False:
+     * the seat keeps the time left (at least the follow-up floor).
+     */
+    fun restartsClockOn(events: List<GameEvent>): Boolean = true
+
     /** How long the table needs to animate [events] before the next action. */
     fun pauseAfter(events: List<GameEvent>): Long
 

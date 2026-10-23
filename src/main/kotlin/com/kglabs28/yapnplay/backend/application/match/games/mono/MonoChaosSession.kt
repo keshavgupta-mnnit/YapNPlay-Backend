@@ -57,6 +57,8 @@ class MonoChaosSession(
     private val voteFrom: Int = MonoContinueVote.MIN_FINISHERS,
 ) : GameSession {
     private val misses = mutableMapOf<Int, MutableSet<Color>>()
+    /** How long the table animates the last events (the continue vote's clock waits for it). */
+    private var lastPauseMs = 0L
     /** When the current catch window opened (bots react from then). */
     private var catchOpenedAt = 0L
 
@@ -133,9 +135,6 @@ class MonoChaosSession(
                 if (catcher != null) return take(engine.apply(state, SeatNumber(catcher), MonoChaosAction.Caught, random))
             }
         }
-        if (state.drawnCardIndex != null && drawnAt > 0 && now >= drawnAt + timing.drawPlayWindowMs && state.currentSeat !in cpuSeats) {
-            return take(engine.apply(state, SeatNumber(state.currentSeat), MonoChaosAction.Pass, random))
-        }
         return null
     }
 
@@ -146,7 +145,8 @@ class MonoChaosSession(
             if (voters.isEmpty()) {
                 decideVote()
             } else {
-                vote.open(now, voters)
+                // The clock starts once the table has shown the finishing move.
+                vote.open(now + lastPauseMs, voters)
                 emptyList()
             }
         }
@@ -168,6 +168,15 @@ class MonoChaosSession(
 
     /** A saved match was mid-vote: a fresh vote opens on the next tick. */
     fun resumeVote() = vote.request()
+
+    /** One MONO turn is one clock: drawing, choosing a colour or a swap partner keeps the time left. A vote's end restarts it. */
+    /**
+     * A fresh full turn after a continue vote, and after the one draw a turn
+     * allows when the drawn card can be played (play it or pass, in a whole
+     * turn's time; the turn timer passes for them at the end).
+     */
+    override fun restartsClockOn(events: List<GameEvent>): Boolean =
+        events.any { it is MonoContinueVoted } || (state.drawnCardIndex != null && events.any { it is MonoChaosEvent.CardDrawn })
 
     override fun endEarly(): List<GameEvent>? = take(engine.apply(state, SeatNumber(state.currentSeat), MonoChaosAction.EndMatch, random))
 
@@ -276,6 +285,7 @@ class MonoChaosSession(
             }
         }
         state = next
+        lastPauseMs = pauseAfter(result.events)
         // From the 2nd finisher on, with 2+ seats still holding cards, the table votes to go on.
         if (next.phase != MonoChaosPhase.FINISHED && next.finishOrder.size >= voteFrom && result.events.any { it is MonoChaosEvent.SeatFinished }) vote.request()
         return if (reshuffled) result.events + MonoDeckReshuffled(next.drawPile.size) else result.events

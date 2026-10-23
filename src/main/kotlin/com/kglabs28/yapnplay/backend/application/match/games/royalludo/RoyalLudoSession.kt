@@ -104,7 +104,8 @@ class RoyalLudoSession(
     override fun publicState(viewerSeat: Int?): JsonObject = json.encodeToJsonElement(
         RoyalLudoPublicState.serializer(),
         RoyalLudoPublicState(
-            pieces = state.pieces,
+            // A seat removed from the game (left Quick Play) has no pieces on the board.
+            pieces = state.pieces.filterKeys { it !in state.removalOrder },
             phase = phaseName(),
             lastRoll = state.lastRoll,
             legalPieces = if (isMyMove(viewerSeat)) state.legalPieces else emptyList(),

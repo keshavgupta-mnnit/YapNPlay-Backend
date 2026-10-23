@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api
 
+import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.api.http.AdminBlockBody
 import com.kglabs28.yapnplay.backend.api.http.AdminCoinsBody
@@ -66,7 +67,7 @@ class AdminSettingsApiTest {
         val bonus = audit.first { it.target == "coins.daily_bonus" }
         assertEquals("100", bonus.oldValue)
         assertEquals("250", bonus.newValue)
-        assertEquals("Tester", bonus.changedBy)
+        assertEquals(AdminAuth.TOKEN_ADMIN, bonus.changedBy)
     }
 
     @Test

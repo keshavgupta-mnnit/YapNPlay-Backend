@@ -121,7 +121,7 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
         override fun evaluate(option: Int): Evaluation {
             val theirs = s.cardCountForSeat(option)
             val gain = (s.cardCountForSeat(me) - theirs) * tuning.cardCost + threatFrom(theirs) * tuning.attackValue * FOUR
-            return Evaluation(gain = gain.toDouble(), note = "$theirs cards")
+            return Evaluation(gain = gain, note = "$theirs cards")
         }
         override val tieBreak: Comparator<Int> = compareBy { it }
     }

@@ -82,7 +82,7 @@ object GameSettings {
             else -> null
         }
     }
-    val GROUP_FEE = IntSetting("coins.group_fee", SettingGroup.ECONOMY, "Group game fee per player (coins)", 100, 0, MAX_COINS)
+    val GROUP_FEE = IntSetting("coins.group_fee", SettingGroup.ECONOMY, "Room game fee per player (coins)", 100, 0, MAX_COINS)
     val COMPLETION_COINS = IntSetting("coins.completion", SettingGroup.ECONOMY, "Coins for finishing a match (every league)", 100, 0, MAX_COINS)
     val COMPLETION_DAILY_CAP = IntSetting("coins.completion_daily_cap", SettingGroup.ECONOMY, "Paid finishes per player per day", 10, 0, 100)
     val COMPLETION_MIN_MINUTES = IntSetting("coins.completion_min_minutes", SettingGroup.ECONOMY, "Shortest match that pays finishing coins (minutes)", 3, 0, 60)
@@ -117,6 +117,7 @@ object GameSettings {
 
     // ── Every match ───────────────────────────────────────────────────────
     val VOTE_SECONDS = IntSetting("match.vote_seconds", SettingGroup.MATCH, "Keep-playing vote (seconds)", 10, 5, MAX_SECONDS)
+    val TURN_FOLLOW_UP_SECONDS = IntSetting("match.turn_follow_up_seconds", SettingGroup.MATCH, "Least time for a follow-up step in the same turn (seconds)", 5, 1, MAX_SECONDS)
     val END_VOTE_SECONDS = IntSetting("match.end_vote_seconds", SettingGroup.MATCH, "End-game vote (seconds)", 20, 5, MAX_SECONDS)
     val END_VOTE_COOLDOWN_MINUTES = IntSetting("match.end_vote_cooldown_minutes", SettingGroup.MATCH, "Minutes before a player may ask to end again", 3, 0, 60)
     val BOT_STANDING_MIN_PCT = IntSetting("bot.standing_min_pct", SettingGroup.MATCH, "Bots (all games): risk weight % when far behind the leader", 60, 0, 300)
@@ -192,7 +193,7 @@ object GameSettings {
         DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_REFERENCE_MINUTES, XP_MIN_TIME_FACTOR_PCT, XP_MAX_TIME_FACTOR_PCT, XP_PER_LEVEL,
-        VOTE_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
+        VOTE_SECONDS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
         CB_TURN_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,

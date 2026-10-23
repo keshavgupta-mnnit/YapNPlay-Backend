@@ -157,7 +157,7 @@ object GoldenSamples {
         GoldenCase("ChooseSeatTaker", ChooseSeatTaker.serializer(), ChooseSeatTaker(MATCH, null)),
         GoldenCase("TakeSeat", TakeSeat.serializer(), TakeSeat(MATCH, 3)),
         GoldenCase("MatchSnapshot", MatchSnapshot.serializer(), f.ludoSnapshot),
-        GoldenCase("MatchEnded", MatchEnded.serializer(), MatchEnded(listOf(RankedSeat(2, MatchSeatStatus.ACTIVE, 1), RankedSeat(1, MatchSeatStatus.ACTIVE, 2)))),
+        GoldenCase("MatchEnded", MatchEnded.serializer(), MatchEnded(listOf(RankedSeat(2, MatchSeatStatus.ACTIVE, 1, coinsWon = 7_000, completionCoins = 100, xpGained = 120, stake = 5_000), RankedSeat(1, MatchSeatStatus.ACTIVE, 2, coinsWon = 3_000, completionCoins = 100, xpGained = 80, stake = 5_000)))),
         GoldenCase("RoyalLudoPublicState", RoyalLudoPublicState.serializer(), f.ludoState),
         GoldenCase("RoyalLudoEvents", ListSerializer(RoyalLudoWireEvent.serializer()), f.ludoEvents),
         GoldenCase("CityBazaarPublicState", CityBazaarPublicState.serializer(), f.bazaarState),

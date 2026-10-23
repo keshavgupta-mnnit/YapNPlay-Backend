@@ -4,6 +4,8 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.10.0 — RankedSeat.stake; coinsWon shown for every seat (CPUs and leavers too, display
+ * only) and CPUs show completionCoins.
  * 0.9.0 — RenameRoom room message (admin only); InviteToRoomBody.userCodes (invite by
  * player code, friends or not).
  * 0.8.0 — MONO plays on after the first finisher: continueVote (MonoContinueVoteWire) on both
@@ -29,4 +31,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.9.0"
+const val CONTRACT_VERSION: String = "0.10.0"

@@ -4,17 +4,19 @@
             "seat": 2,
             "status": "ACTIVE",
             "place": 1,
-            "coinsWon": 0,
-            "completionCoins": 0,
-            "xpGained": 0
+            "coinsWon": 7000,
+            "completionCoins": 100,
+            "xpGained": 120,
+            "stake": 5000
         },
         {
             "seat": 1,
             "status": "ACTIVE",
             "place": 2,
-            "coinsWon": 0,
-            "completionCoins": 0,
-            "xpGained": 0
+            "coinsWon": 3000,
+            "completionCoins": 100,
+            "xpGained": 80,
+            "stake": 5000
         }
     ]
 }

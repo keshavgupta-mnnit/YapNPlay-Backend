@@ -9,8 +9,10 @@ import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
  * seat finishes while 2+ seats still hold cards, the humans at the table
  * vote to keep playing or end, and play stands still meanwhile. It is
  * requested by the session and opened on the next tick (only the match
- * knows who is human); it closes at [endsAt] or once everyone voted. The
- * votes cast decide (a tie keeps playing; nobody voting ends the match).
+ * knows who is human); it closes at [endsAt] or once everyone voted. Play
+ * goes on only when at least half of the voters said yes: a "no" is a no,
+ * and not voting means not caring, so neither counts towards it (the same
+ * rule as every other vote: a decision needs enough agreeing votes).
  */
 class MonoContinueVote(private val voteMs: Long) {
     /** Asked for, not yet opened. */
@@ -27,17 +29,17 @@ class MonoContinueVote(private val voteMs: Long) {
     /** Asked for or running: play waits. */
     val active: Boolean get() = pending || isOpen
     val allVoted: Boolean get() = (yes + no).containsAll(voters)
-    val continues: Boolean get() = yes.isNotEmpty() && yes.size >= no.size
+    val continues: Boolean get() = voters.isNotEmpty() && yes.size * 2 >= voters.size
 
     fun request() {
         pending = true
     }
 
-    /** Opens the vote for [voters] from [now]. */
-    fun open(now: Long, voters: Set<Int>) {
+    /** Opens the vote for [voters]; its clock starts at [from] (now, or after the table's animation). */
+    fun open(from: Long, voters: Set<Int>) {
         pending = false
         this.voters = voters
-        endsAt = now + voteMs
+        endsAt = from + voteMs
         yes.clear()
         no.clear()
     }
