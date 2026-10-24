@@ -170,6 +170,13 @@ fun Route.adminRoutes(
             call.respond(HttpStatusCode.NoContent)
         }
     }
+    post(HttpPaths.ADMIN_REPORT_REVERT) {
+        guard.run(call, AdminPermission.MODERATE) { admin ->
+            val body = call.receive<AdminNoteBody>()
+            actions.revertReport(call.parameters[HttpPaths.REPORT_ID_PARAM].orEmpty(), admin.adminId, body.note)
+            call.respond(HttpStatusCode.NoContent)
+        }
+    }
     get(HttpPaths.ADMIN_AUDIT) { guard.run(call, AdminPermission.VIEW) { call.respond(actions.auditLog()) } }
     get(HttpPaths.ADMIN_MATCHES) { guard.run(call, AdminPermission.VIEW) { call.respond(adminMatches.live()) } }
     get(HttpPaths.ADMIN_MATCH_BOT) {

@@ -80,6 +80,24 @@ class ExposedModerationRepository(private val db: DbQuery) : ModerationRepositor
         }
     }
 
+    override suspend fun undoPenalties(reportId: String, now: Long): List<Penalty> {
+        val uuid = reportId.toUuidOrNull() ?: return emptyList()
+        return db.run {
+            val given = PenaltiesTable.selectAll().where { PenaltiesTable.reportId eq uuid }.map {
+                Penalty(
+                    id = it[PenaltiesTable.id].toString(),
+                    userId = it[PenaltiesTable.userId].toString(),
+                    reportId = reportId,
+                    points = it[PenaltiesTable.points],
+                    blockedUntil = it[PenaltiesTable.blockedUntil],
+                    createdAt = it[PenaltiesTable.createdAt],
+                )
+            }
+            PenaltiesTable.update({ (PenaltiesTable.reportId eq uuid) and PenaltiesTable.clearedAt.isNull() }) { it[clearedAt] = now }
+            given
+        }
+    }
+
     override suspend fun clearBlocks(userId: String, now: Long) {
         db.run {
             PenaltiesTable.update({ (PenaltiesTable.userId eq userId.toUuid()) and PenaltiesTable.clearedAt.isNull() }) {

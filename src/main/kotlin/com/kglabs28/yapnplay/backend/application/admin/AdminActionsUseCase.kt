@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.admin
 
+import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
@@ -16,12 +17,13 @@ import kotlinx.serialization.Serializable
 
 /**
  * What the operator can do from the admin dashboard: find players, block
- * or unblock them, decide a report, and give or take coins. Every change
+ * or unblock them, decide (or undo) a report, and give or take coins. Every change
  * is written to the admin audit with who did it and why.
  */
 class AdminActionsUseCase(
     private val directory: AdminDirectory,
     private val moderation: ModerationRepository,
+    private val users: UserRepository,
     private val coins: CoinStore,
     private val audit: AdminAuditRepository,
     private val ids: IdGenerator,
@@ -39,7 +41,7 @@ class AdminActionsUseCase(
     }
 
     suspend fun reports(): List<AdminReportView> = directory.recentReports(REPORT_LIMIT).map {
-        AdminReportView(it.reportId, it.reporterName, it.reportedId, it.reportedName, it.reason, it.createdAt, it.upheld)
+        AdminReportView(it.reportId, it.reporterName, it.reportedId, it.reportedName, it.reason, it.createdAt, it.upheld, it.revertedAt)
     }
 
     suspend fun auditLog(): List<AdminAuditView> = audit.recent(AUDIT_LIMIT).map {
@@ -88,6 +90,17 @@ class AdminActionsUseCase(
         audit.record(AdminAuditEntry(REPORT, reportId, null, if (upheld) "upheld" else "rejected", by, note, now))
     }
 
+    /**
+     * Undoes a decided report (a player reported someone by mistake): the
+     * block it gave is lifted and the XP it took goes back. Once only.
+     */
+    suspend fun revertReport(reportId: String, by: String, note: String?) {
+        val now = clock.nowMillis()
+        if (!directory.markReverted(reportId, now)) throw ServiceException(ErrorCode.BAD_REQUEST, "Only a decided report can be undone, once")
+        moderation.undoPenalties(reportId, now).filter { it.points > 0 }.forEach { users.addXp(it.userId, it.points) }
+        audit.record(AdminAuditEntry(REPORT_REVERT, reportId, null, "reverted", by, note, now))
+    }
+
     private suspend fun requireUser(userId: String) {
         if (directory.searchUsers(userId, clock.nowMillis(), 1).none { it.userId == userId }) {
             throw ServiceException(ErrorCode.NOT_FOUND, "No such player")
@@ -105,6 +118,7 @@ class AdminActionsUseCase(
         const val UNBLOCK = "UNBLOCK"
         const val COINS = "COINS"
         const val REPORT = "REPORT"
+        const val REPORT_REVERT = "REPORT_REVERT"
     }
 }
 
@@ -139,6 +153,8 @@ data class AdminReportView(
     val reason: String,
     val createdAt: Long,
     val upheld: Boolean?,
+    /** When an admin undid the decision (null: it stands). */
+    val revertedAt: Long? = null,
 )
 
 @Serializable

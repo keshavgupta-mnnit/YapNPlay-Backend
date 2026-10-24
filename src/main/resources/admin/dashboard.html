@@ -434,7 +434,17 @@
               }, d[1] ? "" : "ghost"));
             });
           }
-          return [when(r.createdAt), r.reportedName, r.reporterName, r.reason, r.upheld === null ? "Open" : (r.upheld ? "Upheld" : "Rejected"), act];
+          // A decided report made by mistake: undo it (block lifted, XP given back).
+          if (r.upheld !== null && !r.revertedAt && can("moderate")) {
+            act.appendChild(btn("Undo", function () {
+              if (!confirm("Undo this report? The block it gave is lifted and the XP it took goes back.")) return;
+              api("POST", "/admin/reports/" + r.reportId + "/revert", { note: prompt("Why? (optional)") || null })
+                .then(function () { say("Report undone"); loadReports(); }).catch(function (e) { say(e.message, true); });
+            }, "ghost"));
+          }
+          var decision = r.upheld === null ? "Open" : (r.upheld ? "Upheld" : "Rejected");
+          if (r.revertedAt) decision += " (undone " + when(r.revertedAt) + ")";
+          return [when(r.createdAt), r.reportedName, r.reporterName, r.reason, decision, act];
         }), "No reports");
     }).catch(function (e) { say("Reports: " + e.message, true); });
   }
@@ -489,7 +499,7 @@
   // ── Players ──
   function loadUsers() {
     api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
-      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app", true], ["Last seen"], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
+      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
         users.map(function (u) {
           var block = null, coins = null, del = null;
           if (can("moderate")) {

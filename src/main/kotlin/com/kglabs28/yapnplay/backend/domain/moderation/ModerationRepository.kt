@@ -9,4 +9,6 @@ interface ModerationRepository {
     suspend fun activeBlock(userId: String, now: Long): Penalty?
     /** Lifts every active block (a rewarded ad was watched). */
     suspend fun clearBlocks(userId: String, now: Long)
+    /** Lifts the blocks a report gave (at [now]) and returns every penalty it gave, so their points can go back. */
+    suspend fun undoPenalties(reportId: String, now: Long): List<Penalty>
 }

@@ -19,6 +19,13 @@ object PushKeys {
     const val TYPE_ROOM_INVITE = "room_invite"
     const val INVITE_ID = "inviteId"
 
+    /** "Neha sent you a friend request": tap opens the app. */
+    const val TYPE_FRIEND_REQUEST = "friend_request"
+    /** "Neha accepted your friend request": tap opens the app. */
+    const val TYPE_FRIEND_ACCEPTED = "friend_accepted"
+    /** The other player in a friend push. */
+    const val USER_ID = "userId"
+
     /** `RegisterDevice.platform` value for Android devices. */
     const val PLATFORM_ANDROID = "android"
 }

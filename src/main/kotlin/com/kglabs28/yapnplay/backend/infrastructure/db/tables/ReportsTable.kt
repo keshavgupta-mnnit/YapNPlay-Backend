@@ -13,6 +13,7 @@ object ReportsTable : Table("reports") {
     val createdAt = long("created_at")
     val resolvedAt = long("resolved_at").nullable()
     val upheld = bool("upheld").nullable()
+    val revertedAt = long("reverted_at").nullable()
 
     override val primaryKey = PrimaryKey(id)
 

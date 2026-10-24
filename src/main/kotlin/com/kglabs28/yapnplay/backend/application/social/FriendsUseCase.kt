@@ -39,6 +39,7 @@ class FriendsUseCase(
     private val rooms: PlayRoomActors,
     private val ids: IdGenerator,
     private val clock: Clock,
+    private val pushes: FriendPushes,
 ) {
     suspend fun list(userId: String): Friends = Friends(
         friends.friendsOf(userId).mapNotNull { users.findById(it)?.toSummary() }
@@ -63,11 +64,14 @@ class FriendsUseCase(
             target.id in friends.friendsOf(userId) -> FriendRequestOutcomeCode.ALREADY_FRIENDS
             requests.between(userId, target.id) != null -> FriendRequestOutcomeCode.ALREADY_REQUESTED
             else -> requests.between(target.id, userId)?.let { theirs ->
+                // They had asked first: this answers it, and they hear it was accepted.
                 requests.delete(theirs.id)
                 befriend(userId, target.id)
+                pushes.accepted(target.id, userId, nameOf(userId))
                 FriendRequestOutcomeCode.ACCEPTED
             } ?: run {
                 requests.create(FriendRequestRecord(ids.newId(), userId, target.id, clock.nowMillis()))
+                pushes.requested(target.id, userId, nameOf(userId))
                 FriendRequestOutcomeCode.SENT
             }
         }
@@ -77,7 +81,10 @@ class FriendsUseCase(
         val request = ownRequest(userId, requestId)
         requests.delete(request.id)
         befriend(request.fromId, userId)
+        pushes.accepted(request.fromId, userId, nameOf(userId))
     }
+
+    private suspend fun nameOf(userId: String): String = users.findById(userId)?.displayName.orEmpty()
 
     /** The sender is not told. */
     suspend fun decline(userId: String, requestId: String) {

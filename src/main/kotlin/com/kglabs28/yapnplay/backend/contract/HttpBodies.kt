@@ -34,6 +34,12 @@ data class RoomStanding(
     val coins: Int = 0,
 )
 
+/** `GET /rooms/{roomId}/invites`: users with an invite to the room they haven't answered yet. */
+@Serializable
+data class RoomPendingInvites(
+    val userIds: List<String>,
+)
+
 /** `GET /rooms/{roomId}/leaderboard`: every member with their record in the room (the app sorts by wins or coins). */
 @Serializable
 data class RoomLeaderboard(

@@ -31,6 +31,8 @@ data class AdminReport(
     val createdAt: Long,
     /** Null while undecided. */
     val upheld: Boolean?,
+    /** When an admin undid the decision (null: it stands). */
+    val revertedAt: Long? = null,
 )
 
 /** A room as the admin dashboard shows it. */
@@ -64,4 +66,6 @@ interface AdminDirectory {
     suspend fun decideReport(reportId: String, upheld: Boolean, at: Long): Boolean
     /** Who a report is about, or null. */
     suspend fun reportedIn(reportId: String): String?
+    /** Marks a decided report as undone at [at]; false if it is open, unknown or already undone. */
+    suspend fun markReverted(reportId: String, at: Long): Boolean
 }

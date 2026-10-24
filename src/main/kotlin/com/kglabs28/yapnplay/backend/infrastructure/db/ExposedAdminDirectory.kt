@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import com.kglabs28.yapnplay.backend.domain.admin.AdminDirectory
 import com.kglabs28.yapnplay.backend.domain.admin.AdminRoom
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.BlocksTable
@@ -87,6 +88,7 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
                 reason = it[ReportsTable.reason],
                 createdAt = it[ReportsTable.createdAt],
                 upheld = it[ReportsTable.upheld],
+                revertedAt = it[ReportsTable.revertedAt],
             )
         }
     }
@@ -154,6 +156,15 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
             PlayRoomMembersTable.deleteWhere { PlayRoomMembersTable.userId eq id }
             MatchResultSeatsTable.update({ MatchResultSeatsTable.userId eq id }) { it[MatchResultSeatsTable.userId] = null }
             UsersTable.deleteWhere { UsersTable.id eq id } > 0
+        }
+    }
+
+    override suspend fun markReverted(reportId: String, at: Long): Boolean {
+        val uuid = reportId.toUuidOrNull() ?: return false
+        return db.run {
+            ReportsTable.update({ (ReportsTable.id eq uuid) and ReportsTable.resolvedAt.isNotNull() and ReportsTable.revertedAt.isNull() }) {
+                it[revertedAt] = at
+            } > 0
         }
     }
 

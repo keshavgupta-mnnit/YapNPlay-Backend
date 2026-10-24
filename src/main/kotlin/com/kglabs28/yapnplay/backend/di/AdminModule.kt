@@ -24,7 +24,7 @@ fun adminModule(config: BackendConfig) = module {
     single { AdminTokenCheck(config.adminToken) }
     single<AdminDirectory> { ExposedAdminDirectory(get()) }
     single { AdminFeedbackUseCase(get(), get(), get()) }
-    single { AdminActionsUseCase(get(), get(), get(), get(), get(), get()) }
+    single { AdminActionsUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { AdminMatchesUseCase(get()) }
     single<AdminAccountStore> { ExposedAdminAccountStore(get()) }
     single { AdminAuthUseCase(get(), get(), get()) }

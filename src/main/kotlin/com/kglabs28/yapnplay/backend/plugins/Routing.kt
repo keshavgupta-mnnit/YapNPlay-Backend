@@ -26,7 +26,7 @@ fun Application.configureRouting(koin: Koin) {
                 userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
                 socialRoutes(koin.get(), koin.get(), koin.get(), koin.get())
                 feedbackRoutes(koin.get())
-                roomStatsRoutes(koin.get())
+                roomStatsRoutes(koin.get(), koin.get())
             }
             webSocketRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         }

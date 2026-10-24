@@ -23,4 +23,7 @@ class InMemoryModerationRepository : ModerationRepository {
     override suspend fun clearBlocks(userId: String, now: Long) {
         blocked -= userId
     }
+
+    override suspend fun undoPenalties(reportId: String, now: Long): List<Penalty> =
+        penalties.filter { it.reportId == reportId }.onEach { blocked -= it.userId }
 }

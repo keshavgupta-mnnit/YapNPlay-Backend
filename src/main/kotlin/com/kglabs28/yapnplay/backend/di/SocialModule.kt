@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.social.FriendPushes
+import com.kglabs28.yapnplay.backend.application.rooms.GetRoomPendingInvitesUseCase
 import com.kglabs28.yapnplay.backend.application.rooms.GetRoomLeaderboardUseCase
 import com.kglabs28.yapnplay.backend.application.feedback.FeedbackUseCase
 import com.kglabs28.yapnplay.backend.application.moderation.BlockChecker
@@ -32,5 +34,7 @@ fun socialModule(config: BackendConfig) = module {
     single { RegisterDeviceUseCase(get(), get()) }
     single { FeedbackUseCase(get(), get(), get()) }
     single { GetRoomLeaderboardUseCase(get(), get()) }
-    single { FriendsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { GetRoomPendingInvitesUseCase(get(), get()) }
+    single { FriendPushes(get()) }
+    single { FriendsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }
