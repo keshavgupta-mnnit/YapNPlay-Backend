@@ -171,6 +171,14 @@
   <section id="tab-players" hidden>
     <h2>Players</h2>
     <form id="userSearch" class="row"><input id="userQuery" type="search" placeholder="Search name, player code, ID…"><button type="submit" style="margin:0">Search</button></form>
+    <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
+      <label>Period <select id="userPeriod"></select></label>
+      <label>by <select id="userBy"><option value="joined">Joined</option><option value="last_seen">Last seen</option></select></label>
+      <label>Sort <select id="userSort">
+        <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="coins">Coins</option>
+        <option value="xp">XP</option><option value="time_in_app">Time in app</option><option value="last_seen">Last seen</option>
+      </select></label>
+    </div>
     <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
   </section>
 
@@ -253,7 +261,8 @@
     if (cls) e.className = cls;
     return e;
   }
-  function fmt(n) { return Number(n).toLocaleString(); }
+  /** Numbers get thousands separators; text ("1h 35m") is shown as it is. */
+  function fmt(n) { return typeof n === "number" ? n.toLocaleString() : String(n == null ? 0 : n); }
 
   function cards(id, items) {
     var box = $(id); box.replaceChildren();
@@ -301,7 +310,8 @@
     cards("liveCards", [
       ["Online now", L.onlineNow], ["In a match", L.playersInMatchNow], ["Live matches", L.liveMatches],
       ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow],
-      ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching a match", L.spectatorsNow || 0]
+      ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching a match", L.spectatorsNow || 0],
+      ["Players who played · " + periodName(period), L.playersWhoPlayed || 0, "good"]
     ]);
     cards("totalCards", [
     ].concat(s.users.byType.length > 1 ? [["All players", s.users.total]] : [])
@@ -589,7 +599,11 @@
 
   // ── Players ──
   function loadUsers() {
-    api("GET", "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim())).then(function (users) {
+    var r = periodRange({ key: $("userPeriod").value || "all" });
+    var path = "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim()) +
+      "&by=" + $("userBy").value + "&sort=" + $("userSort").value +
+      (r ? "&from=" + r.from + (r.to ? "&to=" + r.to : "") : "");
+    api("GET", path).then(function (users) {
       table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
         users.map(function (u) {
           var block = null, coins = null, del = null;
@@ -795,6 +809,9 @@
   });
   window.addEventListener("beforeunload", function (e) { if (hasDirty()) { e.preventDefault(); e.returnValue = ""; } });
   $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); loadUsers(); });
+  // The players list's own period (no custom range) and order, from the same list as Overview.
+  PERIODS.filter(function (p) { return p[0] !== "custom"; }).forEach(function (p) { $("userPeriod").appendChild(new Option(p[1], p[0])); });
+  ["userPeriod", "userBy", "userSort"].forEach(function (id) { $(id).addEventListener("change", loadUsers); });
   $("roomSearch").addEventListener("submit", function (e) { e.preventDefault(); loadRooms(); });
   resume();
 })();

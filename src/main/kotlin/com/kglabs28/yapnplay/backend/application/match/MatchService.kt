@@ -53,7 +53,7 @@ class MatchService(
                 players = holders(plan.players),
                 cpuCount = plan.botCount,
                 houseRules = plan.houseRules,
-                entryCoins = settings[GameSettings.GROUP_FEE],
+                entryCoins = plan.entryCoins,
             ),
         )
     }

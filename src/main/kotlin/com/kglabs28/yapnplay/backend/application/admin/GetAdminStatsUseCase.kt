@@ -45,6 +45,7 @@ class GetAdminStatsUseCase(
                 onMicNow = (liveMatches.flatMap { it.micOnUsers } + rooms.all().flatMap { it.micOnUsers }).toSet().size,
                 chattingInLobbyNow = (presence.presentUsers() - liveMatches.flatMap { it.seatedUsers }.toSet()).size,
                 spectatorsNow = liveMatches.sumOf { it.spectatorCount },
+                playersWhoPlayed = queries.playersWhoPlayed(range),
             ),
             users = users(range, since, until),
             rooms = RoomStats(queries.roomCount(range), roomsActive, queries.roomsPerDay(since, TIME_ZONE, until)),

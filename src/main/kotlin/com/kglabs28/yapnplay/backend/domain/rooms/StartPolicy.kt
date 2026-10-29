@@ -25,10 +25,11 @@ class StartPolicy {
         game: GameDescriptor,
         botFill: Boolean,
         houseRules: Map<String, Boolean>,
+        entryCoins: Int = 0,
     ): SeatPlan {
         val players = readyHumans(members, leaderId).take(game.maxPlayers).map { it.userId }
         val bots = if (botFill && players.size < game.minPlayers) game.minPlayers - players.size else 0
         val spectators = members.filter { it.online && it.userId !in players }.map { it.userId }
-        return SeatPlan(game.id.value, players, bots, spectators, houseRules)
+        return SeatPlan(game.id.value, players, bots, spectators, houseRules, entryCoins)
     }
 }

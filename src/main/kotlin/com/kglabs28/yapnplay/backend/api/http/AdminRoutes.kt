@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserSort
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserDate
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserFilter
 import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackReplyBody
 import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackUseCase
 import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
@@ -123,7 +126,18 @@ fun Route.adminRoutes(
             call.respond(settings.update(call.parameters[HttpPaths.KEY_PARAM].orEmpty(), body.value, admin.adminId, body.note))
         }
     }
-    get(HttpPaths.ADMIN_USERS) { guard.run(call, AdminPermission.VIEW) { call.respond(actions.users(call.request.queryParameters[HttpPaths.QUERY_PARAM].orEmpty())) } }
+    get(HttpPaths.ADMIN_USERS) {
+        guard.run(call, AdminPermission.VIEW) {
+            val params = call.request.queryParameters
+            val filter = AdminUserFilter(
+                fromMillis = params[FROM_PARAM]?.toLongOrNull(),
+                toMillis = params[TO_PARAM]?.toLongOrNull(),
+                by = AdminUserDate.entries.firstOrNull { it.name.equals(params[DATE_BY_PARAM], ignoreCase = true) } ?: AdminUserDate.JOINED,
+                sort = AdminUserSort.entries.firstOrNull { it.name.equals(params[SORT_PARAM], ignoreCase = true) } ?: AdminUserSort.NEWEST,
+            )
+            call.respond(actions.users(params[HttpPaths.QUERY_PARAM].orEmpty(), filter))
+        }
+    }
     post(HttpPaths.ADMIN_USER_BLOCK) {
         guard.run(call, AdminPermission.MODERATE) { admin ->
             val body = call.receive<AdminBlockBody>()
@@ -272,5 +286,7 @@ private const val NOTE_PARAM = "note"
 /** /admin/stats period: from and to, epoch millis. */
 private const val FROM_PARAM = "from"
 private const val TO_PARAM = "to"
+private const val DATE_BY_PARAM = "by"
+private const val SORT_PARAM = "sort"
 private const val TEST_ERROR_LOGGER = "AdminTestError"
 private const val TEST_ERROR_MESSAGE = "Test error from the YapNPlay admin: Sentry is working"

@@ -15,6 +15,8 @@ object PlayRoomsTable : Table("play_rooms") {
     val adminId = uuid("admin_id")
     val selectedGame = varchar("selected_game", GAME_ID_MAX_LENGTH).nullable()
     val botFill = bool("bot_fill")
+    /** V23: the room's league (each player's entry, coins). */
+    val entryCoins = integer("entry_coins")
     val createdAt = long("created_at")
 
     override val primaryKey = PrimaryKey(id)

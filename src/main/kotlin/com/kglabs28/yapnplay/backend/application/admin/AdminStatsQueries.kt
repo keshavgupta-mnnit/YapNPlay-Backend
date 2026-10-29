@@ -29,6 +29,9 @@ interface AdminStatsQueries {
     /** Players who left a match before it ended, over matches that ended in [range]. */
     suspend fun playersLeft(range: StatsRange = StatsRange.ALL): Int
 
+    /** Different people (not CPUs) who played a match that ended in [range]. */
+    suspend fun playersWhoPlayed(range: StatsRange = StatsRange.ALL): Int
+
     /** Time in the app over every player (kept only as a running total, so always every time). */
     suspend fun appTime(): StoredAppTime
 }

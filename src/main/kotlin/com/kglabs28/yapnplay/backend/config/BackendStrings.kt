@@ -68,6 +68,8 @@ object BackendStrings {
     const val NO_GAME_SELECTED = "Pick a game first."
     const val GAME_UNAVAILABLE = "This game is not available."
     const val UNKNOWN_HOUSE_RULE = "This game has no such house rule."
+    const val UNKNOWN_LEAGUE = "That league is not offered."
+    const val LEAGUE_UNAFFORDABLE = "Someone in the lobby cannot pay that league's entry."
     const val NOT_ENOUGH_READY = "Not enough ready players to start."
     const val NOT_READY_TO_CANCEL = "Only ready players can cancel the countdown."
     const val CANNOT_REMOVE_SELF = "Use Leave Room to leave yourself."

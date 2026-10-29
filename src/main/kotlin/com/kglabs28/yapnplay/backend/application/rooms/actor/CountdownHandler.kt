@@ -73,7 +73,7 @@ class CountdownHandler(
         val game = state.room.selectedGame?.let(deps.games::findEnabled) ?: return false
         if (!startConditionsHold()) return false
         val plan = deps.startPolicy.plan(
-            state.members.values, state.room.leaderId, game, state.room.botFill, state.houseRules,
+            state.members.values, state.room.leaderId, game, state.room.botFill, state.houseRules, state.room.entryCoins,
         )
         val matchId = deps.matchStarter.start(state.room.id, plan)
         state.matchInProgress = matchId

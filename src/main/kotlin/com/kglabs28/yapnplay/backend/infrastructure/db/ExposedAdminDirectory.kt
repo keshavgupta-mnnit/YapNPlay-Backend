@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserSort
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserDate
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserFilter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import com.kglabs28.yapnplay.backend.domain.admin.AdminDirectory
 import com.kglabs28.yapnplay.backend.domain.admin.AdminRoom
@@ -24,6 +27,8 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.and
@@ -35,14 +40,26 @@ import org.jetbrains.exposed.sql.update
 /** [AdminDirectory] on PostgreSQL. */
 class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
 
-    override suspend fun searchUsers(query: String, now: Long, limit: Int): List<AdminUser> = db.run {
+    override suspend fun searchUsers(query: String, now: Long, limit: Int, filter: AdminUserFilter): List<AdminUser> = db.run {
         val q = query.trim()
         val part = "%${q.lowercase()}%"
         val where: Op<Boolean> = if (q.isEmpty()) Op.TRUE else
             (UsersTable.displayName.lowerCase() like part) or (UsersTable.userCode.lowerCase() like part) or
                 (UsersTable.playGamesPlayerId.lowerCase() like part) or
                 (UsersTable.id.castTo<String>(TextColumnType()) like part)
-        val users = UsersTable.selectAll().where(where).orderBy(UsersTable.createdAt, SortOrder.DESC).limit(limit).toList()
+        val date = if (filter.by == AdminUserDate.LAST_SEEN) UsersTable.lastSeenAt else UsersTable.createdAt
+        var inPeriod = where
+        filter.fromMillis?.let { from -> inPeriod = inPeriod and (date greaterEq from) }
+        filter.toMillis?.let { to -> inPeriod = inPeriod and (date less to) }
+        val (column, order) = when (filter.sort) {
+            AdminUserSort.NEWEST -> UsersTable.createdAt to SortOrder.DESC
+            AdminUserSort.OLDEST -> UsersTable.createdAt to SortOrder.ASC
+            AdminUserSort.COINS -> UsersTable.coins to SortOrder.DESC
+            AdminUserSort.XP -> UsersTable.xp to SortOrder.DESC
+            AdminUserSort.TIME_IN_APP -> UsersTable.onlineMs to SortOrder.DESC
+            AdminUserSort.LAST_SEEN -> UsersTable.lastSeenAt to SortOrder.DESC
+        }
+        val users = UsersTable.selectAll().where(inPeriod).orderBy(column, order).limit(limit).toList()
         val ids = users.map { it[UsersTable.id] }
         val blocks = if (ids.isEmpty()) emptyMap() else PenaltiesTable.selectAll()
             .where { (PenaltiesTable.userId inList ids) and (PenaltiesTable.blockedUntil greater now) and PenaltiesTable.clearedAt.isNull() }

@@ -51,6 +51,12 @@ data class SetBotFill(
     val enabled: Boolean,
 )
 
+/** Leader picks the room's league: each player's entry (coins), one of RoomInfo.leagueFees. */
+@Serializable
+data class SetLeague(
+    val entryCoins: Int,
+)
+
 /** Leader turns one of the selected game's house rules on or off. */
 @Serializable
 data class SetHouseRule(
@@ -180,6 +186,12 @@ data class RoomInfo(
     val botFill: Boolean = false,
     /** Selected game's house rules by key (see HouseRuleOption); reset on game change. */
     val houseRules: Map<String, Boolean> = emptyMap(),
+    /** The room's league: each player's entry (coins) for its matches; kept with the room. */
+    val entryCoins: Int = 100,
+    /** The leagues to pick from (coins, Free = 0 first). */
+    val leagueFees: List<Int> = emptyList(),
+    /** The most every member in the lobby can pay now: leagues above it can't be picked. */
+    val affordableEntry: Int = Int.MAX_VALUE,
     /** Countdown deadline in epoch millis, or null if no countdown running. */
     val countdownDeadline: Long? = null,
     /** Match ID if a match is in progress, or null. */

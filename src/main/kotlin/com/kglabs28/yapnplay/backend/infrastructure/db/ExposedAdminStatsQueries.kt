@@ -66,6 +66,8 @@ class ExposedAdminStatsQueries(private val db: DbQuery) : AdminStatsQueries {
 
     override suspend fun playersLeft(range: StatsRange): Int = db.run { single(PLAYERS_LEFT, range.args()) { it.getInt(1) } }
 
+    override suspend fun playersWhoPlayed(range: StatsRange): Int = db.run { single(PLAYERS_WHO_PLAYED, range.args()) { it.getInt(1) } }
+
     override suspend fun appTime(): StoredAppTime = db.run {
         single(APP_TIME) { StoredAppTime(it.getLong(1), it.getInt(2)) }
     }
@@ -140,6 +142,12 @@ class ExposedAdminStatsQueries(private val db: DbQuery) : AdminStatsQueries {
             FROM match_result_seats s
             JOIN match_results m ON m.id = s.match_id
             WHERE s.left_match AND m.ended_at >= ? AND m.ended_at < ?
+            """
+        const val PLAYERS_WHO_PLAYED = """
+            SELECT count(DISTINCT s.user_id)
+            FROM match_result_seats s
+            JOIN match_results m ON m.id = s.match_id
+            WHERE s.user_id IS NOT NULL AND m.ended_at >= ? AND m.ended_at < ?
             """
         const val APP_TIME = "SELECT coalesce(sum(online_ms), 0), count(*) FILTER (WHERE online_ms > 0) FROM users"
         const val PENALTY_COUNTS =

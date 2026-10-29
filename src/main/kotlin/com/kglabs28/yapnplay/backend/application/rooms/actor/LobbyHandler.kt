@@ -28,6 +28,18 @@ class LobbyHandler(
         deps.repository.updateGame(state.room.id, gameId)
     }
 
+    /** The leader picks the room's league; kept with the room. Never one someone in the lobby can't pay. */
+    suspend fun setLeague(userId: String, entryCoins: Int) {
+        guards.requireLeader(userId)
+        if (entryCoins !in deps.leagueFees()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_LEAGUE)
+        val coins = deps.coins
+        if (coins != null && state.members.values.filter { it.online }.any { coins.balance(it.userId) < entryCoins }) {
+            throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.LEAGUE_UNAFFORDABLE)
+        }
+        state.room = state.room.copy(entryCoins = entryCoins)
+        deps.repository.updateEntryCoins(state.room.id, entryCoins)
+    }
+
     fun setHouseRule(userId: String, key: String, enabled: Boolean) {
         guards.requireLeader(userId)
         val game = guards.requireGame()

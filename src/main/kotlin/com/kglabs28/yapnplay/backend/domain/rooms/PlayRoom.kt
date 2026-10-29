@@ -16,4 +16,9 @@ data class PlayRoom(
     val selectedGame: String?,
     val botFill: Boolean,
     val createdAt: Long,
+    /** The room's league: every player's entry (coins) for its matches. */
+    val entryCoins: Int = DEFAULT_ROOM_ENTRY,
 )
+
+/** A new Game Room's league (coins). */
+const val DEFAULT_ROOM_ENTRY = 100

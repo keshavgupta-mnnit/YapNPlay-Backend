@@ -80,6 +80,7 @@ class PlayRoomActor(
             is RoomAction.SelectGame -> done { lobby.selectGame(userId, action.gameId) }
             is RoomAction.SetBotFill -> done { lobby.setBotFill(userId, action.enabled) }
             is RoomAction.RenameRoom -> done { lobby.rename(userId, action.name) }
+            is RoomAction.SetLeague -> done { lobby.setLeague(userId, action.entryCoins) }
             is RoomAction.SetHouseRule -> done { lobby.setHouseRule(userId, action.key, action.enabled) }
             is RoomAction.SetReady -> done { lobby.setReady(userId, action.ready) }
             is RoomAction.SetWatching -> done { lobby.setWatching(userId, action.watching) }
@@ -128,6 +129,9 @@ class PlayRoomActor(
 
     private suspend fun broadcast() {
         state.version++
+        // The leagues on offer, and the most everyone in the lobby can pay (no league above it can be picked).
+        state.leagueFees = deps.leagueFees()
+        state.affordableEntry = deps.coins?.let { store -> state.members.values.filter { it.online }.minOfOrNull { store.balance(it.userId) } } ?: Int.MAX_VALUE
         micOnUsers = state.members.values.filter { it.online && it.micOn }.map { it.userId }.toSet()
         (state.onlineIds() + state.extraRecipients).distinct().forEach { sendSnapshot(it) }
         state.extraRecipients.clear()

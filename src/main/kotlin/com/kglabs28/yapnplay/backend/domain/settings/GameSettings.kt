@@ -82,7 +82,6 @@ object GameSettings {
             else -> null
         }
     }
-    val GROUP_FEE = IntSetting("coins.group_fee", SettingGroup.ECONOMY, "Room game fee per player (coins)", 100, 0, MAX_COINS)
     val COMPLETION_COINS = IntSetting("coins.completion", SettingGroup.ECONOMY, "Coins for finishing a match (every league)", 100, 0, MAX_COINS)
     val COMPLETION_DAILY_CAP = IntSetting("coins.completion_daily_cap", SettingGroup.ECONOMY, "Paid finishes per player per day", 10, 0, 100)
     val COMPLETION_MIN_MINUTES = IntSetting("coins.completion_min_minutes", SettingGroup.ECONOMY, "Shortest match that pays finishing coins (minutes)", 3, 0, 60)
@@ -137,6 +136,8 @@ object GameSettings {
     val CB_MESSAGE_PAUSE_CAP_MS = IntSetting("cb.message_pause_cap_ms", SettingGroup.CITY_BAZAAR, "Most reading time per update (ms)", 8_000, 0, MAX_PAUSE_MS)
     val CB_CPU_THINK_MS = IntSetting("cb.cpu_think_ms", SettingGroup.CITY_BAZAAR, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val CB_CPU_THINK_JITTER_MS = IntSetting("cb.cpu_think_jitter_ms", SettingGroup.CITY_BAZAAR, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
+    val CB_CPU_BID_DELAY_MS = IntSetting("cb.cpu_bid_delay_ms", SettingGroup.CITY_BAZAAR, "Bots: least wait before bidding again in an auction (ms)", 1_200, 0, 10_000)
+    val CB_CPU_FIRST_BID_DELAY_MS = IntSetting("cb.cpu_first_bid_delay_ms", SettingGroup.CITY_BAZAAR, "Bots: least wait before the first bid on a new auction, so people can bid first (ms)", 3_000, 0, 10_000)
     val CB_CPU_DECISION_EXTRA_MS = IntSetting("cb.cpu_decision_extra_ms", SettingGroup.CITY_BAZAAR, "Bots: extra time for a real choice (buy, build, jail, debt) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)
     val CB_CPU_RESERVE = IntSetting("cb.cpu_reserve", SettingGroup.CITY_BAZAAR, "CPU: least cash kept after paying (₹)", 2_000, 0, 100_000)
     val CB_CPU_SAFETY_BUFFER = IntSetting("cb.bot_safety_buffer", SettingGroup.CITY_BAZAAR, "CPU: cushion on top of the expected bills (₹)", 1_000, 0, 100_000)
@@ -191,12 +192,12 @@ object GameSettings {
     val RL_BOT_CHASE = IntSetting("ludo.bot_chase", SettingGroup.ROYAL_LUDO, "Bots: value per opponent piece 1-6 squares ahead it could hit", 5, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, GROUP_FEE, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
-        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
+        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,

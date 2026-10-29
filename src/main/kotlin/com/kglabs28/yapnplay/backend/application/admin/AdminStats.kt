@@ -55,6 +55,8 @@ data class LiveStats(
     /** People in a room lobby who are not in a match: just chatting. */
     val chattingInLobbyNow: Int = 0,
     val spectatorsNow: Int = 0,
+    /** Different people who played a match in the chosen period (from the database, so it follows the period). */
+    val playersWhoPlayed: Int = 0,
 )
 
 /** Player accounts. Today every account is an auto-created guest; no one has signed up. */

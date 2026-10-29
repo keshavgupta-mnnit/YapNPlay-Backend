@@ -32,6 +32,7 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
                 it[adminId] = room.adminId.toUuid()
                 it[selectedGame] = room.selectedGame
                 it[botFill] = room.botFill
+                it[entryCoins] = room.entryCoins
                 it[createdAt] = room.createdAt
             }
             PlayRoomMembersTable.insert {
@@ -124,6 +125,12 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
         }
     }
 
+    override suspend fun updateEntryCoins(roomId: String, entryCoins: Int) {
+        db.run {
+            PlayRoomsTable.update({ PlayRoomsTable.id eq roomId.toUuid() }) { it[PlayRoomsTable.entryCoins] = entryCoins }
+        }
+    }
+
     override suspend fun updateName(roomId: String, name: String) {
         db.run {
             PlayRoomsTable.update({ PlayRoomsTable.id eq roomId.toUuid() }) { it[PlayRoomsTable.name] = name }
@@ -145,6 +152,7 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
         adminId = this[PlayRoomsTable.adminId].toString(),
         selectedGame = this[PlayRoomsTable.selectedGame],
         botFill = this[PlayRoomsTable.botFill],
+        entryCoins = this[PlayRoomsTable.entryCoins],
         createdAt = this[PlayRoomsTable.createdAt],
     )
 

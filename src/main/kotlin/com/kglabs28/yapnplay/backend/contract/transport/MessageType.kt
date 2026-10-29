@@ -17,6 +17,7 @@ object MessageType {
     const val SELECT_GAME = "SelectGame"
     const val SET_BOT_FILL = "SetBotFill"
     const val SET_HOUSE_RULE = "SetHouseRule"
+    const val SET_LEAGUE = "SetLeague"
     const val SET_WATCHING = "SetWatching"
     const val SET_VOICE_STATE = "SetVoiceState"
     const val TRANSFER_LEADER = "TransferLeader"

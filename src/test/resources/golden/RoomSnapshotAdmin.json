@@ -40,6 +40,9 @@
         "houseRules": {
             "extra_turn_on_six": true
         },
+        "entryCoins": 100,
+        "leagueFees": [],
+        "affordableEntry": 2147483647,
         "countdownDeadline": 1760000010000,
         "matchInProgress": null,
         "waitingList": [

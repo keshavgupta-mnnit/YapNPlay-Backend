@@ -91,7 +91,7 @@ class CityBazaarSession(
     private val cpuBot: CityBazaarBot = CityBazaarBot(CityBazaarBotProfile.CPU),
 ) : GameSession {
     /** How long CPUs wait after the last bid before bidding again. */
-    private var bidGap: Long = CPU_BID_DELAY_MS
+    private var bidGap: Long = timing.bidDelayMillis
     private val mapper = CityBazaarWireMapper(json)
 
     override val currentSeat: Int get() = state.currentSeat
@@ -263,7 +263,7 @@ class CityBazaarSession(
             val opened = result.events.any { it is AuctionStarted }
             auctionEndsAt = now + AUCTION_SECONDS * BackendConstants.MILLIS_PER_SECOND
             lastBidAt = now
-            bidGap = timing.think.millis(decision = false).coerceAtLeast(if (opened) CPU_FIRST_BID_DELAY_MS else CPU_BID_DELAY_MS)
+            bidGap = timing.think.millis(decision = false).coerceAtLeast(if (opened) timing.firstBidDelayMillis else timing.bidDelayMillis)
         }
         return result.events
     }
@@ -287,8 +287,6 @@ class CityBazaarSession(
         const val AFTER_ROLL_MS = 2_100L
         const val PER_STEP_MS = 200L
         const val AFTER_MOVE_MS = 500L
-        const val CPU_BID_DELAY_MS = 1_200L
-        const val CPU_FIRST_BID_DELAY_MS = 3_000L
         const val CPU_BID_CHANCE_PERCENT = 35
         const val PERCENT = 100
         const val MILLIS_PER_MINUTE = 60_000L
@@ -316,6 +314,9 @@ data class CityBazaarTiming(
     ),
     val messageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_MS.default.toLong(),
     val maxMessageMillis: Long = GameSettings.CB_MESSAGE_PAUSE_CAP_MS.default.toLong(),
+    /** A bot's least wait before bidding again in an auction, and before the first bid on a new one. */
+    val bidDelayMillis: Long = GameSettings.CB_CPU_BID_DELAY_MS.default.toLong(),
+    val firstBidDelayMillis: Long = GameSettings.CB_CPU_FIRST_BID_DELAY_MS.default.toLong(),
 )
 
 /** City Royale phases where a bot weighs a real choice (it thinks a little longer). */

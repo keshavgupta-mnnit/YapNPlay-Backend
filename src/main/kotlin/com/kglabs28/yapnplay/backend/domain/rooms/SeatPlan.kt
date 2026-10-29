@@ -10,4 +10,6 @@ data class SeatPlan(
     /** Present members without a seat. */
     val spectators: List<String>,
     val houseRules: Map<String, Boolean>,
+    /** The room's league: each player's entry (coins). */
+    val entryCoins: Int = 0,
 )

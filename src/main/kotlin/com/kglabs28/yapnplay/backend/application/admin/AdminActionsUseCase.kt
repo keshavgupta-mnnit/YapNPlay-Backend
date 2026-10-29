@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.admin
 
+import com.kglabs28.yapnplay.backend.domain.admin.AdminUserFilter
 import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendConstants
@@ -29,9 +30,9 @@ class AdminActionsUseCase(
     private val ids: IdGenerator,
     private val clock: Clock,
 ) {
-    suspend fun users(query: String): List<AdminUserView> {
+    suspend fun users(query: String, filter: AdminUserFilter = AdminUserFilter()): List<AdminUserView> {
         val now = clock.nowMillis()
-        return directory.searchUsers(query, now, USER_LIMIT).map {
+        return directory.searchUsers(query, now, USER_LIMIT, filter).map {
             AdminUserView(
                 it.userId, it.displayName, it.userCode, it.coins, it.xp, it.createdAt, it.playGamesLinked, it.blockedUntil,
                 friends = it.friends, groups = it.groups, gamesPlayed = it.gamesPlayed,

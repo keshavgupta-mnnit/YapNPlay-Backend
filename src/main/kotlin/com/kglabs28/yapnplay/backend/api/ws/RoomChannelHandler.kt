@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.contract.SetLeague
 import com.kglabs28.yapnplay.backend.contract.CreateRoom
 import com.kglabs28.yapnplay.backend.contract.ApproveJoin
 import com.kglabs28.yapnplay.backend.contract.DeclineJoin
@@ -75,6 +76,7 @@ class RoomChannelHandler(
         MessageType.SET_BOT_FILL -> RoomAction.SetBotFill(codec.payload(request, SetBotFill.serializer()).enabled)
         MessageType.SET_READY -> RoomAction.SetReady(codec.payload(request, SetReady.serializer()).ready)
         MessageType.SET_WATCHING -> RoomAction.SetWatching(codec.payload(request, SetWatching.serializer()).watching)
+        MessageType.SET_LEAGUE -> RoomAction.SetLeague(codec.payload(request, SetLeague.serializer()).entryCoins)
         MessageType.SET_HOUSE_RULE -> codec.payload(request, SetHouseRule.serializer()).let {
             RoomAction.SetHouseRule(it.key, it.enabled)
         }

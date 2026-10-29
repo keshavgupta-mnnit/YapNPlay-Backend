@@ -46,6 +46,10 @@ class InMemoryPlayRoomRepository(private val names: (String) -> String = { it })
         rooms[roomId] = rooms.getValue(roomId).copy(botFill = botFill)
     }
 
+    override suspend fun updateEntryCoins(roomId: String, entryCoins: Int) {
+        rooms[roomId] = rooms.getValue(roomId).copy(entryCoins = entryCoins)
+    }
+
     override suspend fun updateName(roomId: String, name: String) {
         rooms[roomId] = rooms.getValue(roomId).copy(name = name)
     }

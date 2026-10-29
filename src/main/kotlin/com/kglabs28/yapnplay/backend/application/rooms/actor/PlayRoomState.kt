@@ -32,6 +32,9 @@ class PlayRoomState(
     var version = 0L
     var countdownDeadline: Long? = null
     var matchInProgress: String? = null
+    /** The leagues on offer (coins), and the most every member in the lobby can pay (refreshed with each snapshot). */
+    var leagueFees: List<Int> = emptyList()
+    var affordableEntry: Int = Int.MAX_VALUE
 
     /** Users who must get the next snapshot although they are no longer members (removed). */
     val extraRecipients = mutableSetOf<String>()
@@ -65,6 +68,9 @@ class PlayRoomState(
             selectedGame = room.selectedGame,
             botFill = room.botFill,
             houseRules = houseRules,
+            entryCoins = room.entryCoins,
+            leagueFees = leagueFees,
+            affordableEntry = affordableEntry,
             countdownDeadline = countdownDeadline,
             matchInProgress = matchInProgress,
             waitingList = if (receiver != null && receiver == room.adminId) {

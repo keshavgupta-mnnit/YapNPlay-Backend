@@ -14,6 +14,7 @@ sealed interface RoomAction {
     data object Leave : RoomAction
     data class SelectGame(val gameId: String?) : RoomAction
     data class SetBotFill(val enabled: Boolean) : RoomAction
+    data class SetLeague(val entryCoins: Int) : RoomAction
     data class SetHouseRule(val key: String, val enabled: Boolean) : RoomAction
     data class SetReady(val ready: Boolean) : RoomAction
     data class SetWatching(val watching: Boolean) : RoomAction

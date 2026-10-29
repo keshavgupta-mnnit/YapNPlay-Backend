@@ -15,6 +15,7 @@ interface PlayRoomRepository {
     suspend fun updateRoles(roomId: String, leaderId: String, adminId: String)
     suspend fun updateGame(roomId: String, selectedGame: String?)
     suspend fun updateBotFill(roomId: String, botFill: Boolean)
+    suspend fun updateEntryCoins(roomId: String, entryCoins: Int)
     suspend fun updateName(roomId: String, name: String)
     suspend fun delete(roomId: String)
 }
