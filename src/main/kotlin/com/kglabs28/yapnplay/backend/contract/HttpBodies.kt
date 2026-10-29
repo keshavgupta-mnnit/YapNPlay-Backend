@@ -392,7 +392,7 @@ data class MatchHistoryItem(
     val seats: List<MatchHistorySeat>,
 )
 
-/** One seat of a past match. [userId] is null for a CPU; coins: the pot share, the finishing coins and the entry staked. */
+/** One seat of a past match. [userId] is null for a CPU; coins: the pot share, the finishing coins and the entry staked; [left]: they left before the end. */
 @Serializable
 data class MatchHistorySeat(
     val seat: Int,
@@ -404,4 +404,5 @@ data class MatchHistorySeat(
     val completionCoins: Int = 0,
     val stake: Int = 0,
     val xp: Int = 0,
+    val left: Boolean = false,
 )

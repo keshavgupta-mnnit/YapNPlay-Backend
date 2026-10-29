@@ -2,7 +2,7 @@ package com.kglabs28.yapnplay.backend.infrastructure.db.tables
 
 import org.jetbrains.exposed.sql.Table
 
-/** Mirrors V3__match_results_and_xp.sql and V15__match_history.sql. */
+/** Mirrors V3__match_results_and_xp.sql, V15__match_history.sql and V22__history_left.sql. */
 object MatchResultSeatsTable : Table("match_result_seats") {
     val matchId = uuid("match_id").references(MatchResultsTable.id)
     val seat = integer("seat")
@@ -15,6 +15,8 @@ object MatchResultSeatsTable : Table("match_result_seats") {
     val coinsWon = integer("coins_won")
     val completionCoins = integer("completion_coins")
     val stake = integer("stake")
+    /** V22: the player left before the match ended (history shows it abandoned). */
+    val leftMatch = bool("left_match")
 
     override val primaryKey = PrimaryKey(matchId, seat)
 

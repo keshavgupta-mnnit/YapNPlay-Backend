@@ -20,9 +20,11 @@ class GetAdminStatsUseCase(
     private val clock: Clock,
     private val rooms: PlayRoomActors,
 ) {
-    suspend operator fun invoke(): AdminStats {
+    /** Totals within [range]; the per-day charts cover the range, or the last [DAYS_SHOWN] days for every time. */
+    suspend operator fun invoke(range: StatsRange = StatsRange.ALL): AdminStats {
         val now = clock.nowMillis()
-        val since = startOfWindow(now)
+        val since = if (range.isAll) startOfWindow(now) else range.fromMillis
+        val until = if (range.isAll) Long.MAX_VALUE else range.toMillis
         val liveMatches = matches.all().filter { !it.isFinished }
         val waiting = matchmaking.waitingNow()
         val roomsActive = presence.activeRoomCount()
@@ -31,6 +33,8 @@ class GetAdminStatsUseCase(
             version = BuildInfo.version,
             commit = BuildInfo.commit,
             timeZone = TIME_ZONE,
+            rangeFrom = range.fromMillis.takeUnless { range.isAll },
+            rangeTo = range.toMillis.takeUnless { range.isAll || it == Long.MAX_VALUE },
             live = LiveStats(
                 onlineNow = notifier.onlineUserCount(),
                 playersInMatchNow = liveMatches.flatMap { it.seatedUsers }.toSet().size,
@@ -42,24 +46,24 @@ class GetAdminStatsUseCase(
                 chattingInLobbyNow = (presence.presentUsers() - liveMatches.flatMap { it.seatedUsers }.toSet()).size,
                 spectatorsNow = liveMatches.sumOf { it.spectatorCount },
             ),
-            users = users(since),
-            rooms = RoomStats(queries.roomCount(), roomsActive, queries.roomsPerDay(since, TIME_ZONE)),
+            users = users(range, since, until),
+            rooms = RoomStats(queries.roomCount(range), roomsActive, queries.roomsPerDay(since, TIME_ZONE, until)),
             games = gameUsage(
-                stored = queries.matchesByGame(),
+                stored = queries.matchesByGame(range),
                 live = liveMatches.groupingBy { it.gameId }.eachCount(),
                 joins = matchmaking.joinsSinceStart(),
                 waiting = waiting,
             ),
-            moderation = moderation(now),
-            matches = queries.matchTotals().let { MatchTotals(it.completed, it.abandoned, it.playMillis / MILLIS_PER_MINUTE) },
+            moderation = moderation(now, range),
+            matches = queries.matchTotals(range).let { MatchTotals(it.completed, it.abandoned, it.playMillis / MILLIS_PER_MINUTE, queries.playersLeft(range)) },
         )
     }
 
-    private suspend fun users(since: Long): UserStats {
-        val byType = queries.userCountsByType()
+    private suspend fun users(range: StatsRange, since: Long, until: Long): UserStats {
+        val byType = queries.userCountsByType(range)
         val time = queries.appTime()
         return UserStats(
-            byType.sumOf { it.count }, byType, queries.usersPerDay(since, TIME_ZONE),
+            byType.sumOf { it.count }, byType, queries.usersPerDay(since, TIME_ZONE, until),
             appMinutesTotal = time.totalMillis / MILLIS_PER_MINUTE,
             appMinutesAverage = if (time.players == 0) 0 else time.totalMillis / time.players / MILLIS_PER_MINUTE,
         )
@@ -90,8 +94,8 @@ class GetAdminStatsUseCase(
         }.sortedWith(compareByDescending<GameUsage> { it.matchesFinished }.thenByDescending { it.liveMatches })
     }
 
-    private suspend fun moderation(now: Long): ModerationStats {
-        val counts = queries.moderationCounts(now)
+    private suspend fun moderation(now: Long, range: StatsRange): ModerationStats {
+        val counts = queries.moderationCounts(now, range)
         return ModerationStats(
             reportsFiled = counts.reports,
             upheld = counts.upheld,
@@ -99,7 +103,7 @@ class GetAdminStatsUseCase(
             pending = counts.pending,
             penaltiesIssued = counts.penalties,
             penaltiesActive = counts.penaltiesActive,
-            mostReported = queries.mostReported(MOST_REPORTED_LIMIT),
+            mostReported = queries.mostReported(MOST_REPORTED_LIMIT, range),
         )
     }
 

@@ -70,8 +70,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlin.math.abs
 
 /**
- * City Bazaar inside a match: the engine, the auction clock (5 s after
- * each bid, CPU seats bidding), the match time limit, and the wire shapes.
+ * City Bazaar inside a match: the engine, the auction clock (10 s to
+ * open and again after each bid, CPU seats bidding), the match time limit, and the wire shapes.
  */
 class CityBazaarSession(
     private val engine: CityBazaarEngine,
@@ -98,7 +98,8 @@ class CityBazaarSession(
     override val phase: String get() = state.phase.name
     override val isFinished: Boolean get() = state.phase == CityBazaarPhase.FINISHED
     override val ranking: List<Int> get() = if (isFinished) CityBazaarEngine.ranking(state) else emptyList()
-    override val turnSeconds: Int get() = timing.turnSeconds
+    /** Choosing what to sell or auction for a debt takes longer than a normal step. */
+    override val turnSeconds: Int get() = if (state.phase == CityBazaarPhase.DEBT) timing.debtSeconds else timing.turnSeconds
     /** A bot's think time: longer for buying, building, jail and debt. */
     override val thinkMillis: Long get() = timing.think.millis(state.phase in THINK_DECISIONS)
     // An auction or the keep-playing vote: no turn timer, the tick closes them.
@@ -258,9 +259,11 @@ class CityBazaarSession(
         state = result.state as CityBazaarState
         if (result.events.any { it is AuctionStarted || it is BidPlaced }) {
             val now = clock.nowMillis()
+            // Every bid restarts the clock; on a new auction CPUs hold back a moment, so every player sees it in time to bid.
+            val opened = result.events.any { it is AuctionStarted }
             auctionEndsAt = now + AUCTION_SECONDS * BackendConstants.MILLIS_PER_SECOND
             lastBidAt = now
-            bidGap = timing.think.millis(decision = false).coerceAtLeast(CPU_BID_DELAY_MS)
+            bidGap = timing.think.millis(decision = false).coerceAtLeast(if (opened) CPU_FIRST_BID_DELAY_MS else CPU_BID_DELAY_MS)
         }
         return result.events
     }
@@ -285,6 +288,7 @@ class CityBazaarSession(
         const val PER_STEP_MS = 200L
         const val AFTER_MOVE_MS = 500L
         const val CPU_BID_DELAY_MS = 1_200L
+        const val CPU_FIRST_BID_DELAY_MS = 3_000L
         const val CPU_BID_CHANCE_PERCENT = 35
         const val PERCENT = 100
         const val MILLIS_PER_MINUTE = 60_000L
@@ -304,6 +308,7 @@ data class CityBazaarSaved(
 /** Turn time, bot think time and reading time per table message (runtime settings). */
 data class CityBazaarTiming(
     val turnSeconds: Int = GameSettings.CB_TURN_SECONDS.default,
+    val debtSeconds: Int = GameSettings.CB_DEBT_SECONDS.default,
     val think: BotThinkTime = BotThinkTime(
         GameSettings.CB_CPU_THINK_MS.default.toLong(),
         GameSettings.CB_CPU_THINK_JITTER_MS.default.toLong(),

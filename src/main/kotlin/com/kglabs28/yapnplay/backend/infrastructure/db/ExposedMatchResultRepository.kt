@@ -42,6 +42,7 @@ class ExposedMatchResultRepository(private val db: DbQuery) : MatchResultReposit
                     it[coinsWon] = seat.coinsWon
                     it[completionCoins] = seat.completionCoins
                     it[stake] = seat.stake
+                    it[leftMatch] = seat.left
                 }
             }
             xpByUser.forEach { (user, xp) ->
@@ -72,6 +73,7 @@ class ExposedMatchResultRepository(private val db: DbQuery) : MatchResultReposit
                     coinsWon = row[MatchResultSeatsTable.coinsWon],
                     completionCoins = row[MatchResultSeatsTable.completionCoins],
                     stake = row[MatchResultSeatsTable.stake],
+                    left = row[MatchResultSeatsTable.leftMatch],
                 )
             }
         val roomIds = matches.mapNotNull { it[MatchResultsTable.roomId] }.distinct()

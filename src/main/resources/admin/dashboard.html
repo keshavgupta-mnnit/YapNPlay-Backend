@@ -73,6 +73,12 @@
   .msg { min-height: 1.4em; font-size: 13px; margin-top: 6px; }
   .tools { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
   .tools button { margin: 0; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips button { margin: 0; padding: 5px 11px; font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .chips button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #periodCustom { margin-top: 8px; }
+  #periodCustom input { flex: 0 1 170px; min-width: 140px; }
+  #periodCustom button { margin: 0; }
 </style>
 </head>
 <body>
@@ -121,7 +127,14 @@
   <h2>Right now</h2>
   <div class="cards" id="liveCards"></div>
   <div class="note">Live numbers are in memory and reset when the server restarts.</div>
-  <h2>Totals</h2>
+  <h2>Period</h2>
+  <div class="chips" id="periodChips"></div>
+  <div class="row" id="periodCustom" hidden>
+    <input type="date" id="periodFrom" aria-label="From"> <span>–</span> <input type="date" id="periodTo" aria-label="To">
+    <button type="button" id="periodApply">Apply</button>
+  </div>
+  <div class="note">Totals, games, the per-day lists and moderation cover this period (days in India time). Time in app is always every time.</div>
+  <h2 id="totalsTitle">Totals</h2>
   <div class="cards" id="totalCards"></div>
   <h2>Games</h2>
   <div class="panel"><table id="games"></table></div>
@@ -297,7 +310,8 @@
       ["Rooms (existing)", s.rooms.total],
       ["Matches finished", s.games.reduce(function (a, g) { return a + g.matchesFinished; }, 0)],
       ["Matches completed", (s.matches || {}).completed || 0, "good"],
-      ["Matches abandoned", (s.matches || {}).abandoned || 0, "bad"],
+      ["Matches stopped (server error)", (s.matches || {}).abandoned || 0, "bad"],
+      ["Players who left mid-match", (s.matches || {}).playersLeft || 0, "bad"],
       ["Time played", minutes((s.matches || {}).minutesPlayed || 0)],
       ["Time in app (all)", minutes(s.users.appMinutesTotal || 0)],
       ["Time in app (avg player)", minutes(s.users.appMinutesAverage || 0)],
@@ -415,9 +429,86 @@
     api("GET", "/admin/me").then(start).catch(function (e) { if (e.message !== "signed out") showSignIn("Server not reachable."); });
   }
 
+  // ── Period: what the totals below "Right now" cover (remembered in this browser) ──
+  var PERIODS = [
+    ["all", "All time"], ["60m", "Last 60 minutes"], ["12h", "Last 12 hours"], ["24h", "Last 24 hours"],
+    ["today", "Today"], ["yesterday", "Yesterday"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["90d", "Last 90 days"],
+    ["custom", "Custom range"]
+  ];
+  var HOUR_MS = 3600000, DAY_MS = 86400000, PERIOD_KEY = "yapnplay.admin.period";
+  var period = (function () {
+    try { var p = JSON.parse(localStorage.getItem(PERIOD_KEY)); if (p && p.key) return p; } catch (e) {}
+    return { key: "all" };
+  })();
+  /** The calendar day (YYYY-MM-DD) in India, [offset] days from today. */
+  function istDay(offset) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offset * DAY_MS)); }
+  function istMidnight(day) { return Date.parse(day + "T00:00:00+05:30"); }
+  function dayLabel(day) { return new Date(istMidnight(day)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }); }
+  /** {from, to} in epoch millis (to left out; none: up to now), or null for every time. */
+  function periodRange(p) {
+    var now = Date.now();
+    switch (p.key) {
+      case "60m": return { from: now - HOUR_MS };
+      case "12h": return { from: now - 12 * HOUR_MS };
+      case "24h": return { from: now - 24 * HOUR_MS };
+      case "today": return { from: istMidnight(istDay(0)) };
+      case "yesterday": return { from: istMidnight(istDay(-1)), to: istMidnight(istDay(0)) };
+      case "7d": return { from: istMidnight(istDay(-6)) };
+      case "30d": return { from: istMidnight(istDay(-29)) };
+      case "90d": return { from: istMidnight(istDay(-89)) };
+      case "custom": return p.from && p.to ? { from: istMidnight(p.from), to: istMidnight(p.to) + DAY_MS } : null;
+      default: return null;
+    }
+  }
+  function periodName(p) {
+    if (p.key === "custom" && p.from && p.to) return dayLabel(p.from) + " – " + dayLabel(p.to);
+    var found = PERIODS.filter(function (x) { return x[0] === p.key; })[0];
+    return found ? found[1] : "All time";
+  }
+  function setPeriod(p) {
+    period = p;
+    try { localStorage.setItem(PERIOD_KEY, JSON.stringify(p)); } catch (e) {}
+    drawPeriod();
+    loadOverview();
+  }
+  function drawPeriod() {
+    var chips = $("periodChips");
+    chips.innerHTML = "";
+    PERIODS.forEach(function (x) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = x[1];
+      b.setAttribute("aria-pressed", String(period.key === x[0]));
+      b.onclick = function () {
+        if (x[0] === "custom") {
+          // Opens on the period shown now; Apply loads it.
+          period = { key: "custom", from: period.from || istDay(-6), to: period.to || istDay(0) };
+          drawPeriod();
+        } else setPeriod({ key: x[0] });
+      };
+      chips.appendChild(b);
+    });
+    var custom = period.key === "custom";
+    $("periodCustom").hidden = !custom;
+    if (custom) { $("periodFrom").value = period.from || ""; $("periodTo").value = period.to || ""; $("periodFrom").max = $("periodTo").max = istDay(0); }
+    $("totalsTitle").textContent = "Totals · " + periodName(period);
+  }
+  $("periodApply").onclick = function () {
+    var from = $("periodFrom").value, to = $("periodTo").value;
+    if (!from || !to) { say("Pick both dates.", true); return; }
+    if (from > to) { var t = from; from = to; to = t; }
+    setPeriod({ key: "custom", from: from, to: to });
+  };
+  drawPeriod();
+
+  function statsPath() {
+    var r = periodRange(period);
+    return "/admin/stats" + (r ? "?from=" + r.from + (r.to ? "&to=" + r.to : "") : "");
+  }
+
   // ── Overview ──
   function loadOverview() {
-    api("GET", "/admin/stats").then(render).catch(function (e) { if (e.message !== "signed out") $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
+    api("GET", statsPath()).then(render).catch(function (e) { if (e.message !== "signed out") $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
   }
 
   // ── Reports, audit ──

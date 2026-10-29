@@ -13,6 +13,6 @@ data class LiveMember(
     val readyAt: Long? = null,
     val watching: Boolean = false,
     val micOn: Boolean = false,
-    val speakerOn: Boolean = false,
+    val speakerOn: Boolean = true,
     val avatarId: String = "",
 )

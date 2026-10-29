@@ -19,7 +19,7 @@ class GetMatchHistoryUseCase(private val results: MatchResultRepository) {
                     endedAt = match.endedAt,
                     mySeat = match.seats.firstOrNull { it.userId == userId }?.seat ?: 0,
                     seats = match.seats.map {
-                        MatchHistorySeat(it.seat, it.userId, it.displayName, it.avatarId, it.place, it.coinsWon, it.completionCoins, it.stake, it.xp)
+                        MatchHistorySeat(it.seat, it.userId, it.displayName, it.avatarId, it.place, it.coinsWon, it.completionCoins, it.stake, it.xp, left = it.left)
                     },
                 )
             },

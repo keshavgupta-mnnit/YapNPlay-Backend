@@ -69,7 +69,7 @@ object GameSettings {
         }
     }
     val AD_DAILY_LIMIT = IntSetting("coins.ad_daily_limit", SettingGroup.ECONOMY, "Rewarded ads per day", 5, 0, 50)
-    val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 120, 0, 1_440)
+    val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 60, 0, 1_440)
     val LEAGUE_FEES = IntListSetting(
         "coins.league_fees", SettingGroup.ECONOMY, "Quick Play league fees (Starter, Bronze, Silver, Gold, Diamond)",
         listOf(0, 100, 500, 1_000, 5_000), "5 rising numbers, the first 0",
@@ -127,6 +127,7 @@ object GameSettings {
 
     // ── City Bazaar ───────────────────────────────────────────────────────
     val CB_TURN_SECONDS = IntSetting("cb.turn_seconds", SettingGroup.CITY_BAZAAR, "Turn time (seconds)", 10, 5, MAX_SECONDS)
+    val CB_DEBT_SECONDS = IntSetting("cb.debt_seconds", SettingGroup.CITY_BAZAAR, "Time to choose what to sell or auction for a debt (seconds)", 30, 10, MAX_SECONDS)
     val CB_ROUND_LIMIT = IntSetting("cb.round_limit", SettingGroup.CITY_BAZAAR, "Quick Play round limit", 30, 1, 500)
     val CB_EXTENSION_ROUNDS = IntSetting("cb.extension_rounds", SettingGroup.CITY_BAZAAR, "Rounds added by a keep-playing vote", 30, 1, 500)
     val CB_EXTENSION_MINUTES = IntSetting("cb.extension_minutes", SettingGroup.CITY_BAZAAR, "Minutes added by a keep-playing vote", 15, 1, 240)
@@ -195,7 +196,7 @@ object GameSettings {
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
-        CB_TURN_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
+        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,

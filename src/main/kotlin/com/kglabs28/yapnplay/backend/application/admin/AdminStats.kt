@@ -11,6 +11,9 @@ data class AdminStats(
     val commit: String = "",
     /** Calendar days below are counted in this time zone. */
     val timeZone: String,
+    /** The period the totals cover (epoch millis, end left out); both null: every time. */
+    val rangeFrom: Long? = null,
+    val rangeTo: Long? = null,
     val live: LiveStats,
     val users: UserStats,
     val rooms: RoomStats,
@@ -27,6 +30,8 @@ data class MatchTotals(
     val abandoned: Int = 0,
     /** Minutes of play over all completed matches. */
     val minutesPlayed: Long = 0,
+    /** Players who left a match before it ended (counted since leaving was recorded, V22). */
+    val playersLeft: Int = 0,
 )
 
 /** `GET /admin/uptime` (no token): when this server process started, and its clock now. */

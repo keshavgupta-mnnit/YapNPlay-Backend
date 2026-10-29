@@ -11,6 +11,7 @@ import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminRemovalUseCase
 import com.kglabs28.yapnplay.backend.application.admin.GetAdminStatsUseCase
 import com.kglabs28.yapnplay.backend.application.admin.ServerUptime
+import com.kglabs28.yapnplay.backend.application.admin.StatsRange
 import com.kglabs28.yapnplay.backend.application.admin.view
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.settings.SettingsService
@@ -98,7 +99,13 @@ fun Route.adminRoutes(
             call.respond(auth.createAdmin(admin, body.adminId, body.password, permissions))
         }
     }
-    get(HttpPaths.ADMIN_STATS) { guard.run(call, AdminPermission.VIEW) { call.respond(getStats()) } }
+    // `from` / `to` (epoch millis, `to` left out) pick the period; neither: every time.
+    get(HttpPaths.ADMIN_STATS) {
+        guard.run(call, AdminPermission.VIEW) {
+            val params = call.request.queryParameters
+            call.respond(getStats(StatsRange.of(params[FROM_PARAM]?.toLongOrNull(), params[TO_PARAM]?.toLongOrNull())))
+        }
+    }
     // Sends one test error to Sentry so the setup can be checked.
     post(HttpPaths.ADMIN_TEST_ERROR) {
         guard.run(call, AdminPermission.VIEW) {
@@ -262,5 +269,8 @@ private const val NO_STORE = "no-store"
 private const val FRAME_OPTIONS = "X-Frame-Options"
 private const val DENY = "DENY"
 private const val NOTE_PARAM = "note"
+/** /admin/stats period: from and to, epoch millis. */
+private const val FROM_PARAM = "from"
+private const val TO_PARAM = "to"
 private const val TEST_ERROR_LOGGER = "AdminTestError"
 private const val TEST_ERROR_MESSAGE = "Test error from the YapNPlay admin: Sentry is working"

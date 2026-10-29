@@ -63,6 +63,7 @@ class CityBazaarSessionFactory(
 
     private fun timing() = CityBazaarTiming(
         turnSeconds = settings[GameSettings.CB_TURN_SECONDS],
+        debtSeconds = settings[GameSettings.CB_DEBT_SECONDS],
         think = BotThinkTime(
             settings[GameSettings.CB_CPU_THINK_MS].toLong(),
             settings[GameSettings.CB_CPU_THINK_JITTER_MS].toLong(),

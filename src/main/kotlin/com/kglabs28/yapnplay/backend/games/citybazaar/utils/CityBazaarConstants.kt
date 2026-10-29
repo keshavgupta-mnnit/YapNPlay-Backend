@@ -43,8 +43,8 @@ const val EXTENSION_MINUTES = 15
 const val EXTENSION_VOTE_SECONDS = 10L
 /** The bank's starting reserve (server setting CITY_BAZAAR_BANK_START): large enough never to run dry. */
 const val BANK_START = 300_000
-/** Auction: seconds left after each bid before the property is sold. */
-const val AUCTION_SECONDS = 5L
+/** Auction: seconds to bid when it opens, and again after every bid; nobody bids in time and the highest bid wins. */
+const val AUCTION_SECONDS = 10L
 
 // Board
 const val TILE_COUNT = 36
