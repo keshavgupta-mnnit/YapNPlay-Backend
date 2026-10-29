@@ -66,7 +66,7 @@ class CoinsApiTest {
     }
 
     @Test
-    fun `one ad pays per 2 hours, and the status says when the next one can`() = serverTest { client ->
+    fun `one ad pays per cooldown, and the status says when the next one can`() = serverTest { client ->
         val token = client.newGuestToken()
         val before = client.get("/coins/ad-status") { bearerAuth(token) }.body<AdRewardStatus>()
         assertEquals(GameSettings.AD_REWARDS.default.first(), before.coinsPerAd)
@@ -75,7 +75,8 @@ class CoinsApiTest {
 
         val first = client.adReward(token, "first")
         val waitMs = assertNotNull(first.nextAdAt) - before.serverTime
-        assertTrue(waitMs in (TWO_HOURS_MS - MINUTE_MS)..(TWO_HOURS_MS + MINUTE_MS), "next in about 2 hours ($waitMs ms)")
+        val cooldownMs = GameSettings.AD_COOLDOWN_MINUTES.default * MINUTE_MS
+        assertTrue(waitMs in (cooldownMs - MINUTE_MS)..(cooldownMs + MINUTE_MS), "next after the cooldown ($waitMs ms)")
 
         val tooSoon = client.post("/coins/ad-reward") { bearerAuth(token); contentType(ContentType.Application.Json); setBody(AdRewardBody("second")) }
         assertEquals(HttpStatusCode.TooManyRequests, tooSoon.status)
@@ -119,7 +120,6 @@ class CoinsApiTest {
     private companion object {
         const val START_COINS = 1_000
         const val MINUTE_MS = 60_000L
-        const val TWO_HOURS_MS = 120 * MINUTE_MS
         const val DAY_MS = 24 * 60 * MINUTE_MS
     }
 }

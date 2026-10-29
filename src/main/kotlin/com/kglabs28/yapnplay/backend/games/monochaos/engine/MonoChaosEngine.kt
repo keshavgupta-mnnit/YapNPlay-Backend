@@ -167,7 +167,7 @@ class MonoChaosEngine : Game {
         if (target != null && seat.value in s.catchClosedFor) return rejected("ALREADY_TRIED", "One try per player")
         // Pressing CAUGHT with nobody to catch, or on a player who called MONO, is a wrong catch: the presser pays.
         val falseCatch = target == null || s.monoCalledSeat == target
-        val drawer = if (falseCatch) seat.value else target ?: seat.value
+        val drawer = if (falseCatch) seat.value else target
         val penalty = if (falseCatch) s.monoChaosRules.mandatory.falseCatchPenaltyCards else s.monoChaosRules.mandatory.monoPenaltyCards
         val events = mutableListOf<MonoChaosEvent>()
         val drawn = drawPenalty(s, drawer, penalty, random)
