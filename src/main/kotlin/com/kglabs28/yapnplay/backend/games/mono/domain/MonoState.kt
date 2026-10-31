@@ -48,7 +48,6 @@ data class MonoState(
     /** After a draw, the only card the player may play. */
     val drawnCardIndex: Int? = null,
     /** The seat that played a 7 and must now choose a swap partner. */
-    val pendingSwapSeat: Int? = null,
     /** Standard MONO never knocks anyone out; the field keeps the wire shape. */
     val eliminatedSeats: Set<Int> = emptySet(),
     /** Seats that left the table; kept so the final ranking can place them. */
@@ -91,7 +90,6 @@ data class MonoState(
         stackTopValue: Int = this.stackTopValue,
         reversed: Boolean = this.reversed,
         drawnCardIndex: Int? = this.drawnCardIndex,
-        pendingSwapSeat: Int? = this.pendingSwapSeat,
         eliminatedSeats: Set<Int> = this.eliminatedSeats,
         removedSeats: Set<Int> = this.removedSeats,
         catchSeat: Int? = this.catchSeat,
@@ -102,7 +100,7 @@ data class MonoState(
         _gameId, _rules, _seats, _turn, hands, drawPile, discardPile,
         currentSeat, phase, topCardColor, turnCounter, monoCallWindowExpiry,
         monoWindowSeat, monoCalledSeat, lastActionSeat, lastActionCard,
-        activeStackPenalty, stackTopValue, reversed, drawnCardIndex, pendingSwapSeat,
+        activeStackPenalty, stackTopValue, reversed, drawnCardIndex,
         eliminatedSeats, removedSeats, catchSeat, catchNextSeat, catchClosedFor, finishOrder,
     )
 }

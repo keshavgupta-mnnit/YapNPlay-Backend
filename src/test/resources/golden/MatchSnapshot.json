@@ -114,5 +114,7 @@
     ],
     "extensionVote": null,
     "pot": null,
-    "endVote": null
+    "endVote": null,
+    "canOfferSeats": false,
+    "mutedTalkers": []
 }

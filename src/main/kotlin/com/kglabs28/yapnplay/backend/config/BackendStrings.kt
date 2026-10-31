@@ -18,6 +18,8 @@ object BackendStrings {
     fun pushEntered(name: String, room: String): String = "$name entered $room"
     fun pushPlayersIn(count: Int, room: String): String = "$count players are in $room"
     fun pushApprovedTitle(room: String): String = "You're in $room"
+    fun pushJoinRequestTitle(name: String, room: String): String = "$name wants to join $room"
+    const val PUSH_JOIN_REQUEST_BODY = "Open the group to let them in."
     const val PUSH_APPROVED_BODY = "The admin let you in. Tap to open the room."
 
     // ── Errors ───────────────────────────────────────────────────────────

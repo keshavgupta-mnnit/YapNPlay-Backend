@@ -11,7 +11,8 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Room pushes (contract "Room activity push"): when a member comes online,
  * the members who are not present get "<name> entered <room>", at most once
- * per user and room every few minutes. Also "you're in" after approval.
+ * per user and room every few minutes. Also "you're in" after approval,
+ * and the admin hears of each request to join.
  */
 class RoomActivityNotifier(
     private val sender: PushSender,
@@ -30,6 +31,12 @@ class RoomActivityNotifier(
         if (due.isEmpty()) return
         val message = roomMessage(roomId, roomName, BackendStrings.pushEntered(arrivalName, roomName), BackendStrings.pushPlayersIn(onlineCount, roomName))
         scope.launch { sender.send(due, message) }
+    }
+
+    /** Tells the room's admin that [name] asked to join: tapping it opens the room, where they let them in. */
+    fun joinRequested(adminId: String, roomId: String, roomName: String, name: String) {
+        val message = roomMessage(roomId, roomName, BackendStrings.pushJoinRequestTitle(name, roomName), BackendStrings.PUSH_JOIN_REQUEST_BODY)
+        scope.launch { sender.send(listOf(adminId), message) }
     }
 
     fun joinApproved(userId: String, roomId: String, roomName: String) {

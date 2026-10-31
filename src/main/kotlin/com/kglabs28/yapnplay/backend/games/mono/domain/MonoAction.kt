@@ -13,8 +13,6 @@ sealed class MonoAction : Action {
     data object AcceptStack : MonoAction()
     /** Ends the turn after drawing a playable card and declining to play it. */
     data object Pass : MonoAction()
-    /** The Rule of 7: the seat that played it picks whose hand to trade. */
-    data class ChooseSwapTarget(val seat: Int) : MonoAction()
     /**
      * The MONO! window ran out. The host sends this on the seat's behalf;
      * it is the only action allowed to a seat that is not the actor.
