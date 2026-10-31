@@ -42,7 +42,7 @@ val matchModule = module {
         )
     }
     single { MatchRegistry() }
-    single<MatchLifecycleListener> { MatchResultRecorder(get(), get(), get()) }
+    single<MatchLifecycleListener> { MatchResultRecorder(get(), get()) }
     single<MatchCheckpointStore> { ExposedMatchCheckpointStore(get(), get()) }
     single<MatchOutcomeStore> { ExposedMatchOutcomeStore(get()) }
     single {

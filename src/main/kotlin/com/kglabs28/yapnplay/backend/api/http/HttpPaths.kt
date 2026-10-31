@@ -49,6 +49,7 @@ object HttpPaths {
     const val ADMIN_PAGE = "/admin"
     const val ADMIN_STATS = "/admin/stats"
     const val ADMIN_TEST_ERROR = "/admin/test-error"
+    const val ADMIN_RESTART = "/admin/restart"
     /** Public: only when the server process started (the sign-in page clock). */
     const val ADMIN_UPTIME = "/admin/uptime"
     const val ADMIN_SETTINGS = "/admin/settings"

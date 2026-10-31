@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.contract.CountdownStop
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.Presence
 import com.kglabs28.yapnplay.backend.contract.JoinRequestInfo
@@ -32,6 +33,8 @@ class PlayRoomState(
     var version = 0L
     var countdownDeadline: Long? = null
     var matchInProgress: String? = null
+    /** Why the last countdown stopped without a match; cleared when one starts. */
+    var countdownStop: CountdownStop? = null
     /** The leagues on offer (coins), and the most every member in the lobby can pay (refreshed with each snapshot). */
     var leagueFees: List<Int> = emptyList()
     var affordableEntry: Int = Int.MAX_VALUE
@@ -73,6 +76,7 @@ class PlayRoomState(
             affordableEntry = affordableEntry,
             countdownDeadline = countdownDeadline,
             matchInProgress = matchInProgress,
+            countdownStop = countdownStop,
             waitingList = if (receiver != null && receiver == room.adminId) {
                 waiting.map { JoinRequestInfo(it.userId, it.displayName, it.requestedAt) }
             } else {

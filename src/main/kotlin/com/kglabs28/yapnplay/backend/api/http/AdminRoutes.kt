@@ -12,6 +12,7 @@ import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminAuthUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminRemovalUseCase
+import com.kglabs28.yapnplay.backend.application.admin.AdminRestartUseCase
 import com.kglabs28.yapnplay.backend.application.admin.GetAdminStatsUseCase
 import com.kglabs28.yapnplay.backend.application.admin.ServerUptime
 import com.kglabs28.yapnplay.backend.application.admin.StatsRange
@@ -61,6 +62,7 @@ fun Route.adminRoutes(
     adminMatches: AdminMatchesUseCase,
     audit: AdminAuditRepository,
     feedback: AdminFeedbackUseCase,
+    restart: AdminRestartUseCase,
 ) {
     val page by lazy {
         AdminTokenCheck::class.java.getResource(DASHBOARD_RESOURCE)?.readText() ?: error(DASHBOARD_RESOURCE)
@@ -117,6 +119,13 @@ fun Route.adminRoutes(
                 ErrorTracking.flush()
             }
             call.respond(TestErrorResult(sentryEnabled = ErrorTracking.enabled))
+        }
+    }
+    // Stops the server so Render starts it again: a clean slate (running matches are saved and come back).
+    post(HttpPaths.ADMIN_RESTART) {
+        guard.run(call, AdminPermission.EDIT_SETTINGS) { admin ->
+            restart(admin.adminId, call.receive<AdminNoteBody>().note)
+            call.respond(HttpStatusCode.NoContent)
         }
     }
     get(HttpPaths.ADMIN_SETTINGS) { guard.run(call, AdminPermission.VIEW) { call.respond(settings.list()) } }

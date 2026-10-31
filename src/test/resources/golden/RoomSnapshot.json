@@ -47,6 +47,7 @@
         "affordableEntry": 2147483647,
         "countdownDeadline": 1760000010000,
         "matchInProgress": null,
-        "waitingList": []
+        "waitingList": [],
+        "countdownStop": null
     }
 }

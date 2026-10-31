@@ -127,6 +127,11 @@
   <h2>Right now</h2>
   <div class="cards" id="liveCards"></div>
   <div class="note">Live numbers are in memory and reset when the server restarts.</div>
+  <div id="restartBox" hidden>
+    <h2>Server</h2>
+    <button type="button" id="restartServer" class="ghost">Restart server</button>
+    <div class="note">For when something is stuck (a room "in progress" with no match, players who can't play). Running matches are saved and carry on; everyone reconnects in about a minute.</div>
+  </div>
   <h2>Period</h2>
   <div class="chips" id="periodChips"></div>
   <div class="row" id="periodCustom" hidden>
@@ -244,6 +249,7 @@
   "use strict";
   var KEY = "yapnplay-admin-session";
   var REFRESH_MS = 10000;
+  var RESTART_POLL_MS = 5000;
   var timer = null;
   var uptimeTick = null, uptimeSync = null;
   var startedAt = null, skew = 0;
@@ -422,6 +428,27 @@
     clearToken(); showSignIn();
   });
 
+  // ── Restarting the server ──
+  // Stops it (Render starts it again), then watches for the new start time and says when it's back.
+  $("restartServer").addEventListener("click", function () {
+    if (!confirm("Restart the server? Everyone is disconnected for about a minute; running matches are saved and carry on.")) return;
+    var before = startedAt;
+    $("restartServer").disabled = true;
+    api("POST", "/admin/restart", { note: null }).then(function () {
+      say("Restarting… the server is back in about a minute.");
+      var watch = setInterval(function () {
+        fetch("/admin/uptime", { cache: "no-store" })
+          .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+          .then(function (u) {
+            if (before != null && u.startedAt === before) return;
+            clearInterval(watch); $("restartServer").disabled = false;
+            say("The server restarted at " + new Date(u.startedAt).toLocaleTimeString() + ".");
+          })
+          .catch(function () {});
+      }, RESTART_POLL_MS);
+    }).catch(function (e) { $("restartServer").disabled = false; if (e.message !== "signed out") say(e.message, true); });
+  });
+
   function start(admin) {
     me = admin;
     stopUptime();
@@ -431,6 +458,8 @@
       var needs = b.getAttribute("data-needs");
       b.hidden = !!needs && !can(needs);
     });
+    $("restartBox").hidden = !can("editSettings");
+    syncUptime();
     showTab("overview");
   }
 

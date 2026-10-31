@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.contract.CountdownStopReason
 import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
@@ -21,7 +22,7 @@ class LobbyHandler(
         if (gameId != null && deps.games.findEnabled(gameId) == null) {
             throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
         }
-        countdown.cancel()
+        countdown.stop(CountdownStopReason.GAME_CHANGED, userId)
         state.room = state.room.copy(selectedGame = gameId)
         state.houseRules = deps.games.defaultHouseRules(gameId)
         state.updateAll { copy(ready = false, readyAt = null, watching = false) }
@@ -64,7 +65,7 @@ class LobbyHandler(
         guards.requireLeader(userId)
         state.room = state.room.copy(botFill = enabled)
         deps.repository.updateBotFill(state.room.id, enabled)
-        countdown.revalidate()
+        countdown.revalidate(CountdownStopReason.SETTINGS_CHANGED, userId)
     }
 
     suspend fun setReady(userId: String, ready: Boolean) {
@@ -75,7 +76,7 @@ class LobbyHandler(
         state.update(userId) {
             if (ready) copy(ready = true, readyAt = readyAt ?: now, watching = false) else copy(ready = false, readyAt = null)
         }
-        countdown.revalidate()
+        countdown.revalidate(CountdownStopReason.NOT_READY, userId)
     }
 
     fun setWatching(userId: String, watching: Boolean) {
@@ -100,7 +101,7 @@ class LobbyHandler(
         }
         state.room = state.room.copy(leaderId = targetId)
         deps.repository.updateRoles(state.room.id, targetId, state.room.adminId)
-        countdown.revalidate()
+        countdown.revalidate(CountdownStopReason.SETTINGS_CHANGED, userId)
     }
 
     suspend fun transferAdmin(userId: String, targetId: String) {

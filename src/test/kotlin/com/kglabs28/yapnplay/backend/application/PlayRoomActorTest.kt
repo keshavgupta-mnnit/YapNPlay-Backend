@@ -69,7 +69,15 @@ class PlayRoomActorTest {
             codec = EnvelopeCodec(testJson) { "push-${++matchCounter}" },
             startPolicy = StartPolicy(),
             rolePolicy = RolePolicy(),
-            matchStarter = MatchStarter { _, plan -> started += plan; "match-${started.size}" },
+            // Like the real server: the match it started is reported running (until the room hears it ended).
+            matchStarter = object : MatchStarter {
+                override suspend fun start(roomId: String, plan: SeatPlan): String {
+                    started += plan
+                    return "match-${started.size}"
+                }
+
+                override fun runningMatchIn(roomId: String): String? = started.size.takeIf { it > 0 }?.let { "match-$it" }
+            },
             clock = clock,
             joinRequests = joinRequests,
             friends = FriendDirectory(InMemoryFriendRepository(), clock),

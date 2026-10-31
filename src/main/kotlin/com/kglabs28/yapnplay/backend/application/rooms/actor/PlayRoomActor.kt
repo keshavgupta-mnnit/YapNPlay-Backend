@@ -72,6 +72,8 @@ class PlayRoomActor(
     }
 
     private suspend fun handle(userId: String, action: RoomAction): RoomResult = try {
+        // The match it thinks is running is over (or gone): the room is free again.
+        state.matchInProgress?.let { if (deps.matchStarter.runningMatchIn(state.room.id) == null) state.matchInProgress = null }
         var deleted = false
         val result: RoomResult = when (action) {
             is RoomAction.Join -> RoomResult.Joined(membership.join(userId, action.displayName, action.avatarId))

@@ -204,7 +204,35 @@ data class RoomInfo(
     val matchInProgress: String? = null,
     /** People asking to join; filled only in the admin's snapshot. */
     val waitingList: List<JoinRequestInfo> = emptyList(),
+    /** Why the last start countdown stopped without a match, and who stopped it; null since a countdown started. */
+    val countdownStop: CountdownStop? = null,
 )
+
+/** A start countdown that stopped without a match: everyone is told why and by whom. */
+@Serializable
+data class CountdownStop(
+    val reason: CountdownStopReason,
+    /** The member whose action stopped it; null when nobody did (the server could not start the match). */
+    val byUserId: String? = null,
+    val byName: String? = null,
+    /** When it stopped (server epoch millis). */
+    val at: Long,
+)
+
+enum class CountdownStopReason {
+    /** A ready player or the leader pressed Cancel. */
+    CANCELLED,
+    /** A player needed for the start stopped being ready. */
+    NOT_READY,
+    /** A player needed for the start left the lobby. */
+    LEFT,
+    /** The leader picked another game. */
+    GAME_CHANGED,
+    /** The leader changed a room setting the start needed (bots, leader). */
+    SETTINGS_CHANGED,
+    /** The countdown ended but the server could not start the match. */
+    START_FAILED,
+}
 
 /** One join request in the admin's Waiting List. */
 @Serializable

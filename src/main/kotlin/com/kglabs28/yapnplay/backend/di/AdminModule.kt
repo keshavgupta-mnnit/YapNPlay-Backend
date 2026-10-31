@@ -15,6 +15,9 @@ import com.kglabs28.yapnplay.backend.application.admin.AdminAuthUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminRemovalUseCase
 import com.kglabs28.yapnplay.backend.domain.admin.AdminAccountStore
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminAccountStore
+import com.kglabs28.yapnplay.backend.application.admin.AdminRestartUseCase
+import com.kglabs28.yapnplay.backend.domain.admin.ServerRestarter
+import com.kglabs28.yapnplay.backend.infrastructure.process.ProcessExitRestarter
 import org.koin.dsl.module
 
 /** The operator dashboard: stats, sign-in, moderation and removals. */
@@ -30,4 +33,6 @@ fun adminModule(config: BackendConfig) = module {
     single { AdminAuthUseCase(get(), get(), get()) }
     single { AdminAuth(get(), get()) }
     single { AdminRemovalUseCase(get(), get(), get(), get(), get(), get()) }
+    single<ServerRestarter> { ProcessExitRestarter() }
+    single { AdminRestartUseCase(get(), get()) }
 }

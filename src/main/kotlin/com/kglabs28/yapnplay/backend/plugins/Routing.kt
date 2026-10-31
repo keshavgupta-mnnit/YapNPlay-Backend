@@ -20,7 +20,7 @@ fun Application.configureRouting(koin: Koin) {
     routing {
         publicRoutes(koin.get(), koin.get(), koin.get(), GUEST_RATE_LIMIT)
         openLinkRoutes()
-        adminRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
+        adminRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         authenticate(BearerUserAuthProvider.NAME) {
             rateLimit(PLAYER_RATE_LIMIT) {
                 userRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())

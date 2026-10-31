@@ -578,8 +578,9 @@ class MatchActor(
                 )
             } + pastHolders.mapIndexed { index, p ->
                 val place = state.seats.size + index + 1
+                // Their own record seat (the table's seat now belongs to someone else): one row per seat number.
                 FinishedSeat(
-                    p.seat, p.userId, place,
+                    PAST_HOLDER_SEAT_BASE + index + 1, p.userId, place,
                     left = true,
                     xp = deps.progression.xpFor(place, true, now - state.startedAt),
                     displayName = p.displayName,
@@ -624,6 +625,8 @@ class MatchActor(
             state.viewers().forEach { deps.notifier.send(it, envelope) }
             runCatching { deps.outcomes.ended(matchId, MatchOutcomeStatus.COMPLETED, now) }
                 .onFailure { log.warn("Match $matchId: recording the outcome failed", it) }
+            // The room is free again now: a result that fails to save must never leave it "in progress".
+            roomId?.let { room -> runCatching { deps.rooms.matchEnded(room, matchId) }.onFailure { log.warn("Match $matchId: freeing room $room failed", it) } }
             // The stored result keeps each seat's coins as the table showed them (for the player's history).
             val shown = ended.ranking.filter { it.displayName == null }.associateBy { it.seat }
             val stored = record.copy(
@@ -654,6 +657,8 @@ class MatchActor(
     private companion object {
         val log = LoggerFactory.getLogger(MatchActor::class.java)
         const val MILLIS_PER_MINUTE = 60_000L
+        /** Seat numbers a past holder is recorded under (101, 102…), clear of the table's own seats. */
+        const val PAST_HOLDER_SEAT_BASE = 100
         /** A bot moves at least this long before its turn's deadline, so the move never races it. */
         const val BOT_DEADLINE_MARGIN_MS = 500L
     }

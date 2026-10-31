@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.contract.CountdownStopReason
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.JoinRoomResult
 import com.kglabs28.yapnplay.backend.contract.JoinStatus
@@ -108,7 +109,7 @@ class MembershipHandler(
         if (state.room.leaderId == userId) {
             deps.rolePolicy.nextLeader(state.members.values, userId)?.let { setRoles(it, state.room.adminId) }
         }
-        countdown.revalidate()
+        countdown.revalidate(CountdownStopReason.LEFT, userId)
     }
 
     /** Returns true when the room was deleted because nobody is left. */
@@ -133,6 +134,7 @@ class MembershipHandler(
     private suspend fun removeMembership(userId: String): Boolean {
         val wasLeader = state.room.leaderId == userId
         val wasAdmin = state.room.adminId == userId
+        val name = state.member(userId).displayName
         if (state.member(userId).online) goOffline(userId)
         state.members.remove(userId)
         deps.repository.removeMember(state.room.id, userId)
@@ -149,7 +151,7 @@ class MembershipHandler(
         }
         val admin = if (wasAdmin) roles.nextAdmin(state.members.values, userId) else state.room.adminId
         if (wasLeader || wasAdmin) setRoles(checkNotNull(leader), checkNotNull(admin))
-        countdown.revalidate()
+        countdown.revalidate(CountdownStopReason.LEFT, userId, name)
         return false
     }
 
