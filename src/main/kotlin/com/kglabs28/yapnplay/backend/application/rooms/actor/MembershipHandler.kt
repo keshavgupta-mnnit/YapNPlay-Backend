@@ -33,6 +33,8 @@ class MembershipHandler(
                 val now = deps.clock.nowMillis()
                 deps.joinRequests.add(state.room.id, userId, now)
                 state.waiting += JoinRequest(state.room.id, userId, displayName, now, avatarId)
+                // The admin hears of it on their phone, so a request doesn't wait unseen.
+                deps.activity.joinRequested(state.room.adminId, state.room.id, state.room.name, displayName)
             }
             return JoinRoomResult(JoinStatus.PENDING_APPROVAL, state.room.name)
         }

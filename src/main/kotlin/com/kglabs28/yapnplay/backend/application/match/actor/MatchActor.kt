@@ -296,7 +296,7 @@ class MatchActor(
         }
         state.lastEndProposal[seat.seat] = now
         // Bots never vote: a CPU seat, a leaver's, or one the bot plays for someone away.
-        val voters = session.stillIn - state.seats.filter { it.cpu || it.left || it.presence == SeatPresence.BOT }.map { it.seat }.toSet()
+        val voters = voterSeats(session.stillIn)
         state.endVote = EndVoteState(seat.seat, voters + seat.seat, now, now + deps.settings[GameSettings.END_VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
         val vote = state.endVote!!
         if (vote.ends || vote.allVoted) decideEnd() else publish(emptyList())
@@ -336,7 +336,7 @@ class MatchActor(
                 // Only real people still in vote: never CPUs or leavers. A human whose seat the bot is
                 // holding (away, missed turns) still votes, so a lone player with CPUs always decides.
                 // Bots never vote: a CPU seat, a leaver's, or one the bot plays for someone away.
-                val voters = session.stillIn - state.seats.filter { it.cpu || it.left || it.presence == SeatPresence.BOT }.map { it.seat }.toSet()
+                val voters = voterSeats(session.stillIn)
                 // The clock starts after the table has shown the last turn (its messages can take seconds),
                 // so players get the whole vote time with the question on screen.
                 val endsAt = now + state.pauseMs + deps.settings[GameSettings.VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND
@@ -637,6 +637,17 @@ class MatchActor(
             onClosed(matchId)
             stop()
         }
+    }
+
+    /**
+     * Who votes (keep playing, end the game): the people still in, never a CPU or someone who left.
+     * A seat the bot is playing for someone away is left out too, so the vote doesn't wait on them,
+     * unless nobody else could vote (a lone human with CPUs still decides).
+     */
+    private fun voterSeats(stillIn: Set<Int>): Set<Int> {
+        val people = state.seats.filter { it.seat in stillIn && !it.cpu && !it.left }
+        val present = people.filter { it.presence != SeatPresence.BOT }
+        return present.ifEmpty { people }.map { it.seat }.toSet()
     }
 
     private companion object {

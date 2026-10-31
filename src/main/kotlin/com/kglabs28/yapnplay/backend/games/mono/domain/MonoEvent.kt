@@ -16,10 +16,6 @@ sealed class MonoEvent : GameEvent {
     data class MonoCaught(val catcher: SeatNumber, val seat: SeatNumber, val penaltyCards: Int) : MonoEvent()
     /** [seat] pressed Caught on [target], who had called: [seat] drew [penaltyCards]. */
     data class FalseCatch(val seat: SeatNumber, val target: SeatNumber, val penaltyCards: Int) : MonoEvent()
-    /** The Rule of 7: two seats traded hands. */
-    data class HandSwapped(val from: SeatNumber, val to: SeatNumber) : MonoEvent()
-    /** The Rule of 0: every hand moved one way around the table. */
-    data class HandsPassed(val direction: String) : MonoEvent()
     data class TurnPassed(val seat: SeatNumber) : MonoEvent()
     data class SeatFinished(val seat: SeatNumber, val place: Int) : MonoEvent()
     data class MatchEnded(val finishingOrder: List<Int>) : MonoEvent()

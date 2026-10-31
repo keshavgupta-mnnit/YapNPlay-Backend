@@ -35,7 +35,6 @@
     "reversed": false,
     "drawnCardIndex": 1,
     "drawnCardExpiry": 1760000003000,
-    "pendingSwapSeat": null,
     "eliminatedSeats": [],
     "finishedSeats": [
         4,
@@ -50,6 +49,7 @@
     "falseCatchPenaltyCards": 2,
     "callBeforePlay": true,
     "noPowerFinish": true,
+    "drawFourAnytime": false,
     "continueVote": {
         "endsAt": 1760000010000,
         "voters": [

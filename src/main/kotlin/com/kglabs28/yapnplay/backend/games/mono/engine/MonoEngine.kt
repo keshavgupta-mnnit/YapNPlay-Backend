@@ -97,7 +97,6 @@ class MonoEngine : Game {
             MonoAction.DrawCard -> drawCard(s, seat, random)
             MonoAction.Pass -> passTurn(s, seat)
             is MonoAction.ChooseColor -> chooseColor(s, seat, action.color, random)
-            is MonoAction.ChooseSwapTarget -> chooseSwapTarget(s, seat, action.seat)
             MonoAction.CallMono -> callMono(s, seat)
             MonoAction.AcceptStack -> acceptStack(s, seat, random)
             MonoAction.ExpireMonoCall, MonoAction.EndMatch -> rejected("BAD_REQUEST", "Handled above")
@@ -129,7 +128,7 @@ class MonoEngine : Game {
         if (s.currentSeat in s.finishOrder && s.phase != MonoPhase.AWAITING_COLOR_CHOICE) {
             val next = advance(s, s.currentSeat, 1, s.reversed)
             val phase = if (s.phase == MonoPhase.AWAITING_STACK_CHOICE) s.phase else MonoPhase.AWAITING_PLAY
-            s = s.copy(currentSeat = next, phase = phase, drawnCardIndex = null, pendingSwapSeat = null, turn = MonoTurnState(SeatNumber(next), phase.name))
+            s = s.copy(currentSeat = next, phase = phase, drawnCardIndex = null, turn = MonoTurnState(SeatNumber(next), phase.name))
         }
         return ApplyResult.Success(s, out)
     }
@@ -205,7 +204,6 @@ class MonoEngine : Game {
         MonoAction.Pass -> s.phase == MonoPhase.AWAITING_PLAY && s.drawnCardIndex != null
         MonoAction.AcceptStack -> s.phase == MonoPhase.AWAITING_STACK_CHOICE
         is MonoAction.ChooseColor -> s.phase == MonoPhase.AWAITING_COLOR_CHOICE
-        is MonoAction.ChooseSwapTarget -> s.phase == MonoPhase.AWAITING_SWAP_CHOICE
         else -> true
     }
 
@@ -230,8 +228,6 @@ class MonoEngine : Game {
         return when (s.phase) {
             MonoPhase.AWAITING_COLOR_CHOICE ->
                 chooseColor(s, seat, bestColour(s, seat.value), random)
-            MonoPhase.AWAITING_SWAP_CHOICE ->
-                chooseSwapTarget(s, seat, swapPartner(s, seat.value))
             MonoPhase.AWAITING_STACK_CHOICE -> {
                 // A draw card can only be stacked on if it matches the
                 // discard as well as being worth enough.
@@ -302,7 +298,6 @@ class MonoEngine : Game {
             monoCalledSeat = s.monoCalledSeat,
             reversed = s.reversed,
             drawnCardIndex = s.drawnCardIndex,
-            pendingSwapSeat = s.pendingSwapSeat,
         )
     }
 
@@ -388,7 +383,7 @@ class MonoEngine : Game {
 
         events += MonoEvent.CardPlayed(seat, card, played.topCardColor)
 
-        // A last card still takes effect (the seat finishes in [settle]); only a swap or pass is skipped.
+        // A last card still takes effect (the seat finishes in [settle]).
         val lastCard = newHand.isEmpty()
 
         if (prism) return ApplyResult.Success(played, events)
@@ -506,24 +501,6 @@ class MonoEngine : Game {
         )
     }
 
-    private fun chooseSwapTarget(s: MonoState, seat: SeatNumber, target: Int): ApplyResult {
-        if (s.phase != MonoPhase.AWAITING_SWAP_CHOICE) return rejected("NOT_WAITING", "Not choosing a swap partner")
-        if (target == seat.value) return rejected("BAD_TARGET", "Choose an opponent")
-        if (target !in activeSeats(s)) return rejected("BAD_TARGET", "No such seat")
-        val mine = s.handForSeat(seat.value)
-        val theirs = s.handForSeat(target)
-        val swapped = s.copy(
-            hands = s.hands + (seat.value to theirs) + (target to mine),
-            phase = MonoPhase.AWAITING_PLAY,
-            pendingSwapSeat = null,
-            turnCounter = s.turnCounter + 1,
-        )
-        val next = nextSeat(s, seat.value)
-        return ApplyResult.Success(
-            swapped.copy(currentSeat = next, turn = MonoTurnState(SeatNumber(next), MonoPhase.AWAITING_PLAY.name)),
-            listOf(MonoEvent.HandSwapped(seat, SeatNumber(target))),
-        )
-    }
 
     private fun drawCard(s: MonoState, seat: SeatNumber, random: GameRandom): ApplyResult {
         if (s.drawnCardIndex != null) return rejected("ALREADY_DREW", "Play the drawn card or pass")
@@ -687,12 +664,6 @@ class MonoEngine : Game {
         return seats[index]
     }
 
-    /** The seat [seat] most wants to trade hands with (largest hand). */
-    private fun swapPartner(s: MonoState, seat: Int): Int =
-        activeSeats(s)
-            .filter { it != seat }
-            .maxByOrNull { s.cardCountForSeat(it) }
-            ?: seat
 
     /** The colour the seat holds most of, so autoplay plays to its strength. */
     private fun bestColour(s: MonoState, seat: Int): MonoConstants.Color =

@@ -94,7 +94,6 @@ class MonoSession(
             MonoWireAction.CallMono -> MonoAction.CallMono
             MonoWireAction.AcceptStack -> MonoAction.AcceptStack
             MonoWireAction.Pass -> MonoAction.Pass
-            is MonoWireAction.ChooseSwapTarget -> MonoAction.ChooseSwapTarget(wire.seat)
             MonoWireAction.Caught -> MonoAction.Caught
             is MonoWireAction.VoteContinue -> MonoVoteContinue(wire.keepPlaying)
             null -> null
@@ -189,7 +188,6 @@ class MonoSession(
         when (event) {
             is MonoEvent.CardPlayed -> PLAY_MS
             is MonoEvent.CardDrawn -> DRAW_MS
-            is MonoEvent.HandSwapped, is MonoEvent.HandsPassed -> SWAP_MS
             is MonoEvent.ColorChosen, is MonoEvent.MonoCaught, is MonoEvent.FalseCatch -> NOTICE_MS
             else -> 0L
         }
@@ -221,7 +219,6 @@ class MonoSession(
                 drawnCardIndex = state.drawnCardIndex,
                 // No separate window now: the drawn card has the restarted turn timer.
                 drawnCardExpiry = 0,
-                pendingSwapSeat = state.pendingSwapSeat,
                 eliminatedSeats = state.eliminatedSeats.toList(),
                 finishedSeats = state.finishOrder,
                 ranking = ranking,
@@ -264,8 +261,6 @@ class MonoSession(
                 is MonoEvent.MonoCaught -> MonoWireEvent.MonoCaught(event.catcher.value, event.seat.value, event.penaltyCards)
                 is MonoEvent.FalseCatch -> MonoWireEvent.FalseCatch(event.seat.value, event.target.value, event.penaltyCards)
                 is MonoDeckReshuffled -> MonoWireEvent.DeckReshuffled(event.drawPileCount)
-                is MonoEvent.HandSwapped -> MonoWireEvent.HandSwapped(event.from.value, event.to.value)
-                is MonoEvent.HandsPassed -> MonoWireEvent.HandsPassed(event.direction)
                 is MonoEvent.TurnPassed -> MonoWireEvent.TurnPassed(event.seat.value)
                 is MonoEvent.SeatFinished -> MonoWireEvent.SeatFinished(event.seat.value, event.place)
                 is MonoEvent.MatchEnded -> MonoWireEvent.MatchEnded(event.finishingOrder)
@@ -319,11 +314,10 @@ class MonoSession(
         const val WINDOW_OPEN = -1L
         const val PLAY_MS = 700L
         const val DRAW_MS = 300L
-        const val SWAP_MS = 1_200L
         /** A colour change or a catch: long enough for the table's message to be read. */
         const val NOTICE_MS = 1_200L
         const val MAX_PAUSE_MS = 7_000L
-        val DECISIONS = setOf(MonoPhase.AWAITING_COLOR_CHOICE, MonoPhase.AWAITING_STACK_CHOICE, MonoPhase.AWAITING_SWAP_CHOICE)
+        val DECISIONS = setOf(MonoPhase.AWAITING_COLOR_CHOICE, MonoPhase.AWAITING_STACK_CHOICE)
     }
 }
 

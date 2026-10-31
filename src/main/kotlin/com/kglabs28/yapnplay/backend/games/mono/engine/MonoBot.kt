@@ -35,7 +35,6 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
             MonoPhase.AWAITING_PLAY -> PlayChoice(s, me).choose(trace)
             MonoPhase.AWAITING_COLOR_CHOICE -> ColourChoice(s, me, misses).choose(trace)?.let { MonoAction.ChooseColor(it) }
             MonoPhase.AWAITING_STACK_CHOICE -> StackChoice(s, me).choose(trace)
-            MonoPhase.AWAITING_SWAP_CHOICE -> SwapChoice(s, me).choose(trace)?.let { MonoAction.ChooseSwapTarget(it) }
             MonoPhase.FINISHED -> null
         }
     }
@@ -117,17 +116,6 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
         }
     }
 
-    /** The Rule of 7 (room house rule): trade with the opponent whose hand is smallest, most so if they are about to win. */
-    inner class SwapChoice(private val s: MonoState, private val me: Int) : BotDecision<Int> {
-        override val name = "swap"
-        override fun options() = s.seats.map { it.value }.filter { it != me && it !in s.finishOrder }
-        override fun evaluate(option: Int): Evaluation {
-            val theirs = s.cardCountForSeat(option)
-            val gain = (s.cardCountForSeat(me) - theirs) * tuning.cardCost + threatFrom(theirs) * tuning.attackValue * FOUR
-            return Evaluation(gain = gain, note = "$theirs cards")
-        }
-        override val tieBreak: Comparator<Int> = compareBy { it }
-    }
 
     private fun bestColour(cards: List<MonoCard>): Color = Color.entries.maxByOrNull { c -> cards.count { it.playColor() == c } } ?: Color.RED
 

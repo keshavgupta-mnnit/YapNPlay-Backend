@@ -18,6 +18,7 @@
                 "watching": false,
                 "micOn": true,
                 "speakerOn": true,
+                "talkingMuted": false,
                 "isFriend": false,
                 "onlineSince": 1760000000000,
                 "avatarId": "a03"
@@ -30,6 +31,7 @@
                 "watching": false,
                 "micOn": false,
                 "speakerOn": false,
+                "talkingMuted": false,
                 "isFriend": true,
                 "onlineSince": null,
                 "avatarId": ""

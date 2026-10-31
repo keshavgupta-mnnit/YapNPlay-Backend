@@ -7,7 +7,9 @@
             "coinsWon": 7000,
             "completionCoins": 100,
             "xpGained": 120,
-            "stake": 5000
+            "stake": 5000,
+            "displayName": null,
+            "avatarId": null
         },
         {
             "seat": 1,
@@ -16,7 +18,9 @@
             "coinsWon": 3000,
             "completionCoins": 100,
             "xpGained": 80,
-            "stake": 5000
+            "stake": 5000,
+            "displayName": null,
+            "avatarId": null
         }
     ]
 }

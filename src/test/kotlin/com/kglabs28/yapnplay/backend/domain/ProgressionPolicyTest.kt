@@ -27,6 +27,6 @@ class ProgressionPolicyTest {
     fun `variable xp for every minute played, up to the cap`() {
         assertEquals(550, policy.xpFor(1, left = false, durationMillis = 5 * minute + 59_000), "5 whole minutes: +50")
         assertEquals(400, policy.xpFor(4, left = false, durationMillis = 15 * minute), "4th, 15 minutes: 100 + 150 + 150")
-        assertEquals(1_100, policy.xpFor(1, left = false, durationMillis = 300 * minute), "time xp stops at 60 minutes")
+        assertEquals(3_000, policy.xpFor(1, left = false, durationMillis = 300 * minute), "time xp stops at 250 minutes (3,000 xp)")
     }
 }

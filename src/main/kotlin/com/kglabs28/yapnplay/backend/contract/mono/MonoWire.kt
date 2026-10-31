@@ -26,7 +26,7 @@ data class MonoCardWire(
  */
 @Serializable
 data class MonoPublicState(
-    /** AWAITING_PLAY, AWAITING_COLOR_CHOICE, AWAITING_STACK_CHOICE, AWAITING_SWAP_CHOICE or FINISHED. */
+    /** AWAITING_PLAY, AWAITING_COLOR_CHOICE, AWAITING_STACK_CHOICE or FINISHED. */
     val phase: String,
     val topCard: MonoCardWire? = null,
     val topCardColor: String? = null,
@@ -51,8 +51,6 @@ data class MonoPublicState(
     val drawnCardIndex: Int? = null,
     /** Epoch millis when the drawn card can no longer be played (the turn passes); 0 when none. */
     val drawnCardExpiry: Long = 0,
-    /** The seat that played a 7 and must pick a swap partner. */
-    val pendingSwapSeat: Int? = null,
     val eliminatedSeats: List<Int> = emptyList(),
     val finishedSeats: List<Int> = emptyList(),
     /** Seats from first to last once the match is over. */
@@ -83,8 +81,6 @@ sealed interface MonoWireAction {
     @Serializable @SerialName("CallMono") data object CallMono : MonoWireAction
     @Serializable @SerialName("AcceptStack") data object AcceptStack : MonoWireAction
     @Serializable @SerialName("Pass") data object Pass : MonoWireAction
-    /** The Rule of 7 (room house rule): the seat whose hand to trade with. */
-    @Serializable @SerialName("ChooseSwapTarget") data class ChooseSwapTarget(val seat: Int) : MonoWireAction
     /** 0.6.0: the player on one card didn't call MONO! (any other seat, while the catch window is open). */
     @Serializable @SerialName("Caught") data object Caught : MonoWireAction
 
@@ -128,11 +124,7 @@ sealed interface MonoWireEvent {
     @Serializable @SerialName("DeckReshuffled")
     data class DeckReshuffled(val drawPileCount: Int) : MonoWireEvent
 
-    @Serializable @SerialName("HandSwapped")
-    data class HandSwapped(val from: Int, val to: Int) : MonoWireEvent
 
-    @Serializable @SerialName("HandsPassed")
-    data class HandsPassed(val direction: String) : MonoWireEvent
 
     @Serializable @SerialName("TurnPassed")
     data class TurnPassed(val seat: Int) : MonoWireEvent

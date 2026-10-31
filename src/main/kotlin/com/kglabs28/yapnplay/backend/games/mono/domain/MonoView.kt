@@ -34,5 +34,4 @@ data class MonoView(
     /** After a draw, the only card the seat may play. */
     val drawnCardIndex: Int? = null,
     /** The seat that played a 7 and must pick a swap partner. */
-    val pendingSwapSeat: Int? = null,
 ) : GameView
