@@ -29,7 +29,12 @@ data class MatchSeatState(
     val avatarId: String = "",
     /** When the owner left (epoch millis): a leaver ranks last, the latest leaver first; null while they play. */
     val leftAt: Long? = null,
+    /** They left after their game was already over (finished, or knocked out): not an abandon, their place stands. */
+    val outBeforeLeaving: Boolean = false,
 ) {
     /** The server plays this seat right away instead of waiting for the turn timer. */
     val playedByServer: Boolean get() = cpu || left || autoplay || presence != SeatPresence.PLAYING
+
+    /** Left while still playing: ranks last, earns no XP or coins (an abandon). */
+    val abandoned: Boolean get() = left && !outBeforeLeaving
 }

@@ -65,8 +65,17 @@ class SeatHandover(
      */
     fun leave(seat: Int, giveTo: String?) {
         val leaver = state.seat(seat)
-        state.update(seat) { copy(left = true, leftAt = deps.clock.nowMillis(), autoplay = false, presence = SeatPresence.AWAY) }
+        // Already out of the game (finished, or knocked out): they keep their place, and nobody takes the seat.
+        val out = state.session.stillIn.let { it.isNotEmpty() && seat !in it }
+        state.update(seat) { copy(left = true, leftAt = deps.clock.nowMillis(), autoplay = false, presence = SeatPresence.AWAY, outBeforeLeaving = out) }
         state.idleTurns.remove(seat)
+        if (out) {
+            if (isRoomMatch) {
+                state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level, leaver.avatarId)
+            }
+            publish()
+            return
+        }
         if (!isRoomMatch) {
             if (state.offer?.seat == seat) state.offer = null
             state.session.removeSeat(seat)

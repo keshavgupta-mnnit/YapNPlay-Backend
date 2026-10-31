@@ -96,6 +96,8 @@ class RoyalLudoSession(
     }
 
     override val canEndEarly: Boolean get() = !isFinished
+    /** Seats still racing: a finished player is out of play (leaving then is not an abandon). */
+    override val stillIn: Set<Int> get() = state.seats.map { it.value }.filter { it !in state.finishingOrder }.toSet()
 
     /**
      * Ended by the players' vote (or every human left): the match ends here,

@@ -555,8 +555,8 @@ class MatchActor(
         checkpoints.close()
         // A player who left (and didn't take a seat back) ranks below everyone still in, the latest leaver first.
         val gameRanking = state.session.ranking
-        val ranking = gameRanking.filterNot { state.seat(it).left } +
-            gameRanking.filter { state.seat(it).left }.sortedByDescending { state.seat(it).leftAt ?: 0L }
+        val ranking = gameRanking.filterNot { state.seat(it).abandoned } +
+            gameRanking.filter { state.seat(it).abandoned }.sortedByDescending { state.seat(it).leftAt ?: 0L }
         // Those whose seat someone else took over come after everyone at the table, the latest first.
         val pastHolders = state.pastHolders.sortedByDescending { it.leftAt }
         val record = FinishedMatch(
@@ -569,9 +569,10 @@ class MatchActor(
                 val place = ranking.indexOf(s.seat).let { if (it < 0) ranking.size + 1 else it + 1 }
                 FinishedSeat(
                     s.seat, s.userId.takeUnless { s.cpu }, place,
-                    left = s.left,
-                    completed = !s.cpu && !s.left && !s.removed && s.presence != SeatPresence.BOT,
-                    xp = if (s.cpu) 0 else deps.progression.xpFor(place, s.left, now - state.startedAt),
+                    left = s.abandoned,
+                    // Out of the game before leaving (finished, knocked out): their game was complete.
+                    completed = !s.cpu && !s.abandoned && !s.removed && (s.presence != SeatPresence.BOT || s.outBeforeLeaving),
+                    xp = if (s.cpu) 0 else deps.progression.xpFor(place, s.abandoned, now - state.startedAt),
                     displayName = s.displayName,
                     avatarId = s.avatarId,
                 )
