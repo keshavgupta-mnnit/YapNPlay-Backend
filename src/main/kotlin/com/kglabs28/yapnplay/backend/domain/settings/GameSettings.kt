@@ -110,7 +110,7 @@ object GameSettings {
         "xp.place_bonus", SettingGroup.XP, "Fixed extra XP by end position (1st first; places past the list get none)", listOf(400, 300, 200, 150, 100, 50, 25, 0), "Up to 8 numbers, none negative",
     ) { bonus -> if (bonus.size > 8 || bonus.any { it !in 0..10_000 }) "Up to 8 numbers from 0 to 10000" else null }
     val XP_PER_MINUTE = IntSetting("xp.per_minute", SettingGroup.XP, "Variable XP for every minute the match ran", 10, 0, 1_000)
-    val XP_TIME_CAP_MINUTES = IntSetting("xp.time_cap_minutes", SettingGroup.XP, "Minutes past this give no more time XP", 60, 1, 600)
+    val XP_TIME_CAP_MINUTES = IntSetting("xp.time_cap_minutes", SettingGroup.XP, "Minutes past this give no more time XP (250 at 10 a minute: a match gives up to about 3000 XP)", 250, 1, 600)
     val XP_PER_LEVEL = IntSetting("xp.per_level", SettingGroup.XP, "XP per level", 1_000, 100, 1_000_000)
 
     // ── Every match ───────────────────────────────────────────────────────
@@ -127,9 +127,13 @@ object GameSettings {
     // ── City Bazaar ───────────────────────────────────────────────────────
     val CB_TURN_SECONDS = IntSetting("cb.turn_seconds", SettingGroup.CITY_BAZAAR, "Turn time (seconds)", 10, 5, MAX_SECONDS)
     val CB_DEBT_SECONDS = IntSetting("cb.debt_seconds", SettingGroup.CITY_BAZAAR, "Time to choose what to sell or auction for a debt (seconds)", 30, 10, MAX_SECONDS)
-    val CB_ROUND_LIMIT = IntSetting("cb.round_limit", SettingGroup.CITY_BAZAAR, "Quick Play round limit", 30, 1, 500)
+    val CB_ROUND_LIMIT = IntSetting("cb.round_limit", SettingGroup.CITY_BAZAAR, "Round limit: the keep-playing vote comes at this round, or at the time limit, whichever is first", 60, 1, 500)
+    val CB_TIME_LIMIT_MINUTES = IntSetting("cb.time_limit_minutes", SettingGroup.CITY_BAZAAR, "Time limit: the first keep-playing vote comes after this many minutes (or at the round limit)", 45, 1, 600)
+    val CB_VOTE_GAP_MINUTES = IntSetting("cb.vote_gap_minutes", SettingGroup.CITY_BAZAAR, "Least minutes between two keep-playing votes (a limit reached sooner extends quietly)", 15, 0, 240)
     val CB_EXTENSION_ROUNDS = IntSetting("cb.extension_rounds", SettingGroup.CITY_BAZAAR, "Rounds added by a keep-playing vote", 30, 1, 500)
     val CB_EXTENSION_MINUTES = IntSetting("cb.extension_minutes", SettingGroup.CITY_BAZAAR, "Minutes added by a keep-playing vote", 15, 1, 240)
+    val CB_START_CASH = IntSetting("cb.start_cash", SettingGroup.CITY_BAZAAR, "Each player's starting money, up to 4 players (₹)", 20_000, 1_000, 1_000_000)
+    val CB_START_CASH_LARGE = IntSetting("cb.start_cash_large", SettingGroup.CITY_BAZAAR, "Each player's starting money, 5 or more players (₹)", 15_000, 1_000, 1_000_000)
     val CB_BANK_START = IntSetting("cb.bank_start", SettingGroup.CITY_BAZAAR, "Bank's starting money (₹)", 300_000, 0, 100_000_000)
     val CB_CLUB_REST_EACH = IntSetting("cb.club_rest_each", SettingGroup.CITY_BAZAAR, "Club / Rest House amount per player (₹)", 50, 0, 100_000)
     val CB_MESSAGE_PAUSE_MS = IntSetting("cb.message_pause_ms", SettingGroup.CITY_BAZAAR, "Reading time per table message (ms)", 2_500, 0, 10_000)
@@ -153,8 +157,6 @@ object GameSettings {
 
     // ── MONO and MONO: Complete Chaos ──
     val MONO_TURN_SECONDS = IntSetting("mono.turn_seconds", SettingGroup.MONO, "Turn time (seconds)", 15, 5, MAX_SECONDS)
-    val MONO_CALL_WINDOW_MS = IntSetting("mono.call_window_ms", SettingGroup.MONO, "Time to call MONO! after going down to one card (ms)", 2_500, 500, 10_000)
-    val MONO_DRAW_PLAY_WINDOW_MS = IntSetting("mono.draw_play_window_ms", SettingGroup.MONO, "Time to play a playable drawn card before the turn passes (ms)", 3_000, 500, 15_000)
     val MONO_CPU_THINK_MS = IntSetting("mono.cpu_think_ms", SettingGroup.MONO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val MONO_CPU_THINK_JITTER_MS = IntSetting("mono.cpu_think_jitter_ms", SettingGroup.MONO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
     val MONO_CPU_DECISION_EXTRA_MS = IntSetting("mono.cpu_decision_extra_ms", SettingGroup.MONO, "Bots: extra time for a real choice (colour, stack, swap) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)
@@ -197,11 +199,11 @@ object GameSettings {
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
-        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_BANK_START,
+        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_TIME_LIMIT_MINUTES, CB_VOTE_GAP_MINUTES, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_START_CASH, CB_START_CASH_LARGE, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,
-        MONO_TURN_SECONDS, MONO_CALL_WINDOW_MS, MONO_DRAW_PLAY_WINDOW_MS, MONO_CPU_THINK_MS, MONO_CPU_THINK_JITTER_MS, MONO_CPU_DECISION_EXTRA_MS,
+        MONO_TURN_SECONDS, MONO_CPU_THINK_MS, MONO_CPU_THINK_JITTER_MS, MONO_CPU_DECISION_EXTRA_MS,
         CHAOS_CPU_THINK_MS, CHAOS_CPU_THINK_JITTER_MS, CHAOS_CPU_DECISION_EXTRA_MS, MONO_PENALTY_CARDS, CHAOS_PENALTY_CARDS,
         CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST, MONO_BOT_CATCH_REACTION_MS,
         RL_TURN_SECONDS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,

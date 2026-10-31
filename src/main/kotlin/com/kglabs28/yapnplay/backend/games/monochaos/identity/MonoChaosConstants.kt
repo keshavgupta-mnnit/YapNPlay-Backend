@@ -31,7 +31,6 @@ object MonoChaosConstants {
     val DECK_SIZE_CHECK = 168
 
     val HOUSE_RULES = listOf(
-        HouseRuleOption("stacking_allowed", "Stacking Allowed", "Stack draw cards on draw cards", true),
         HouseRuleOption("seven_swap", "Seven Swap", "Playing a 7 swaps hands with an opponent", true),
         HouseRuleOption("zero_pass", "Zero Pass", "Playing a 0 passes all hands to the next player", true),
         HouseRuleOption("knockout_enabled", "25-Card Knockout", "Eliminate players at 25+ cards", true),

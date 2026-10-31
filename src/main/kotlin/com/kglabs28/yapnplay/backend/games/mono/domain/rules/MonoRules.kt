@@ -21,11 +21,10 @@ data class MonoMandatoryRules(
 
 @Serializable
 data class MonoHouseRules(
-    val stackingAllowed: Boolean = false,
-    val sevenSwap: Boolean = false,
-    val zeroPass: Boolean = false,
-    /** A power card (anything but a number) may never be the last card played. */
-    val noPowerFinish: Boolean = false,
+    /** A power card (anything but a number) may never be the last card played. On unless a group turns it off. */
+    val noPowerFinish: Boolean = true,
+    /** A Wild +4 may go down even while holding the colour in play (classic: only when you have none). */
+    val drawFourAnytime: Boolean = false,
     /** MONO! must be called on your own turn with two cards, before playing the second-last. */
     val callBeforePlay: Boolean = false,
 ) : HouseRules

@@ -33,10 +33,16 @@ class CityBazaarSessionFactory(
 
     override fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession {
         // Quick Play: every rule on, with the server's round limit.
-        val rules = CityBazaarRules.STANDARD.copy(house = houseRulesFrom(houseRules.orEmpty()))
+        val rules = CityBazaarRules.STANDARD.copy(
+            // A bigger table starts poorer, so the board still runs short of cities.
+            mandatory = CityBazaarRules.STANDARD.mandatory.copy(
+                startingCash = settings[if (seatCount > SMALL_TABLE_SEATS) GameSettings.CB_START_CASH_LARGE else GameSettings.CB_START_CASH],
+            ),
+            house = houseRulesFrom(houseRules.orEmpty()),
+        )
         val state = game.start(rules, seatCount, random) as CityBazaarState
         val trace = BotTrace()
-        return CityBazaarSession(game, state, random, json, clock, timing = timing(), trace = trace, autoplayBot = autoplayBot(trace), cpuBot = cpuBot(trace))
+        return CityBazaarSession(game, state, random, json, clock, timingOf = ::timing, trace = trace, autoplayBot = autoplayBot(trace), cpuBot = cpuBot(trace))
     }
 
     private fun autoplayBot(trace: BotTrace) = CityBazaarBot(
@@ -64,6 +70,7 @@ class CityBazaarSessionFactory(
     private fun timing() = CityBazaarTiming(
         turnSeconds = settings[GameSettings.CB_TURN_SECONDS],
         debtSeconds = settings[GameSettings.CB_DEBT_SECONDS],
+        voteGapMillis = settings[GameSettings.CB_VOTE_GAP_MINUTES] * SECONDS_PER_MINUTE * BackendConstants.MILLIS_PER_SECOND,
         bidDelayMillis = settings[GameSettings.CB_CPU_BID_DELAY_MS].toLong(),
         firstBidDelayMillis = settings[GameSettings.CB_CPU_FIRST_BID_DELAY_MS].toLong(),
         think = BotThinkTime(
@@ -83,7 +90,7 @@ class CityBazaarSessionFactory(
         val auctionEndsAt = if (bidding) now + AUCTION_SECONDS * BackendConstants.MILLIS_PER_SECOND else session.auctionEndsAt
         val lastBidAt = if (bidding) now else session.lastBidAt
         val trace = BotTrace()
-        return CityBazaarSession(game, session.engine, random, json, clock, session.startedAt, auctionEndsAt, lastBidAt, timing(), trace = trace, autoplayBot = autoplayBot(trace), cpuBot = cpuBot(trace))
+        return CityBazaarSession(game, session.engine, random, json, clock, session.startedAt, auctionEndsAt, lastBidAt, ::timing, trace = trace, autoplayBot = autoplayBot(trace), cpuBot = cpuBot(trace))
     }
 
     /** A room's toggles (none for Quick Play: every rule on) plus the server's settings. */
@@ -96,7 +103,7 @@ class CityBazaarSessionFactory(
             debtAuction = on(DEBT_AUCTION),
             moneyPopups = on(MONEY_POPUPS),
             roundLimit = if (on(ROUND_LIMIT_KEY)) settings[GameSettings.CB_ROUND_LIMIT] else null,
-            timeLimitMinutes = if (on(TIME_LIMIT_KEY)) TIME_LIMIT_MINUTES else null,
+            timeLimitMinutes = if (on(TIME_LIMIT_KEY)) settings[GameSettings.CB_TIME_LIMIT_MINUTES] else null,
             extensionRounds = settings[GameSettings.CB_EXTENSION_ROUNDS],
             extensionMinutes = settings[GameSettings.CB_EXTENSION_MINUTES],
             bankStart = settings[GameSettings.CB_BANK_START],
@@ -115,3 +122,7 @@ class CityBazaarSessionFactory(
         const val TIME_LIMIT_KEY = "time_limit"
     }
 }
+
+private const val SECONDS_PER_MINUTE = 60L
+/** Up to this many players start with [GameSettings.CB_START_CASH]; more with [GameSettings.CB_START_CASH_LARGE]. */
+private const val SMALL_TABLE_SEATS = 4

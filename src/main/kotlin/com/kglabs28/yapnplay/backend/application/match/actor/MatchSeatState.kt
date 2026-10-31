@@ -27,6 +27,8 @@ data class MatchSeatState(
     val disconnectedAt: Long? = null,
     /** Preset avatar (a CPU's robot avatar); "" = default icon. */
     val avatarId: String = "",
+    /** When the owner left (epoch millis): a leaver ranks last, the latest leaver first; null while they play. */
+    val leftAt: Long? = null,
 ) {
     /** The server plays this seat right away instead of waiting for the turn timer. */
     val playedByServer: Boolean get() = cpu || left || autoplay || presence != SeatPresence.PLAYING

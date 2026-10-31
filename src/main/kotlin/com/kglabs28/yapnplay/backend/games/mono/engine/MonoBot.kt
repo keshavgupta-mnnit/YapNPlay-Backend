@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.mono.engine
 
+import com.kglabs28.yapnplay.backend.games.mono.domain.colourInPlay
+import com.kglabs28.yapnplay.backend.games.mono.domain.heldBackByColour
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
 import com.kglabs28.yapnplay.backend.games.base.match.GameState
 import com.kglabs28.yapnplay.backend.games.base.play.Action
@@ -56,7 +58,8 @@ class MonoBot(private val tuning: MonoBotTuning = MonoBotTuning(), private val t
             // After a draw only the drawn card may go down, unless No Power Finish lets any legal card follow.
             s.drawnCardIndex?.takeIf { !noPowerFinish }?.let { drawn -> return listOf(MonoAction.Pass, MonoAction.PlayCard(drawn)) }
             val plays = hand.indices.filter {
-                hand[it].isPlayableOn(top, s.topCardColor) && !(noPowerFinish && hand.size == 1 && hand[it] !is MonoCard.NumberCard)
+                hand[it].isPlayableOn(top, s.topCardColor) && !(noPowerFinish && hand.size == 1 && hand[it] !is MonoCard.NumberCard) &&
+                    !hand[it].heldBackByColour(hand, s.colourInPlay, s.monoRules.house.drawFourAnytime)
             }.map { MonoAction.PlayCard(it) }
             return plays + if (s.drawnCardIndex != null) MonoAction.Pass else MonoAction.DrawCard
         }

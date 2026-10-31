@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.application.match.RoomGateway
 import com.kglabs28.yapnplay.backend.contract.EndVoteInfo
 import com.kglabs28.yapnplay.backend.domain.economy.PotRules
 import com.kglabs28.yapnplay.backend.contract.MatchPot
@@ -19,7 +20,7 @@ import kotlinx.serialization.json.JsonObject
  * Builds the snapshot one viewer sees: only their own legal moves, and
  * the game's per-viewer public state (no hidden information leaks).
  */
-class MatchSnapshotBuilder(private val state: MatchState) {
+class MatchSnapshotBuilder(private val state: MatchState, private val rooms: RoomGateway) {
 
     fun build(viewerUserId: String, now: Long, events: List<JsonObject>): MatchSnapshot {
         val session = state.session
@@ -49,6 +50,8 @@ class MatchSnapshotBuilder(private val state: MatchState) {
                 val offer = session.extension
                 ExtensionVoteInfo(vote.endsAt, vote.voters.sorted(), vote.yes.sorted(), vote.no.sorted(), offer.extraRounds, offer.extraMinutes)
             },
+            mutedTalkers = state.mutedTalkers.sorted(),
+            canOfferSeats = state.roomId?.let { viewerUserId == rooms.leaderOf(it) || viewerUserId == rooms.adminOf(it) } == true,
         )
     }
 

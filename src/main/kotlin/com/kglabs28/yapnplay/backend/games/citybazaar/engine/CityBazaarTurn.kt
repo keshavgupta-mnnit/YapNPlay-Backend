@@ -332,6 +332,24 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
         settle()
     }
 
+    /**
+     * The player in debt gives up. With debt auctions on, every city they
+     * still own goes up for auction first, one at a time (its houses sold
+     * back to the bank), never straight to the bank; only once none is left
+     * and the debt still isn't covered are they bankrupt.
+     */
+    fun giveUp(seat: Int, payees: Map<Int, Int>) {
+        val next = s.owners.filter { it.value == seat }.keys.firstOrNull()
+        if (s.cbRules.house.debtAuction && next != null) {
+            while (s.level(next) > 0) sellBuilding(seat, next)
+            // Selling the houses may already cover it: then the city stays theirs.
+            settleDebtIfPossible()
+            if (s.debt == null) return
+            if (startAuction(seat, next)) return
+        }
+        bankrupt(seat, payees)
+    }
+
     /** Everything goes to the bank; what's left of the cash goes to [payees]; out of the match. */
     fun bankrupt(seat: Int, payees: Map<Int, Int>) {
         s.owners.filter { it.value == seat }.keys.forEach { tile ->

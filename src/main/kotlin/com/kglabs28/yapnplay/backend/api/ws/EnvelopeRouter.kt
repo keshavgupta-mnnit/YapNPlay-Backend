@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.api.ws
 
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.transport.Channel
+import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.contract.transport.Envelope
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
@@ -21,7 +22,8 @@ class EnvelopeRouter(
     private val moderation: ModerationChannelHandler,
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope = try {
-        when (request.channel) {
+        // A ping, on any channel: answered at once, so the app can time the round trip.
+        if (request.type == MessageType.PING) codec.ack(request) else when (request.channel) {
             Channel.ROOM -> rooms.handle(userId, request)
             Channel.MATCH -> matches.handle(userId, request)
             Channel.MATCHMAKING -> matchmaking.handle(userId, request)

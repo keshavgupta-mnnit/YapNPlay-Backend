@@ -26,11 +26,9 @@ object MonoConstants {
     val DECK_SIZE = 108
 
     val HOUSE_RULES = listOf(
-        HouseRuleOption("stacking_allowed", "Stack Upward", "Stack an equal or higher draw card: +2 on +2, +4 on +2 or +4", true),
         HouseRuleOption("no_power_finish", "No Power Finish", "Your last card must be a number card", true),
         HouseRuleOption("call_before_play", "Call Before Play", "Call MONO! on your turn before playing your second-last card", true),
-        HouseRuleOption("seven_swap", "Seven Swap", "Playing a 7 swaps hands with an opponent", false),
-        HouseRuleOption("zero_pass", "Zero Pass", "Playing a 0 passes all hands to the next player", false),
+        HouseRuleOption("draw_four_anytime", "+4 Anytime", "Play a Wild +4 even while you hold the colour in play", false),
     )
 
     val FIXED_RULES = listOf(

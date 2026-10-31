@@ -99,6 +99,7 @@ class PlayRoomState(
         watching = watching,
         micOn = micOn,
         speakerOn = speakerOn,
+        talkingMuted = talkingMuted && !micOn,
         isFriend = isFriend,
         onlineSince = onlineSince,
         avatarId = avatarId,

@@ -83,7 +83,12 @@ class LobbyHandler(
     }
 
     fun setVoiceState(userId: String, micOn: Boolean, speakerOn: Boolean) {
-        state.update(userId) { copy(micOn = micOn, speakerOn = speakerOn) }
+        state.update(userId) { copy(micOn = micOn, speakerOn = speakerOn, talkingMuted = talkingMuted && !micOn) }
+    }
+
+    /** Talking with the mic off: shown to everyone as a grey voice line. */
+    fun setTalkingMuted(userId: String, talking: Boolean) {
+        state.update(userId) { copy(talkingMuted = talking) }
     }
 
     /** Only someone online can take over picking the game. */

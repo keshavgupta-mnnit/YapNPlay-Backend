@@ -31,7 +31,7 @@ class RoyalLudoSessionFactory(
             sixBoostPerMissPct = settings[GameSettings.RL_SIX_BOOST_PER_MISS_PCT],
             sixChanceCapPct = settings[GameSettings.RL_SIX_CHANCE_CAP_PCT],
         )
-        return RoyalLudoSession(game, state, random, json, settings[GameSettings.RL_TURN_SECONDS], think(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) })
+        return RoyalLudoSession(game, state, random, json, { settings[GameSettings.RL_TURN_SECONDS] }, ::think, BotTrace().let { RoyalLudoSessionBots(bot(it), it) })
     }
 
     private fun think() = BotThinkTime(
@@ -43,7 +43,7 @@ class RoyalLudoSessionFactory(
     override fun restore(saved: JsonObject): GameSession =
         RoyalLudoSession(
             game, json.decodeFromJsonElement(RoyalLudoState.serializer(), saved), random, json,
-            settings[GameSettings.RL_TURN_SECONDS], think(), BotTrace().let { RoyalLudoSessionBots(bot(it), it) },
+            { settings[GameSettings.RL_TURN_SECONDS] }, ::think, BotTrace().let { RoyalLudoSessionBots(bot(it), it) },
         )
 
     private fun bot(trace: BotTrace) = RoyalLudoBot(

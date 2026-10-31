@@ -34,6 +34,13 @@ data class SetAutoplay(
     val enabled: Boolean,
 )
 
+/** The user is talking with their mic off at this table: everyone sees a grey glow on them. */
+@Serializable
+data class SetMatchTalkingMuted(
+    val matchId: String,
+    val talking: Boolean,
+)
+
 /** The user's mic switch at this table (shown on their seat or spectator chip). */
 @Serializable
 data class SetMic(
@@ -82,6 +89,10 @@ data class MatchSnapshot(
     val pot: MatchPot? = null,
     /** 0.5.0: the end-game vote while it runs (play is paused). */
     val endVote: EndVoteInfo? = null,
+    /** The viewer is the room's leader or admin: they may offer a seat the bot plays to a spectator. */
+    val canOfferSeats: Boolean = false,
+    /** Players and spectators talking with their mic off (a grey glow on them). */
+    val mutedTalkers: List<String> = emptyList(),
 )
 
 /** [total] = entryCoins x (paid players + CPU seats); [split] = % of the pot by place (1st first). */
@@ -282,6 +293,9 @@ data class RankedSeat(
     val xpGained: Int = 0,
     /** 0.10.0: the entry this seat put in (the bank's for a CPU; 0 in free games or when it didn't pay). */
     val stake: Int = 0,
+    /** Someone whose seat another person took over (ranked last): their name and avatar, as the seat now shows someone else; null otherwise. */
+    val displayName: String? = null,
+    val avatarId: String? = null,
 )
 
 // ══════════════════════════════════════════════════════════════════════════

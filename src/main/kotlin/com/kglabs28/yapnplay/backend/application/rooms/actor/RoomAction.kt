@@ -19,6 +19,7 @@ sealed interface RoomAction {
     data class SetReady(val ready: Boolean) : RoomAction
     data class SetWatching(val watching: Boolean) : RoomAction
     data class SetVoiceState(val micOn: Boolean, val speakerOn: Boolean) : RoomAction
+    data class SetTalkingMuted(val talking: Boolean) : RoomAction
     data object StartCountdown : RoomAction
     data object CancelCountdown : RoomAction
     data class TransferLeader(val userId: String) : RoomAction

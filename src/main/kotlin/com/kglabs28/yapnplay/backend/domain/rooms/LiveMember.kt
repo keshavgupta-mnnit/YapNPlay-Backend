@@ -14,5 +14,7 @@ data class LiveMember(
     val watching: Boolean = false,
     val micOn: Boolean = false,
     val speakerOn: Boolean = true,
+    /** Talking with their mic off. */
+    val talkingMuted: Boolean = false,
     val avatarId: String = "",
 )

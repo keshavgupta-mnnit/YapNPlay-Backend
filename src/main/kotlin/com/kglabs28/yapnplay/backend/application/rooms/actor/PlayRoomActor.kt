@@ -34,6 +34,8 @@ class PlayRoomActor(
     /** The current leader, readable from outside the actor (match seat handover asks). */
     @Volatile
     var leaderId: String = state.room.leaderId
+    /** Read by matches (the admin may hand out seats too). */
+    var adminId: String = state.room.adminId
         private set
 
     private val inbox = Inbox<RoomCommand>(Inbox.UNLIMITED)
@@ -85,6 +87,7 @@ class PlayRoomActor(
             is RoomAction.SetReady -> done { lobby.setReady(userId, action.ready) }
             is RoomAction.SetWatching -> done { lobby.setWatching(userId, action.watching) }
             is RoomAction.SetVoiceState -> done { lobby.setVoiceState(userId, action.micOn, action.speakerOn) }
+            is RoomAction.SetTalkingMuted -> done { lobby.setTalkingMuted(userId, action.talking) }
             is RoomAction.TransferLeader -> done { lobby.transferLeader(userId, action.userId) }
             is RoomAction.TransferAdmin -> done { lobby.transferAdmin(userId, action.userId) }
             RoomAction.StartCountdown -> done { countdown.start(userId) }
@@ -103,6 +106,7 @@ class PlayRoomActor(
             }
         }
         leaderId = state.room.leaderId
+        adminId = state.room.adminId
         if (deleted) {
             onDeleted(roomId)
             stop()

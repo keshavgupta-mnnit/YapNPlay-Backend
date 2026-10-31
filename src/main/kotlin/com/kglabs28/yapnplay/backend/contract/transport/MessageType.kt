@@ -29,6 +29,8 @@ object MessageType {
 
     // ── Room channel: server to client ────────────────────────────────────
     const val ACK = "Ack"
+    /** Client to server on any channel: answered with Ack at once (the app times the round trip). */
+    const val PING = "Ping"
     const val REJECTED = "Rejected"
     const val ROOM_SNAPSHOT = "RoomSnapshot"
     const val MATCH_STARTING = "MatchStarting"
@@ -44,11 +46,14 @@ object MessageType {
     const val MATCH_REQUEST_SNAPSHOT = "MatchRequestSnapshot"
     const val SET_AUTOPLAY = "SetAutoplay"
     const val SET_MIC = "SetMic"
+    /** Room and match channels: the user is talking with their mic off (others see a grey glow). */
+    const val SET_TALKING_MUTED = "SetTalkingMuted"
     const val SET_PRESENCE = "SetPresence"
     const val CONFIRM_PRESENCE = "ConfirmPresence"
     const val LEAVE_SEAT = "LeaveSeat"
     const val ANSWER_SEAT_OFFER = "AnswerSeatOffer"
     const val CHOOSE_SEAT_TAKER = "ChooseSeatTaker"
+    const val OFFER_BOT_SEAT = "OfferBotSeat"
     const val TAKE_SEAT = "TakeSeat"
     /** 0.4.4: keep playing at the limit, or end. */
     const val VOTE_EXTENSION = "VoteExtension"

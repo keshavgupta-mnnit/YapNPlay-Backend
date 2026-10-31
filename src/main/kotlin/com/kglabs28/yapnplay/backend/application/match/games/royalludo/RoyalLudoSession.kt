@@ -41,15 +41,20 @@ class RoyalLudoSession(
     private var state: RoyalLudoState,
     private val random: GameRandom,
     private val json: Json,
-    override val turnSeconds: Int = GameSettings.RL_TURN_SECONDS.default,
-    private val think: BotThinkTime = BotThinkTime(
-        GameSettings.RL_CPU_THINK_MS.default.toLong(),
-        GameSettings.RL_CPU_THINK_JITTER_MS.default.toLong(),
-        GameSettings.RL_CPU_DECISION_EXTRA_MS.default.toLong(),
-    ),
+    /** Turn time and bot think time, read on every use: an admin's change applies to running matches at once. */
+    private val turnSecondsOf: () -> Int = { GameSettings.RL_TURN_SECONDS.default },
+    private val thinkOf: () -> BotThinkTime = {
+        BotThinkTime(
+            GameSettings.RL_CPU_THINK_MS.default.toLong(),
+            GameSettings.RL_CPU_THINK_JITTER_MS.default.toLong(),
+            GameSettings.RL_CPU_DECISION_EXTRA_MS.default.toLong(),
+        )
+    },
     /** How the server plays a seat (values from the runtime settings), and its recent decisions. */
     private val bots: RoyalLudoSessionBots = RoyalLudoSessionBots(),
 ) : GameSession {
+    override val turnSeconds: Int get() = turnSecondsOf()
+    private val think: BotThinkTime get() = thinkOf()
     override val botTrace: List<BotTraceEntry> get() = bots.trace.recent()
 
 

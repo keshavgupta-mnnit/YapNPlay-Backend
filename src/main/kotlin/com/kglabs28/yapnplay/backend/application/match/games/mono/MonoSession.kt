@@ -52,14 +52,16 @@ class MonoSession(
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
-    private val timing: MonoTiming = MonoTiming(),
+    /** Read on every use, so an admin's change applies to running matches at once. */
+    private val timingOf: () -> MonoTiming = { MonoTiming() },
     private var drawnAt: Long = 0L,
     private val bot: MonoBot = MonoBot(),
     private val trace: BotTrace = BotTrace(),
-    private val vote: MonoContinueVote = MonoContinueVote(timing.voteMs),
+    private val vote: MonoContinueVote = MonoContinueVote(timingOf().voteMs),
     /** Finishers before the continue vote starts: 3 in rooms of 5+, else 2. */
     private val voteFrom: Int = MonoContinueVote.MIN_FINISHERS,
 ) : GameSession {
+    private val timing: MonoTiming get() = timingOf()
     /** Colours each seat recently failed to play (they drew instead): bot knowledge, not saved. */
     private val misses = mutableMapOf<Int, MutableSet<Color>>()
     /** How long the table animates the last events (the continue vote's clock waits for it). */
@@ -181,16 +183,6 @@ class MonoSession(
      * allows when the drawn card can be played (play it or pass, in a whole
      * turn's time; the turn timer passes for them at the end).
      */
-    /**
-     * A full turn clock again: after the keep-playing vote, a drawn card that
-     * can be played, or a played card that leaves the turn with the same
-     * player (Skip Everyone, a two-player Skip or Reverse, a wild's colour).
-     */
-    override fun restartsClockOn(events: List<GameEvent>): Boolean =
-        events.any { it is MonoContinueVoted } ||
-            (state.drawnCardIndex != null && events.any { it is MonoEvent.CardDrawn }) ||
-            events.any { it is MonoEvent.CardPlayed && it.seat.value == state.currentSeat }
-
     override fun endEarly(): List<GameEvent>? = take(engine.apply(state, SeatNumber(state.currentSeat), MonoAction.EndMatch, random))
 
     override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
@@ -240,6 +232,7 @@ class MonoSession(
                 falseCatchPenaltyCards = state.monoRules.mandatory.falseCatchPenaltyCards,
                 callBeforePlay = house.callBeforePlay,
                 noPowerFinish = house.noPowerFinish,
+                drawFourAnytime = house.drawFourAnytime,
             ),
         ).jsonObject
     }
@@ -292,7 +285,6 @@ class MonoSession(
         val before = state
         val now = clock.nowMillis()
         var next = result.state as MonoState
-        if (next.monoWindowSeat != null && next.monoCallWindowExpiry == WINDOW_OPEN) next = next.copy(monoCallWindowExpiry = now + timing.monoWindowMs)
         if (next.catchSeat != null && next.catchSeat != before.catchSeat) catchOpenedAt = now
         val reshuffled = before.discardPile.size > next.discardPile.size || next.discardPile.take(before.discardPile.size) != before.discardPile
         drawnAt = when {
@@ -345,7 +337,7 @@ fun MonoCard.toWire(): MonoCardWire = when (this) {
     MonoCard.PrismDrawFour -> MonoCardWire("PrismDrawFour")
 }
 
-/** Turn time, bot think time, the MONO! window and the drawn-card window (runtime settings). */
+/** Turn time and bot think time (runtime settings): every decision gets the whole turn clock. */
 data class MonoTiming(
     val turnSeconds: Int = GameSettings.MONO_TURN_SECONDS.default,
     val think: BotThinkTime = BotThinkTime(
@@ -353,8 +345,6 @@ data class MonoTiming(
         GameSettings.MONO_CPU_THINK_JITTER_MS.default.toLong(),
         GameSettings.MONO_CPU_DECISION_EXTRA_MS.default.toLong(),
     ),
-    val monoWindowMs: Long = GameSettings.MONO_CALL_WINDOW_MS.default.toLong(),
-    val drawPlayWindowMs: Long = GameSettings.MONO_DRAW_PLAY_WINDOW_MS.default.toLong(),
     /** How long a bot takes before pressing Caught. */
     val catchReactionMs: Long = GameSettings.MONO_BOT_CATCH_REACTION_MS.default.toLong(),
     /** How long the continue vote stays open (the match's keep-playing vote time). */
@@ -379,8 +369,6 @@ data class MonoTiming(
                     settings[GameSettings.MONO_CPU_DECISION_EXTRA_MS].toLong(),
                 )
             },
-            settings[GameSettings.MONO_CALL_WINDOW_MS].toLong(),
-            settings[GameSettings.MONO_DRAW_PLAY_WINDOW_MS].toLong(),
             settings[GameSettings.MONO_BOT_CATCH_REACTION_MS].toLong(),
             settings[GameSettings.VOTE_SECONDS] * MILLIS_PER_SECOND,
         )
@@ -418,10 +406,8 @@ class MonoSessionFactory(
                 falseCatchPenaltyCards = settings[GameSettings.MONO_FALSE_CATCH_CARDS],
             ),
             house = MonoHouseRules(
-                stackingAllowed = on(STACKING, base.house.stackingAllowed),
-                sevenSwap = on(SEVEN_SWAP, base.house.sevenSwap),
-                zeroPass = on(ZERO_PASS, base.house.zeroPass),
                 noPowerFinish = on(NO_POWER_FINISH, base.house.noPowerFinish),
+                drawFourAnytime = on(DRAW_FOUR_ANYTIME, base.house.drawFourAnytime),
                 callBeforePlay = on(CALL_BEFORE_PLAY, base.house.callBeforePlay),
             ),
         )
@@ -432,21 +418,19 @@ class MonoSessionFactory(
         val s = json.decodeFromJsonElement(MonoSaved.serializer(), saved)
         // Anyone mid-window gets a fresh one: nobody could act while the server was down.
         val now = clock.nowMillis()
-        val state = if (s.state.monoCallWindowExpiry > 0) s.state.copy(monoCallWindowExpiry = now + MonoTiming.from(settings).monoWindowMs) else s.state
+        val state = s.state
         return session(state, if (s.drawnAt > 0) now else 0L, s.voteFrom).also { if (s.votePending) it.resumeVote() }
     }
 
     private fun session(state: MonoState, drawnAt: Long, voteFrom: Int): MonoSession {
         val trace = BotTrace()
-        return MonoSession(game, state, random, json, clock, MonoTiming.from(settings), drawnAt, MonoBot(MonoTiming.botTuning(settings), trace), trace, voteFrom = voteFrom)
+        return MonoSession(game, state, random, json, clock, { MonoTiming.from(settings) }, drawnAt, MonoBot(MonoTiming.botTuning(settings), trace), trace, voteFrom = voteFrom)
     }
 
     private companion object {
-        const val STACKING = "stacking_allowed"
-        const val SEVEN_SWAP = "seven_swap"
-        const val ZERO_PASS = "zero_pass"
         const val NO_POWER_FINISH = "no_power_finish"
         const val CALL_BEFORE_PLAY = "call_before_play"
+        const val DRAW_FOUR_ANYTIME = "draw_four_anytime"
     }
 }
 

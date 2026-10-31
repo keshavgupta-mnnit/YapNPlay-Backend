@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.contract.SetMatchTalkingMuted
+import com.kglabs28.yapnplay.backend.contract.OfferBotSeat
 import com.kglabs28.yapnplay.backend.contract.CastEndVote
 import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
 import com.kglabs28.yapnplay.backend.contract.VoteExtension
@@ -60,10 +62,12 @@ class MatchChannelHandler(
     private fun control(request: Envelope): Pair<String, MatchAction> = when (request.type) {
         MessageType.SET_AUTOPLAY -> codec.payload(request, SetAutoplay.serializer()).let { it.matchId to MatchAction.SetAutoplay(it.enabled) }
         MessageType.SET_MIC -> codec.payload(request, SetMic.serializer()).let { it.matchId to MatchAction.SetMic(it.micOn) }
+        MessageType.SET_TALKING_MUTED -> codec.payload(request, SetMatchTalkingMuted.serializer()).let { it.matchId to MatchAction.SetTalkingMuted(it.talking) }
         MessageType.SET_PRESENCE -> codec.payload(request, SetPresence.serializer()).let { it.matchId to MatchAction.SetPresence(it.away) }
         MessageType.CONFIRM_PRESENCE -> codec.payload(request, ConfirmPresence.serializer()).let { it.matchId to MatchAction.ConfirmPresence }
         MessageType.LEAVE_SEAT -> codec.payload(request, LeaveSeat.serializer()).let { it.matchId to MatchAction.Leave(it.giveToUserId) }
         MessageType.ANSWER_SEAT_OFFER -> codec.payload(request, AnswerSeatOffer.serializer()).let { it.matchId to MatchAction.AnswerOffer(it.accept) }
+        MessageType.OFFER_BOT_SEAT -> codec.payload(request, OfferBotSeat.serializer()).let { it.matchId to MatchAction.OfferBotSeat(it.seat, it.toUserId) }
         MessageType.CHOOSE_SEAT_TAKER -> codec.payload(request, ChooseSeatTaker.serializer()).let { it.matchId to MatchAction.ChooseTaker(it.giveToUserId) }
         MessageType.TAKE_SEAT -> codec.payload(request, TakeSeat.serializer()).let { it.matchId to MatchAction.TakeSeat(it.seat) }
         MessageType.VOTE_EXTENSION -> codec.payload(request, VoteExtension.serializer()).let { it.matchId to MatchAction.VoteExtension(it.keepPlaying) }

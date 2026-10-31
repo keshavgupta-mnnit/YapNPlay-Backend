@@ -5,6 +5,9 @@ interface RoomGateway {
     /** The room's current leader, or null. */
     fun leaderOf(roomId: String): String?
 
+    /** The room's admin, or null (none known). */
+    fun adminOf(roomId: String): String? = null
+
     /** True while [userId] is present in [roomId]. */
     fun isPresent(userId: String, roomId: String): Boolean
 

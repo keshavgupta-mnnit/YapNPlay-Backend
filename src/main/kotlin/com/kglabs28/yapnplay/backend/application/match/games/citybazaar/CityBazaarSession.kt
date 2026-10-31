@@ -82,7 +82,8 @@ class CityBazaarSession(
     private val startedAt: Long = clock.nowMillis(),
     private var auctionEndsAt: Long = 0L,
     private var lastBidAt: Long = 0L,
-    private val timing: CityBazaarTiming = CityBazaarTiming(),
+    /** Read on every use, so an admin's change applies to running matches at once. */
+    private val timingOf: () -> CityBazaarTiming = { CityBazaarTiming() },
     /** The bots' recent decisions, for the admin page. */
     private val trace: BotTrace = BotTrace(),
     /** How a player's Autoplay plays (reserves are runtime settings). */
@@ -90,6 +91,7 @@ class CityBazaarSession(
     /** How CPU, away and bot-held seats play (tuning from runtime settings). */
     private val cpuBot: CityBazaarBot = CityBazaarBot(CityBazaarBotProfile.CPU),
 ) : GameSession {
+    private val timing: CityBazaarTiming get() = timingOf()
     /** How long CPUs wait after the last bid before bidding again. */
     private var bidGap: Long = timing.bidDelayMillis
     private val mapper = CityBazaarWireMapper(json)
@@ -130,7 +132,7 @@ class CityBazaarSession(
         if (isFinished) return null
         state.cbRules.house.timeLimitMinutes?.let { limit ->
             // Time is up: between turns the match pauses for the keep-playing vote.
-            if (now - startedAt >= limit * MILLIS_PER_MINUTE && state.phase == CityBazaarPhase.ROLL) {
+            if (now - startedAt >= limit * MILLIS_PER_MINUTE && state.phase == CityBazaarPhase.ROLL && !tooSoonForVote(now)) {
                 return apply(state.currentSeat, ReachTimeLimit)
             }
         }
@@ -161,8 +163,16 @@ class CityBazaarSession(
             null -> ExtensionOffer()
         }
 
-    override fun extend(): List<GameEvent>? =
-        apply(state.currentSeat, ExtendMatch(state.cbRules.house.extensionRounds, state.cbRules.house.extensionMinutes))
+    override fun extend(): List<GameEvent>? {
+        lastVoteAt = clock.nowMillis()
+        return apply(state.currentSeat, ExtendMatch(state.cbRules.house.extensionRounds, state.cbRules.house.extensionMinutes))
+    }
+
+    /** When the last keep-playing vote ended (null: none yet). */
+    private var lastVoteAt: Long? = null
+
+    /** A keep-playing vote this soon after the last one is skipped: play just goes on. */
+    private fun tooSoonForVote(now: Long): Boolean = lastVoteAt?.let { now - it < timing.voteGapMillis } == true
 
     override fun endAtLimit(): List<GameEvent>? = apply(state.currentSeat, EndMatch)
 
@@ -257,6 +267,14 @@ class CityBazaarSession(
     private fun take(result: ApplyResult): List<GameEvent>? {
         if (result !is ApplyResult.Success) return null
         state = result.state as CityBazaarState
+        // The round limit came too soon after the last vote: extend quietly, no second vote.
+        if (state.phase == CityBazaarPhase.EXTENSION_VOTE && state.limitHit == CityBazaarLimit.ROUNDS && tooSoonForVote(clock.nowMillis())) {
+            val quiet = engine.apply(state, SeatNumber(state.currentSeat), ExtendMatch(state.cbRules.house.extensionRounds, state.cbRules.house.extensionMinutes), random)
+            if (quiet is ApplyResult.Success) {
+                state = quiet.state as CityBazaarState
+                return result.events + quiet.events
+            }
+        }
         if (result.events.any { it is AuctionStarted || it is BidPlaced }) {
             val now = clock.nowMillis()
             // Every bid restarts the clock; on a new auction CPUs hold back a moment, so every player sees it in time to bid.
@@ -317,6 +335,8 @@ data class CityBazaarTiming(
     /** A bot's least wait before bidding again in an auction, and before the first bid on a new one. */
     val bidDelayMillis: Long = GameSettings.CB_CPU_BID_DELAY_MS.default.toLong(),
     val firstBidDelayMillis: Long = GameSettings.CB_CPU_FIRST_BID_DELAY_MS.default.toLong(),
+    /** Least time between two keep-playing votes: a limit reached sooner extends quietly. */
+    val voteGapMillis: Long = GameSettings.CB_VOTE_GAP_MINUTES.default * 60_000L,
 )
 
 /** City Royale phases where a bot weighs a real choice (it thinks a little longer). */

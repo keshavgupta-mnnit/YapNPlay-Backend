@@ -12,6 +12,8 @@ class PlayRoomGateway(
 
     override fun leaderOf(roomId: String): String? = actors.peek(roomId)?.leaderId
 
+    override fun adminOf(roomId: String): String? = actors.peek(roomId)?.adminId
+
     override fun isPresent(userId: String, roomId: String): Boolean = presence.roomOf(userId) == roomId
 
     override suspend fun matchEnded(roomId: String, matchId: String) {

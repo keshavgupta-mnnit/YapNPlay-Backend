@@ -73,6 +73,12 @@ data class SetWatching(
     val watching: Boolean,
 )
 
+/** You're talking with your mic off: everyone sees your voice line move in grey. */
+@Serializable
+data class SetTalkingMuted(
+    val talking: Boolean,
+)
+
 /** Your mic/speaker switches, shown to everyone on your member card. */
 @Serializable
 data class SetVoiceState(
@@ -218,6 +224,8 @@ data class RoomMember(
     val watching: Boolean = false,
     val micOn: Boolean = false,
     val speakerOn: Boolean = false,
+    /** Talking with their mic off (a grey voice line). */
+    val talkingMuted: Boolean = false,
     /** Relative to the receiving user: is this member their friend. */
     val isFriend: Boolean = false,
     /** When this member came online in the current session (epoch millis); leader succession uses it. */

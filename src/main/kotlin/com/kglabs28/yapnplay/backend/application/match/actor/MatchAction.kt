@@ -12,11 +12,13 @@ sealed interface MatchAction {
 
     data class SetAutoplay(val enabled: Boolean) : MatchAction
     data class SetMic(val on: Boolean) : MatchAction
+    data class SetTalkingMuted(val talking: Boolean) : MatchAction
     data class SetPresence(val away: Boolean) : MatchAction
     data object ConfirmPresence : MatchAction
     data class Leave(val giveToUserId: String?) : MatchAction
     data class AnswerOffer(val accept: Boolean) : MatchAction
     data class ChooseTaker(val giveToUserId: String?) : MatchAction
+    data class OfferBotSeat(val seat: Int, val toUserId: String) : MatchAction
     data class TakeSeat(val seat: Int) : MatchAction
     /** The keep-playing vote at the game's limit. */
     data class VoteExtension(val keepPlaying: Boolean) : MatchAction

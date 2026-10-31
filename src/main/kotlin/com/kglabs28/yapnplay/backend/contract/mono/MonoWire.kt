@@ -67,6 +67,8 @@ data class MonoPublicState(
     /** 0.6.0: house rules the table must show (MONO! only before the play; no power card last). */
     val callBeforePlay: Boolean = false,
     val noPowerFinish: Boolean = false,
+    /** A Wild +4 may go down while holding the colour in play (house rule; classic: no). */
+    val drawFourAnytime: Boolean = false,
     /** 0.8.0: the continue vote after the 2nd and later finishers (null when none); play waits while it runs. */
     val continueVote: MonoContinueVoteWire? = null,
 )

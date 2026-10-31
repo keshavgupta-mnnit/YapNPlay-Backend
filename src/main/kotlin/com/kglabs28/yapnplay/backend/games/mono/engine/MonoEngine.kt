@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.mono.engine
 
+import com.kglabs28.yapnplay.backend.games.mono.domain.colourInPlay
+import com.kglabs28.yapnplay.backend.games.mono.domain.heldBackByColour
 import com.kglabs28.yapnplay.backend.games.base.Game
 import com.kglabs28.yapnplay.backend.games.base.identity.GameId
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
@@ -191,7 +193,8 @@ class MonoEngine : Game {
         val noPowerFinish = s.monoRules.house.noPowerFinish
         val candidates = s.drawnCardIndex?.takeIf { !noPowerFinish }?.let { listOf(it) } ?: hand.indices.toList()
         return candidates.filter { i ->
-            hand[i].isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor) && !(noPowerFinish && hand.size == 1 && hand[i] !is MonoCard.NumberCard)
+            hand[i].isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor) && !(noPowerFinish && hand.size == 1 && hand[i] !is MonoCard.NumberCard) &&
+                !hand[i].heldBackByColour(hand, s.colourInPlay, s.monoRules.house.drawFourAnytime)
         }
     }
 
@@ -229,24 +232,21 @@ class MonoEngine : Game {
                 chooseColor(s, seat, bestColour(s, seat.value), random)
             MonoPhase.AWAITING_SWAP_CHOICE ->
                 chooseSwapTarget(s, seat, swapPartner(s, seat.value))
-            MonoPhase.AWAITING_STACK_CHOICE ->
-                if (s.monoRules.house.stackingAllowed) {
-                    // A draw card can only be stacked on if it matches the
-                    // discard as well as being worth enough.
-                    val stackable = s.handForSeat(seat.value).withIndex()
-                        .filter { (_, card) ->
-                            card.penaltyValue() >= s.stackTopValue &&
-                                card.penaltyValue() > 0 &&
-                                card.isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor)
-                        }
-                    if (stackable.isNotEmpty()) {
-                        playCard(s, seat, stackable.maxByOrNull { it.value.penaltyValue() }!!.index, random)
-                    } else {
-                        acceptStack(s, seat, random)
+            MonoPhase.AWAITING_STACK_CHOICE -> {
+                // A draw card can only be stacked on if it matches the
+                // discard as well as being worth enough.
+                val stackable = s.handForSeat(seat.value).withIndex()
+                    .filter { (_, card) ->
+                        card.penaltyValue() >= s.stackTopValue &&
+                            card.penaltyValue() > 0 &&
+                            card.isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor)
                     }
+                if (stackable.isNotEmpty()) {
+                    playCard(s, seat, stackable.maxByOrNull { it.value.penaltyValue() }!!.index, random)
                 } else {
                     acceptStack(s, seat, random)
                 }
+            }
             MonoPhase.AWAITING_PLAY -> {
                 val allowed = legalPlays(s, seat.value)
                 when {
@@ -348,6 +348,9 @@ class MonoEngine : Game {
         if (!card.isPlayableOn(s.discardPile.lastOrNull(), s.topCardColor)) {
             return rejected("NOT_PLAYABLE", "Card does not match")
         }
+        if (card.heldBackByColour(hand, s.colourInPlay, s.monoRules.house.drawFourAnytime)) {
+            return rejected("DRAW_FOUR_HELD", "A +4 only when you hold none of the colour in play")
+        }
 
         val events = mutableListOf<MonoEvent>()
         val newHand = hand.toMutableList().apply { removeAt(handIndex) }
@@ -356,7 +359,7 @@ class MonoEngine : Game {
 
         // A Prism card leaves the colour open until its player chooses.
         val prism = card.isPrism()
-        val stacking = s.monoRules.house.stackingAllowed && card.penaltyValue() > 0
+        val stacking = card.penaltyValue() > 0
         val penalty = s.activeStackPenalty + card.penaltyValue()
 
         var played = s.copy(
@@ -398,36 +401,12 @@ class MonoEngine : Game {
             )
         }
 
-        if (card.penaltyValue() > 0) {
-            // +2 and +4 charge the next player, who then loses the turn.
-            val victim = nextSeat(s, seat.value)
-            return resolveDraw(played, victim, card.penaltyValue(), random, events)
-        }
-
-        // The Rule of 7 waits for its player to pick a partner.
-        if (card is MonoCard.NumberCard && card.number == SEVEN && s.monoRules.house.sevenSwap && !lastCard) {
-            return ApplyResult.Success(
-                played.copy(
-                    phase = MonoPhase.AWAITING_SWAP_CHOICE,
-                    pendingSwapSeat = seat.value,
-                    turn = MonoTurnState(seat, MonoPhase.AWAITING_SWAP_CHOICE.name),
-                ),
-                events,
-            )
-        }
-
-        val afterRules = if (card is MonoCard.NumberCard && card.number == ZERO && s.monoRules.house.zeroPass && !lastCard) {
-            events += MonoEvent.HandsPassed(if (s.reversed) COUNTER else CLOCKWISE)
-            passAllHands(played, s.reversed)
-        } else {
-            played
-        }
 
         val reverseFlip = card is MonoCard.ReverseCard
         val newReversed = if (reverseFlip) !s.reversed else s.reversed
         val next = nextFor(s, seat.value, card, newReversed)
         return ApplyResult.Success(
-            afterRules.copy(
+            played.copy(
                 reversed = newReversed,
                 currentSeat = next,
                 phase = MonoPhase.AWAITING_PLAY,
@@ -454,6 +433,21 @@ class MonoEngine : Game {
         val newHand = hand.toMutableList().apply { removeAt(handIndex) }
         if (newHand.isEmpty() && s.monoRules.house.noPowerFinish) return rejected("NO_POWER_FINISH", "Your last card must be a number card")
         val total = s.activeStackPenalty + card.penaltyValue()
+        if (card.isPrism()) {
+            // A wild +4 on the stack: its player names the colour, then the stack moves on ([chooseColor]).
+            val naming = s.copy(
+                hands = s.hands + (seat.value to newHand),
+                discardPile = s.discardPile + card,
+                phase = MonoPhase.AWAITING_COLOR_CHOICE,
+                activeStackPenalty = total,
+                stackTopValue = card.penaltyValue(),
+                turnCounter = s.turnCounter + 1,
+                lastActionSeat = seat.value,
+                lastActionCard = card,
+                turn = MonoTurnState(seat, MonoPhase.AWAITING_COLOR_CHOICE.name),
+            )
+            return ApplyResult.Success(naming, listOf(MonoEvent.CardPlayed(seat, card, naming.topCardColor)))
+        }
         val next = nextSeat(s, seat.value)
         val after = s.copy(
             hands = s.hands + (seat.value to newHand),
@@ -492,8 +486,8 @@ class MonoEngine : Game {
         )
         val events = mutableListOf<MonoEvent>(MonoEvent.ColorChosen(seat, color))
 
-        // Stack Upward: after the colour, the next player may stack onto the +4 or take it.
-        if (top is MonoCard.PrismDrawFour && s.monoRules.house.stackingAllowed) {
+        // After the colour, the next player may stack onto the +4 or take it.
+        if (top is MonoCard.PrismDrawFour) {
             val victim = nextSeat(s, seat.value)
             return ApplyResult.Success(
                 chosen.copy(
@@ -503,11 +497,6 @@ class MonoEngine : Game {
                 ),
                 events,
             )
-        }
-        // A Prism +4 charges the next player after the colour is named.
-        if (top is MonoCard.PrismDrawFour) {
-            val victim = nextSeat(s, seat.value)
-            return resolveDraw(chosen, victim, top.penaltyValue(), random, events)
         }
 
         val next = nextSeat(s, seat.value)
@@ -594,33 +583,6 @@ class MonoEngine : Game {
     }
 
     /** [victim] draws [count] cards and loses their turn. */
-    private fun resolveDraw(
-        s: MonoState,
-        victim: Int,
-        count: Int,
-        random: GameRandom,
-        events: MutableList<MonoEvent>,
-    ): ApplyResult {
-        val drawn = drawCards(s, count, random)
-        val newHand = s.handForSeat(victim) + drawn.cards
-        val next = advance(drawn.state, victim, 1, s.reversed)
-        val drawnEvents: List<MonoEvent> = drawn.cards.map { MonoEvent.CardDrawn(SeatNumber(victim), it) }
-        events += drawnEvents
-        events += MonoEvent.TurnPassed(SeatNumber(victim))
-        return ApplyResult.Success(
-            drawn.state.copy(
-                hands = s.hands + (victim to newHand),
-                currentSeat = next,
-                phase = MonoPhase.AWAITING_PLAY,
-                activeStackPenalty = 0,
-                stackTopValue = 0,
-                drawnCardIndex = null,
-                turnCounter = s.turnCounter + 1,
-                turn = MonoTurnState(SeatNumber(next), MonoPhase.AWAITING_PLAY.name),
-            ),
-            events,
-        )
-    }
 
     /** The cards drawn, and the piles they came from. */
     private data class DrawResult(val state: MonoState, val cards: List<MonoCard>)
@@ -704,16 +666,6 @@ class MonoEngine : Game {
         )
     }
 
-    /** The Rule of 0: every hand moves one seat along the direction of play. */
-    private fun passAllHands(s: MonoState, reversed: Boolean): MonoState {
-        val active = activeSeats(s)
-        if (active.size <= 1) return s
-        val moved = active.associateWith { seat ->
-            val giver = advance(s, seat, 1, !reversed)
-            s.handForSeat(giver)
-        }
-        return s.copy(hands = s.hands + moved)
-    }
 
     /** Seats still holding cards (finished seats are skipped). */
     private fun activeSeats(s: MonoState): List<Int> = s.seats.map { it.value }.filter { it !in s.finishOrder }
@@ -756,10 +708,6 @@ class MonoEngine : Game {
         ApplyResult.Rejected(TypedRejection(code, message))
 
     private companion object {
-        const val SEVEN = 7
-        const val ZERO = 0
-        const val CLOCKWISE = "clockwise"
-        const val COUNTER = "counter-clockwise"
         /** The engine does not own a clock; the host stamps this deadline. */
         const val WINDOW_OPEN = -1L
     }

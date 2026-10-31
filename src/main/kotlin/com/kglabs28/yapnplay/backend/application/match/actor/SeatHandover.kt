@@ -65,7 +65,7 @@ class SeatHandover(
      */
     fun leave(seat: Int, giveTo: String?) {
         val leaver = state.seat(seat)
-        state.update(seat) { copy(left = true, autoplay = false, presence = SeatPresence.AWAY) }
+        state.update(seat) { copy(left = true, leftAt = deps.clock.nowMillis(), autoplay = false, presence = SeatPresence.AWAY) }
         state.idleTurns.remove(seat)
         if (!isRoomMatch) {
             if (state.offer?.seat == seat) state.offer = null
@@ -96,7 +96,40 @@ class SeatHandover(
             .filter { now - (it.disconnectedAt ?: now) >= BackendConstants.DISCONNECT_GRACE_MS }
             .forEach { setAway(it.seat, away = true) }
         val offer = state.offer
+        if (offer == null && offerSeatBackToOwner()) return
         if (offer == null) handleAwaySeats(now) else advance(offer, now)
+    }
+
+    /**
+     * A player whose seat the bot is playing came back to watch: their own
+     * seat is offered to them first (they accept to take it back). True when offered.
+     */
+    private fun offerSeatBackToOwner(): Boolean {
+        if (!isRoomMatch) return false
+        val seat = state.seats.firstOrNull { s ->
+            !s.cpu && !s.removed && s.presence == SeatPresence.BOT && s.userId in state.spectators && s.userId !in state.declined
+        } ?: return false
+        offerTo(seat.seat, seat.displayName, state.spectators.getValue(seat.userId), round = 2)
+        return true
+    }
+
+    /**
+     * The room's leader or admin offers a seat the bot is playing (a leaver's,
+     * an away player's, or a CPU's) to a spectator, who still has to accept.
+     */
+    fun offerBotSeat(byUserId: String, seat: Int, toUserId: String) {
+        val roomId = state.roomId ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SEAT_OFFER)
+        if (byUserId != deps.rooms.leaderOf(roomId) && byUserId != deps.rooms.adminOf(roomId)) {
+            throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.ONLY_LEADER_OFFERS_SEAT)
+        }
+        val target = state.seats.firstOrNull { it.seat == seat }
+        if (target == null || target.removed || !(target.cpu || target.presence == SeatPresence.BOT)) {
+            throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.SEAT_NOT_BOT)
+        }
+        if (state.offer != null) throw ServiceException(ErrorCode.SEAT_TAKEN, BackendStrings.SEAT_OFFER_BUSY)
+        val pick = state.spectators[toUserId] ?: throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
+        state.declined -= toUserId
+        offerTo(seat, target.displayName, pick, round = 2)
     }
 
     /** The named spectator answers. */
@@ -203,6 +236,11 @@ class SeatHandover(
     private fun standIn(seat: Int, userId: String) {
         val joiner = state.spectators.remove(userId) ?: return toBot(seat)
         val replaced = state.seat(seat)
+        // Whoever held it keeps a result, ranked last (unless they sit down again).
+        state.pastHolders.removeAll { it.userId == joiner.userId }
+        if (!replaced.cpu && replaced.userId != joiner.userId) {
+            state.pastHolders += PastHolder(seat, replaced.userId, replaced.displayName, replaced.avatarId, replaced.leftAt ?: deps.clock.nowMillis())
+        }
         if (isRoomMatch && !replaced.cpu && !replaced.left) {
             state.spectators[replaced.userId] = MatchSpectator(replaced.userId, replaced.displayName, deps.clock.nowMillis(), replaced.micOn, replaced.level, replaced.avatarId)
         }
@@ -218,6 +256,7 @@ class SeatHandover(
                 presence = SeatPresence.PLAYING,
                 connected = true,
                 left = false,
+                leftAt = null,
                 disconnectedAt = null,
             )
         }

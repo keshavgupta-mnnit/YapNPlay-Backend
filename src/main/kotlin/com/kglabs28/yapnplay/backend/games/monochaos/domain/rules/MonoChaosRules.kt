@@ -21,7 +21,6 @@ data class MonoChaosMandatoryRules(
 
 @Serializable
 data class MonoChaosHouseRules(
-    val stackingAllowed: Boolean = true,
     val sevenSwap: Boolean = true,
     val zeroPass: Boolean = true,
     val knockoutEnabled: Boolean = true,

@@ -31,6 +31,10 @@ class MatchState(
     var offer: SeatOfferState? = null
     /** Spectators who passed on the current handover. */
     val declined = mutableSetOf<String>()
+    /** People whose seat someone else took over (not counting anyone seated again): ranked last at the end. */
+    val pastHolders = mutableListOf<PastHolder>()
+    /** Players and spectators talking with their mic off (shown as a grey glow). */
+    val mutedTalkers = mutableSetOf<String>()
     val awaySince = mutableMapOf<Int, Long>()
     val missedTurns = mutableMapOf<Int, Int>()
     /** Whole turns in a row the bot played for a seat on timeout. */

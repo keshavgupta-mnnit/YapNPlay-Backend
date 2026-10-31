@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.contract.SetTalkingMuted
 import com.kglabs28.yapnplay.backend.contract.SetLeague
 import com.kglabs28.yapnplay.backend.contract.CreateRoom
 import com.kglabs28.yapnplay.backend.contract.ApproveJoin
@@ -83,6 +84,7 @@ class RoomChannelHandler(
         MessageType.SET_VOICE_STATE -> codec.payload(request, SetVoiceState.serializer()).let {
             RoomAction.SetVoiceState(it.micOn, it.speakerOn)
         }
+        MessageType.SET_TALKING_MUTED -> RoomAction.SetTalkingMuted(codec.payload(request, SetTalkingMuted.serializer()).talking)
         MessageType.TRANSFER_LEADER -> RoomAction.TransferLeader(codec.payload(request, TransferLeader.serializer()).userId)
         MessageType.TRANSFER_ADMIN -> RoomAction.TransferAdmin(codec.payload(request, TransferAdmin.serializer()).userId)
         MessageType.REMOVE_MEMBER -> RoomAction.RemoveMember(codec.payload(request, RemoveMember.serializer()).userId)

@@ -48,14 +48,16 @@ class MonoChaosSession(
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
-    private val timing: MonoTiming = MonoTiming(),
+    /** Read on every use, so an admin's change applies to running matches at once. */
+    private val timingOf: () -> MonoTiming = { MonoTiming() },
     private var drawnAt: Long = 0L,
     private val bot: MonoChaosBot = MonoChaosBot(),
     private val trace: BotTrace = BotTrace(),
-    private val vote: MonoContinueVote = MonoContinueVote(timing.voteMs),
+    private val vote: MonoContinueVote = MonoContinueVote(timingOf().voteMs),
     /** Finishers before the continue vote starts: 3 in rooms of 5+, else 2. */
     private val voteFrom: Int = MonoContinueVote.MIN_FINISHERS,
 ) : GameSession {
+    private val timing: MonoTiming get() = timingOf()
     private val misses = mutableMapOf<Int, MutableSet<Color>>()
     /** How long the table animates the last events (the continue vote's clock waits for it). */
     private var lastPauseMs = 0L
@@ -174,16 +176,6 @@ class MonoChaosSession(
      * allows when the drawn card can be played (play it or pass, in a whole
      * turn's time; the turn timer passes for them at the end).
      */
-    /**
-     * A full turn clock again: after the keep-playing vote, a drawn card that
-     * can be played, or a played card that leaves the turn with the same
-     * player (Skip Everyone, a two-player Skip or Reverse, a wild's colour).
-     */
-    override fun restartsClockOn(events: List<GameEvent>): Boolean =
-        events.any { it is MonoContinueVoted } ||
-            (state.drawnCardIndex != null && events.any { it is MonoChaosEvent.CardDrawn }) ||
-            events.any { it is MonoChaosEvent.CardPlayed && it.seat.value == state.currentSeat }
-
     override fun endEarly(): List<GameEvent>? = take(engine.apply(state, SeatNumber(state.currentSeat), MonoChaosAction.EndMatch, random))
 
     override fun pauseAfter(events: List<GameEvent>): Long = events.sumOf { event ->
@@ -277,7 +269,6 @@ class MonoChaosSession(
         val before = state
         val now = clock.nowMillis()
         var next = result.state as MonoChaosState
-        if (next.monoWindowSeat != null && next.monoCallWindowExpiry == WINDOW_OPEN) next = next.copy(monoCallWindowExpiry = now + timing.monoWindowMs)
         if (next.catchSeat != null && next.catchSeat != before.catchSeat) catchOpenedAt = now
         val reshuffled = before.discardPile.size > next.discardPile.size || next.discardPile.take(before.discardPile.size) != before.discardPile
         drawnAt = when {
@@ -370,7 +361,6 @@ class MonoChaosSessionFactory(
                 knockoutThreshold = settings[GameSettings.CHAOS_KNOCKOUT_CARDS],
             ),
             house = MonoChaosHouseRules(
-                stackingAllowed = on(STACKING, base.house.stackingAllowed),
                 sevenSwap = on(SEVEN_SWAP, base.house.sevenSwap),
                 zeroPass = on(ZERO_PASS, base.house.zeroPass),
                 knockoutEnabled = on(KNOCKOUT, base.house.knockoutEnabled),
@@ -382,17 +372,16 @@ class MonoChaosSessionFactory(
     override fun restore(saved: JsonObject): GameSession {
         val s = json.decodeFromJsonElement(MonoChaosSaved.serializer(), saved)
         val now = clock.nowMillis()
-        val state = if (s.state.monoCallWindowExpiry > 0) s.state.copy(monoCallWindowExpiry = now + MonoTiming.from(settings).monoWindowMs) else s.state
+        val state = s.state
         return session(state, if (s.drawnAt > 0) now else 0L, s.voteFrom).also { if (s.votePending) it.resumeVote() }
     }
 
     private fun session(state: MonoChaosState, drawnAt: Long, voteFrom: Int): MonoChaosSession {
         val trace = BotTrace()
-        return MonoChaosSession(game, state, random, json, clock, MonoTiming.from(settings, chaos = true), drawnAt, MonoChaosBot(MonoTiming.botTuning(settings), trace), trace, voteFrom = voteFrom)
+        return MonoChaosSession(game, state, random, json, clock, { MonoTiming.from(settings, chaos = true) }, drawnAt, MonoChaosBot(MonoTiming.botTuning(settings), trace), trace, voteFrom = voteFrom)
     }
 
     private companion object {
-        const val STACKING = "stacking_allowed"
         const val SEVEN_SWAP = "seven_swap"
         const val ZERO_PASS = "zero_pass"
         const val KNOCKOUT = "knockout_enabled"

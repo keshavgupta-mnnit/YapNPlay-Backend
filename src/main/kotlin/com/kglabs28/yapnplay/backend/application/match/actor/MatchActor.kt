@@ -61,7 +61,7 @@ class MatchActor(
 
     private val inbox = Inbox<MatchCommand>(Inbox.UNLIMITED)
     private val handover = SeatHandover(state, deps) { publish(emptyList()) }
-    private val snapshots = MatchSnapshotBuilder(state)
+    private val snapshots = MatchSnapshotBuilder(state, deps.rooms)
     private var wakeToken = 0L
     /** Something changed since the last wake was planned (set by publish, cleared by scheduleWake). */
     private var rescheduleNeeded = true
@@ -174,11 +174,13 @@ class MatchActor(
             is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId))
             is MatchAction.SetAutoplay -> setAutoplay(userId, action.enabled)
             is MatchAction.SetMic -> setMic(userId, action.on)
+            is MatchAction.SetTalkingMuted -> setTalkingMuted(userId, action.talking)
             is MatchAction.SetPresence -> handover.setAway(ownSeat(userId).seat, action.away)
             MatchAction.ConfirmPresence -> handover.stillHere(userId)
             is MatchAction.Leave -> handover.leave(ownSeat(userId).seat, action.giveToUserId)
             is MatchAction.AnswerOffer -> handover.answerOffer(userId, action.accept)
             is MatchAction.ChooseTaker -> handover.leaderChoice(userId, action.giveToUserId)
+            is MatchAction.OfferBotSeat -> handover.offerBotSeat(userId, action.seat, action.toUserId)
             is MatchAction.TakeSeat -> handover.takeSeat(userId, action.seat)
             is MatchAction.VoteExtension -> voteExtension(userId, action.keepPlaying)
             is MatchAction.ProposeEnd -> proposeEnd(userId)
@@ -254,10 +256,19 @@ class MatchActor(
             userId in state.spectators -> state.spectators[userId] = state.spectators.getValue(userId).copy(micOn = on)
             else -> throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
         }
+        if (on) state.mutedTalkers -= userId
         publish(emptyList())
     }
 
+    /** Talking with the mic off: everyone at the table sees a grey glow on them. */
+    private fun setTalkingMuted(userId: String, talking: Boolean) {
+        if (state.seatOf(userId) == null && userId !in state.spectators) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
+        val changed = if (talking) state.mutedTalkers.add(userId) else state.mutedTalkers.remove(userId)
+        if (changed) publish(emptyList())
+    }
+
     private fun disconnected(userId: String) {
+        state.mutedTalkers -= userId
         val seat = state.seatOf(userId)
         if (seat != null) {
             state.update(seat.seat) { copy(connected = false, disconnectedAt = deps.clock.nowMillis()) }
@@ -284,7 +295,8 @@ class MatchActor(
             if (now - last < cooldown) throw ServiceException(ErrorCode.RATE_LIMITED, BackendStrings.END_VOTE_TOO_SOON)
         }
         state.lastEndProposal[seat.seat] = now
-        val voters = session.stillIn - state.seats.filter { it.cpu || it.left }.map { it.seat }.toSet()
+        // Bots never vote: a CPU seat, a leaver's, or one the bot plays for someone away.
+        val voters = session.stillIn - state.seats.filter { it.cpu || it.left || it.presence == SeatPresence.BOT }.map { it.seat }.toSet()
         state.endVote = EndVoteState(seat.seat, voters + seat.seat, now, now + deps.settings[GameSettings.END_VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
         val vote = state.endVote!!
         if (vote.ends || vote.allVoted) decideEnd() else publish(emptyList())
@@ -323,7 +335,8 @@ class MatchActor(
             session.atLimit -> {
                 // Only real people still in vote: never CPUs or leavers. A human whose seat the bot is
                 // holding (away, missed turns) still votes, so a lone player with CPUs always decides.
-                val voters = session.stillIn - state.seats.filter { it.cpu || it.left }.map { it.seat }.toSet()
+                // Bots never vote: a CPU seat, a leaver's, or one the bot plays for someone away.
+                val voters = session.stillIn - state.seats.filter { it.cpu || it.left || it.presence == SeatPresence.BOT }.map { it.seat }.toSet()
                 // The clock starts after the table has shown the last turn (its messages can take seconds),
                 // so players get the whole vote time with the question on screen.
                 val endsAt = now + state.pauseMs + deps.settings[GameSettings.VOTE_SECONDS] * BackendConstants.MILLIS_PER_SECOND
@@ -540,7 +553,12 @@ class MatchActor(
         ticker.cancel()
         checkpoints.trySend(null)
         checkpoints.close()
-        val ranking = state.session.ranking
+        // A player who left (and didn't take a seat back) ranks below everyone still in, the latest leaver first.
+        val gameRanking = state.session.ranking
+        val ranking = gameRanking.filterNot { state.seat(it).left } +
+            gameRanking.filter { state.seat(it).left }.sortedByDescending { state.seat(it).leftAt ?: 0L }
+        // Those whose seat someone else took over come after everyone at the table, the latest first.
+        val pastHolders = state.pastHolders.sortedByDescending { it.leftAt }
         val record = FinishedMatch(
             matchId = matchId,
             gameId = state.setup.gameId,
@@ -556,6 +574,15 @@ class MatchActor(
                     xp = if (s.cpu) 0 else deps.progression.xpFor(place, s.left, now - state.startedAt),
                     displayName = s.displayName,
                     avatarId = s.avatarId,
+                )
+            } + pastHolders.mapIndexed { index, p ->
+                val place = state.seats.size + index + 1
+                FinishedSeat(
+                    p.seat, p.userId, place,
+                    left = true,
+                    xp = deps.progression.xpFor(place, true, now - state.startedAt),
+                    displayName = p.displayName,
+                    avatarId = p.avatarId,
                 )
             },
             entryCoins = state.setup.entryCoins,
@@ -587,6 +614,9 @@ class MatchActor(
                         stake = if (paidIn && record.paid.isNotEmpty()) record.entryCoins else 0,
                         xpGained = record.seats.firstOrNull { it.seat == s.seat }?.xp ?: 0,
                     )
+                } + record.seats.drop(state.seats.size).map { p ->
+                    // Named, as their seat now shows someone else.
+                    RankedSeat(p.seat, MatchSeatStatus.ACTIVE, p.place, xpGained = p.xp, displayName = p.displayName, avatarId = p.avatarId)
                 },
             )
             val envelope = deps.codec.push(Channel.MATCH, MessageType.MATCH_ENDED, MatchEnded.serializer(), ended)
@@ -594,9 +624,11 @@ class MatchActor(
             runCatching { deps.outcomes.ended(matchId, MatchOutcomeStatus.COMPLETED, now) }
                 .onFailure { log.warn("Match $matchId: recording the outcome failed", it) }
             // The stored result keeps each seat's coins as the table showed them (for the player's history).
-            val shown = ended.ranking.associateBy { it.seat }
+            val shown = ended.ranking.filter { it.displayName == null }.associateBy { it.seat }
             val stored = record.copy(
-                seats = record.seats.map { seat ->
+                seats = record.seats.mapIndexed { index, seat ->
+                    // Past holders (after the table's seats) won nothing.
+                    if (index >= state.seats.size) return@mapIndexed seat
                     shown[seat.seat]?.let { seat.copy(coinsWon = it.coinsWon, completionCoins = it.completionCoins, stake = it.stake) } ?: seat
                 },
             )
