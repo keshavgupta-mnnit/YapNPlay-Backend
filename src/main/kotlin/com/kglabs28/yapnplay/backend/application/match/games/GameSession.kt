@@ -35,6 +35,15 @@ interface GameSession {
     /** True when [seat] may send [action] while it isn't their turn (MONO!'s callout). */
     fun actsOutOfTurn(seat: Int, action: Action): Boolean = false
 
+    /**
+     * A side message during play (a drawing stroke from [seat], null: a spectator): the game keeps it and
+     * says what to forward, with no full update. Null when the game has no such message or refuses it.
+     */
+    fun relay(seat: Int?, type: String, payload: JsonObject): RelayOut? = null
+
+    /** True while [seat] may not talk (Doodle King: their own turn to draw); the server keeps their mic off. */
+    fun silenced(seat: Int): Boolean = false
+
     /** Applies [action] for [seat]; null when the engine refuses it. */
     fun apply(seat: Int, action: Action): List<GameEvent>?
 
@@ -108,3 +117,6 @@ interface GameSession {
     /** Everything needed to rebuild this session after a restart ([GameSessionFactory.restore]). */
     fun save(): JsonObject
 }
+
+/** What a side message ([GameSession.relay]) sends on: to everyone else at the table, and back to the sender. */
+data class RelayOut(val toOthers: JsonObject? = null, val toSender: JsonObject? = null)

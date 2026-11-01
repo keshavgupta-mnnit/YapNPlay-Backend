@@ -1,5 +1,15 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleClear
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleDrawing
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleFeedEntry
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleKingPublicState
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleKingWireAction
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleKingWireEvent
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleRelay
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleSeatState
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleStroke
+import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleUndo
 import com.kglabs28.yapnplay.backend.contract.mono.MonoCardWire
 import com.kglabs28.yapnplay.backend.contract.RenameRoom
 import com.kglabs28.yapnplay.backend.contract.mono.MonoPublicState
@@ -163,6 +173,32 @@ object GoldenSamples {
         GoldenCase("CityBazaarPublicState", CityBazaarPublicState.serializer(), f.bazaarState),
         GoldenCase("CityBazaarEvents", ListSerializer(CityBazaarWireEvent.serializer()), f.bazaarEvents),
         GoldenCase("CityBazaarActions", ListSerializer(CityBazaarWireAction.serializer()), f.bazaarActions),
+        GoldenCase(
+            "DoodleKingPublicState", DoodleKingPublicState.serializer(),
+            DoodleKingPublicState(
+                phase = "DRAW", round = 2, rounds = 3, level = "MEDIUM", drawerSeat = 1, phaseEndsAt = 1_760_000_060_000, drawSeconds = 60,
+                hint = "B_C____", seats = listOf(DoodleSeatState(1, 150, turnPoints = 25), DoodleSeatState(2, 120, guessed = true, turnPoints = 100), DoodleSeatState(3, 95)),
+                feed = listOf(DoodleFeedEntry("GUESS", 3, "wheel"), DoodleFeedEntry("CORRECT", 2, points = 100)),
+                drawingId = 4, strokeCount = 12,
+            ),
+        ),
+        GoldenCase(
+            "DoodleKingActions", ListSerializer(DoodleKingWireAction.serializer()),
+            listOf(DoodleKingWireAction.PickWord(1), DoodleKingWireAction.Guess("bicycle"), DoodleKingWireAction.Pass),
+        ),
+        GoldenCase(
+            "DoodleRelay", ListSerializer(DoodleRelay.serializer()),
+            listOf(
+                DoodleStroke(4, 7, colour = 1, size = 2, points = listOf(100, 200, 140, 260)),
+                DoodleUndo(4),
+                DoodleClear(4),
+                DoodleDrawing(4, listOf(DoodleStroke(4, 1, points = listOf(0, 0, 4095, 4095)))),
+            ),
+        ),
+        GoldenCase(
+            "DoodleKingEvents", ListSerializer(DoodleKingWireEvent.serializer()),
+            listOf(DoodleKingWireEvent.Guessed(2, 100), DoodleKingWireEvent.Revealed("bicycle", mapOf(1 to 55, 2 to 100))),
+        ),
         // ── MATCHMAKING channel ─────────────────────────────────────────
         GoldenCase("JoinQueue", JoinQueue.serializer(), JoinQueue("royal-ludo", entryCoins = 500)),
         GoldenCase("LeaveQueue", LeaveQueue.serializer(), LeaveQueue),

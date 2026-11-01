@@ -232,6 +232,9 @@ enum class CountdownStopReason {
     SETTINGS_CHANGED,
     /** The countdown ended but the server could not start the match. */
     START_FAILED,
+
+    /** Someone here ([CountdownStop.byName]) has an older app without this game. */
+    UPDATE_NEEDED,
 }
 
 /** One join request in the admin's Waiting List. */

@@ -72,6 +72,10 @@ object BackendConstants {
 
     // ── Matches ──────────────────────────────────────────────────────────
     const val MATCH_TICK_MS = 500L
+    /** Games every app version has; an app that doesn't list its games (older than 1.0.6) has only these. */
+    val GAMES_IN_EVERY_APP = setOf("royal-ludo", "city-bazaar", "mono", "mono-chaos")
+    /** The WebSocket header a newer app lists its games in, comma-separated. */
+    const val APP_GAMES_HEADER = "X-YapNPlay-Games"
     /** A dropped connection counts as away after this grace (contract). */
     const val DISCONNECT_GRACE_MS = 5_000L
     /** Ticks or turn wakes in a row that throw before the match is aborted (ABORTED_ERROR). */

@@ -1,0 +1,43 @@
+[
+    {
+        "type": "DoodleStroke",
+        "drawingId": 4,
+        "id": 7,
+        "colour": 1,
+        "size": 2,
+        "eraser": false,
+        "points": [
+            100,
+            200,
+            140,
+            260
+        ]
+    },
+    {
+        "type": "DoodleUndo",
+        "drawingId": 4
+    },
+    {
+        "type": "DoodleClear",
+        "drawingId": 4
+    },
+    {
+        "type": "DoodleDrawing",
+        "drawingId": 4,
+        "strokes": [
+            {
+                "drawingId": 4,
+                "id": 1,
+                "colour": 0,
+                "size": 1,
+                "eraser": false,
+                "points": [
+                    0,
+                    0,
+                    4095,
+                    4095
+                ]
+            }
+        ]
+    }
+]

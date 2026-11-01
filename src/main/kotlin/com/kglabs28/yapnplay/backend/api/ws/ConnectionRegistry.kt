@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.contract.transport.Envelope
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
@@ -22,4 +23,7 @@ class ConnectionRegistry(private val codec: EnvelopeCodec) : ClientNotifier {
     override fun onlineUserCount(): Int = connections.size
 
     override fun isConnected(userId: String): Boolean = connections.containsKey(userId)
+
+    override fun supports(userId: String, gameId: String): Boolean =
+        gameId in BackendConstants.GAMES_IN_EVERY_APP || connections[userId]?.games?.contains(gameId) == true
 }

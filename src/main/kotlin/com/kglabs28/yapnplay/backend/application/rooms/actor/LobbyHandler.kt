@@ -19,8 +19,9 @@ class LobbyHandler(
     /** Any change resets everyone's ready/watching and loads the game's default house rules. */
     suspend fun selectGame(userId: String, gameId: String?) {
         guards.requireLeader(userId)
-        if (gameId != null && deps.games.findEnabled(gameId) == null) {
-            throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
+        if (gameId != null) {
+            val game = deps.games.findEnabled(gameId) ?: throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.GAME_UNAVAILABLE)
+            guards.requireEveryoneHas(game)
         }
         countdown.stop(CountdownStopReason.GAME_CHANGED, userId)
         state.room = state.room.copy(selectedGame = gameId)

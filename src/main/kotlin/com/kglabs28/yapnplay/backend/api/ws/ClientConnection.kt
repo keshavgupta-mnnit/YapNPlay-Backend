@@ -16,6 +16,8 @@ import kotlinx.coroutines.channels.consumeEach
 class ClientConnection(
     val userId: String,
     private val session: WebSocketSession,
+    /** The games this app has (its header); null: an older app, which has only the first games. */
+    val games: Set<String>? = null,
 ) {
     private val outgoing = Channel<String>(BackendConstants.WS_OUTGOING_BUFFER)
 

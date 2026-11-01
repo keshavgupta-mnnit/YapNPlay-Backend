@@ -93,7 +93,7 @@ class AdminApiTest {
         assertEquals(listOf(AccountTypeCount(AccountType.GUEST, 3)), stats.users.byType)
         assertEquals(3, stats.users.newPerDay.sumOf { it.count })
         assertEquals(0, stats.rooms.total)
-        assertEquals(setOf("royal-ludo", "city-bazaar", "mono", "mono-chaos"), stats.games.map { it.gameId }.toSet())
+        assertEquals(setOf("royal-ludo", "city-bazaar", "mono", "mono-chaos", "doodle-king"), stats.games.map { it.gameId }.toSet())
         assertEquals(0, stats.moderation.reportsFiled)
     }
 

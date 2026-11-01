@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.realtime
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.contract.transport.Envelope
 
 /**
@@ -14,4 +15,7 @@ interface ClientNotifier {
     fun onlineUserCount(): Int
 
     fun isConnected(userId: String): Boolean
+
+    /** [userId]'s app can show [gameId] (older apps know only the first games). Offline: only those too. */
+    fun supports(userId: String, gameId: String): Boolean = gameId in BackendConstants.GAMES_IN_EVERY_APP
 }

@@ -109,7 +109,7 @@ class MatchmakingService(
         }
         val humans = table.players.size
         when {
-            game.matchmaking.fillWithCpu -> start(table, cpuCount = game.matchmaking.seats - humans)
+            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = game.matchmaking.seats - humans)
             humans >= game.minPlayers -> start(table, cpuCount = 0)
             else -> cancel(table, QueueCancelReason.NOT_ENOUGH_PLAYERS)
         }

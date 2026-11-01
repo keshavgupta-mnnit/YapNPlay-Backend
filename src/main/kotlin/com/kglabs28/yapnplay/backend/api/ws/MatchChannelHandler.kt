@@ -52,6 +52,13 @@ class MatchChannelHandler(
             send(userId, matchId, MatchAction.Play(request.type, request.payload))
             codec.ack(request)
         }
+        // Doodle King's drawing: forwarded to the table at once, no full update.
+        MessageType.DOODLE_STROKE, MessageType.DOODLE_UNDO, MessageType.DOODLE_CLEAR, MessageType.DOODLE_SYNC -> {
+            val matchId = request.payload[MATCH_ID]?.jsonPrimitive?.contentOrNull
+                ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_REQUEST)
+            send(userId, matchId, MatchAction.Relay(request.type, request.payload))
+            codec.ack(request)
+        }
         else -> {
             val (matchId, action) = control(request)
             send(userId, matchId, action)

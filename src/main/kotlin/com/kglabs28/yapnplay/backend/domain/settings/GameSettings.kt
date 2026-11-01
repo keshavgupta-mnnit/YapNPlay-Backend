@@ -6,6 +6,7 @@ enum class SettingGroup(val label: String) {
     CHAOS("Complete Chaos"),
     ROYAL_LUDO("Royal Ludo"),
     CITY_BAZAAR("City Royale"),
+    DOODLE_KING("Doodle King"),
     ECONOMY("Coins & ads"),
     XP("XP and level"),
     MATCH("All matches"),
@@ -193,6 +194,26 @@ object GameSettings {
     val RL_BOT_ENDGAME_CAPTURE_PCT = IntSetting("ludo.bot_endgame_capture_pct", SettingGroup.ROYAL_LUDO, "Bots: capture value % against the rival leading the race", 150, 0, 500)
     val RL_BOT_CHASE = IntSetting("ludo.bot_chase", SettingGroup.ROYAL_LUDO, "Bots: value per opponent piece 1-6 squares ahead it could hit", 5, 0, 100)
 
+    // ── Doodle King ───────────────────────────────────────────────────────
+    val DK_ROUNDS = IntSetting("dk.rounds", SettingGroup.DOODLE_KING, "Rounds (everyone draws once a round; words easy, medium, then hard)", 3, 1, 6)
+    val DK_DRAW_SECONDS = IntSetting("dk.draw_seconds", SettingGroup.DOODLE_KING, "Drawing time per turn (seconds)", 60, 20, 180)
+    val DK_INTRO_SECONDS = IntSetting("dk.intro_seconds", SettingGroup.DOODLE_KING, "\"Your turn\" before the word pick (seconds)", 3, 1, 10)
+    val DK_PICK_SECONDS = IntSetting("dk.pick_seconds", SettingGroup.DOODLE_KING, "Time to pick 1 of 3 words (seconds; then one is picked at random)", 10, 3, 30)
+    val DK_REVEAL_SECONDS = IntSetting("dk.reveal_seconds", SettingGroup.DOODLE_KING, "The word shown after a turn (seconds)", 5, 2, 15)
+    val DK_GUESS_POINTS = IntListSetting(
+        "dk.guess_points", SettingGroup.DOODLE_KING, "Points for guessing, 1st to guess first (later guessers get the last number)", listOf(100, 80, 65, 50, 40, 30, 25, 20), "1 to 8 numbers from 0 to 1000",
+    ) { points -> if (points.isEmpty() || points.size > 8 || points.any { it !in 0..1_000 }) "1 to 8 numbers from 0 to 1000" else null }
+    val DK_LEVEL_POINTS_PCT = IntListSetting(
+        "dk.level_points_pct", SettingGroup.DOODLE_KING, "Points by word level, % (easy, medium, hard): guessing and drawing points both scale", listOf(100, 150, 200), "3 numbers from 10 to 1000",
+    ) { pct -> if (pct.size != 3 || pct.any { it !in 10..1_000 }) "3 numbers from 10 to 1000" else null }
+    val DK_DRAWER_PER_GUESS = IntSetting("dk.drawer_per_guess", SettingGroup.DOODLE_KING, "Drawer's points for each correct guess", 25, 0, 500)
+    val DK_ALL_GUESSED_BONUS = IntSetting("dk.all_guessed_bonus", SettingGroup.DOODLE_KING, "Drawer's bonus when everyone guesses", 30, 0, 500)
+    val DK_EXTENSION_ROUNDS = IntSetting("dk.extension_rounds", SettingGroup.DOODLE_KING, "Rounds added when the table votes to keep playing", 1, 1, 3)
+    val DK_PASS_PENALTY = IntSetting("dk.pass_penalty", SettingGroup.DOODLE_KING, "Points lost for passing or drawing nothing", 50, 0, 500)
+    val DK_HINT_START_PCT = IntSetting("dk.hint_start_pct", SettingGroup.DOODLE_KING, "Letter hints start after this % of the drawing time", 40, 0, 95)
+    // TODO before the live release: back to 0 (or set 0 on the admin board). On while Doodle King is being tested.
+    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "TESTING ONLY: 1 lets CPU players fill Doodle King tables (set 0 live)", 1, 0, 1)
+
     val ALL: List<GameSetting<*>> = listOf(
         DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
@@ -208,6 +229,8 @@ object GameSettings {
         CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST, MONO_BOT_CATCH_REACTION_MS,
         RL_TURN_SECONDS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
+        DK_ROUNDS, DK_DRAW_SECONDS, DK_INTRO_SECONDS, DK_PICK_SECONDS, DK_REVEAL_SECONDS, DK_GUESS_POINTS, DK_LEVEL_POINTS_PCT, DK_DRAWER_PER_GUESS,
+        DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS, DK_TEST_BOTS,
     )
 
     fun find(key: String): GameSetting<*>? = ALL.firstOrNull { it.key == key }

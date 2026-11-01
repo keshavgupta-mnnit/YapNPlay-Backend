@@ -1,0 +1,51 @@
+{
+    "phase": "DRAW",
+    "round": 2,
+    "rounds": 3,
+    "level": "MEDIUM",
+    "drawerSeat": 1,
+    "phaseEndsAt": 1760000060000,
+    "drawSeconds": 60,
+    "word": null,
+    "options": [],
+    "hint": "B_C____",
+    "seats": [
+        {
+            "seat": 1,
+            "score": 150,
+            "guessed": false,
+            "turnPoints": 25,
+            "removed": false
+        },
+        {
+            "seat": 2,
+            "score": 120,
+            "guessed": true,
+            "turnPoints": 100,
+            "removed": false
+        },
+        {
+            "seat": 3,
+            "score": 95,
+            "guessed": false,
+            "turnPoints": 0,
+            "removed": false
+        }
+    ],
+    "feed": [
+        {
+            "kind": "GUESS",
+            "seat": 3,
+            "text": "wheel",
+            "points": 0
+        },
+        {
+            "kind": "CORRECT",
+            "seat": 2,
+            "text": null,
+            "points": 100
+        }
+    ],
+    "drawingId": 4,
+    "strokeCount": 12
+}

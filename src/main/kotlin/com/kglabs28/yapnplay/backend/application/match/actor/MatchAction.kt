@@ -7,6 +7,9 @@ sealed interface MatchAction {
     /** A game move: the raw message [type] and payload, decoded by the game. */
     data class Play(val type: String, val payload: JsonObject) : MatchAction
 
+    /** A side message (a drawing stroke): kept by the game and forwarded at once, with no full update. */
+    data class Relay(val type: String, val payload: JsonObject) : MatchAction
+
     /** Snapshot for a player, or start watching (room members only). */
     data class RequestSnapshot(val displayName: String, val avatarId: String = "") : MatchAction
 

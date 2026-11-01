@@ -35,6 +35,9 @@ interface GameDescriptor {
     /** Taglines and art key shown in game pickers. */
     val showcase: GameShowcase
 
+    /** CPU players may fill empty seats (a room's bot fill, Quick Play's CPU fill). Doodle King: only while testing. */
+    val cpuFillAllowed: Boolean get() = true
+
     /** Toggles a room leader may change (shown in the lobby's house rules). */
     val houseRuleOptions: List<HouseRuleOption>
 

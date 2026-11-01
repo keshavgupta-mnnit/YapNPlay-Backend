@@ -1,0 +1,13 @@
+[
+    {
+        "type": "PickWord",
+        "index": 1
+    },
+    {
+        "type": "Guess",
+        "text": "bicycle"
+    },
+    {
+        "type": "PassTurn"
+    }
+]

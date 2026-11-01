@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import kotlinx.serialization.json.JsonObject
 import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.contract.EndVoted
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
@@ -171,6 +172,8 @@ class MatchActor(
         if (state.ended && action !is MatchAction.RequestSnapshot) throw ServiceException(ErrorCode.MATCH_ENDED, BackendStrings.MATCH_ENDED)
         when (action) {
             is MatchAction.Play -> play(userId, action)
+            // A drawing stroke: no turn or timer changes, so nothing to reschedule.
+            is MatchAction.Relay -> return relay(userId, action)
             is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId))
             is MatchAction.SetAutoplay -> setAutoplay(userId, action.enabled)
             is MatchAction.SetMic -> setMic(userId, action.on)
@@ -216,6 +219,20 @@ class MatchActor(
         publish(events, outOfTurn)
     }
 
+    /** A side message (a Doodle King stroke): the game keeps it and it goes straight on, with no full update. */
+    private fun relay(userId: String, action: MatchAction.Relay): MatchResult {
+        val seat = state.seatOf(userId)?.seat
+        if (seat == null && userId !in state.spectators) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
+        val out = state.session.relay(seat, action.type, action.payload)
+            ?: throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.ILLEGAL_MOVE)
+        out.toOthers?.let { message ->
+            val push = deps.codec.push(Channel.MATCH, MessageType.MATCH_RELAY, JsonObject.serializer(), message)
+            state.viewers().filter { it != userId }.forEach { deps.notifier.send(it, push) }
+        }
+        out.toSender?.let { deps.notifier.send(userId, deps.codec.push(Channel.MATCH, MessageType.MATCH_RELAY, JsonObject.serializer(), it)) }
+        return MatchResult.Done
+    }
+
     /** A player's snapshot; a room member without a seat becomes a spectator. */
     private fun snapshotFor(userId: String, displayName: String, avatarId: String = ""): MatchSnapshot {
         val seat = state.seatOf(userId)
@@ -228,7 +245,8 @@ class MatchActor(
             if (state.waitingFor.remove(userId) && state.waitingFor.isEmpty()) endStartHold()
         } else if (userId !in state.spectators) {
             val roomId = state.roomId
-            if (state.ended || roomId == null || !deps.rooms.isPresent(userId, roomId)) {
+            // An older app without this game can't watch it (it would open the wrong table).
+            if (state.ended || roomId == null || !deps.rooms.isPresent(userId, roomId) || !deps.notifier.supports(userId, state.setup.gameId)) {
                 throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
             }
             state.spectators[userId] = MatchSpectator(userId, displayName, deps.clock.nowMillis(), avatarId = avatarId)
@@ -251,6 +269,8 @@ class MatchActor(
 
     private fun setMic(userId: String, on: Boolean) {
         val seat = state.seatOf(userId)
+        // The game has them quiet right now (drawing in Doodle King): their mic stays off.
+        if (on && seat != null && state.session.silenced(seat.seat)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.MIC_SILENCED)
         when {
             seat != null -> state.update(seat.seat) { copy(micOn = on) }
             userId in state.spectators -> state.spectators[userId] = state.spectators.getValue(userId).copy(micOn = on)
@@ -497,6 +517,8 @@ class MatchActor(
             else -> now + state.pauseMs + maxOf(deadline - now, deps.settings[GameSettings.TURN_FOLLOW_UP_SECONDS] * BackendConstants.MILLIS_PER_SECOND)
         }
         planBotMove(now, events.isNotEmpty() && !outOfTurn)
+        // Whoever the game has quiet now (the drawer) talks to nobody: their mic goes off.
+        state.seats.filter { it.micOn && session.silenced(it.seat) }.forEach { quiet -> state.update(quiet.seat) { copy(micOn = false) } }
         state.version++
         rescheduleNeeded = true
         seatedUsers = state.seats.filter { !it.cpu && !it.left }.map { it.userId }.toSet()

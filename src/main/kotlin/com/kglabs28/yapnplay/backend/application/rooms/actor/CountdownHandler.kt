@@ -33,6 +33,8 @@ class CountdownHandler(
         if (state.countdownDeadline != null) return
         if (state.matchInProgress != null) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.MATCH_RUNNING)
         deps.blocks.requireNotBlocked(userId)
+        // Someone came in on an older app after the game was picked: it can't start until they update.
+        guards.requireEveryoneHas(game)
         if (!deps.startPolicy.canStart(state.members.values, state.room.leaderId, game, state.room.botFill)) {
             throw ServiceException(ErrorCode.NOT_ENOUGH_READY, BackendStrings.NOT_ENOUGH_READY)
         }
@@ -85,6 +87,10 @@ class CountdownHandler(
         job = null
         val game = state.room.selectedGame?.let(deps.games::findEnabled)
         if (game == null || !startConditionsHold()) return failedToStart()
+        guards.withoutGame(game).takeIf { it.isNotEmpty() }?.let { missing ->
+            state.countdownStop = CountdownStop(CountdownStopReason.UPDATE_NEEDED, byName = missing.joinToString(), at = deps.clock.nowMillis())
+            return false
+        }
         val plan = deps.startPolicy.plan(
             state.members.values, state.room.leaderId, game, state.room.botFill, state.houseRules, state.room.entryCoins,
         )

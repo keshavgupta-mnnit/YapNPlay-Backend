@@ -22,6 +22,16 @@ class RoomGuards(private val state: PlayRoomState, private val deps: PlayRoomDep
         if (userId !in state.members) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.TARGET_NOT_MEMBER)
     }
 
+    /** Online members whose app can't show [game] (an older app), by name; empty when everyone can play it. */
+    fun withoutGame(game: GameDescriptor): List<String> =
+        state.members.values.filter { it.online && !deps.notifier.supports(it.userId, game.id.value) }.map { it.displayName }
+
+    /** Everyone online here has [game] in their app, else nobody can pick or start it. */
+    fun requireEveryoneHas(game: GameDescriptor) {
+        val missing = withoutGame(game)
+        if (missing.isNotEmpty()) throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.needsUpdate(missing.joinToString(), game.displayName))
+    }
+
     /** The selected game, which must exist and be switched on. */
     fun requireGame(): GameDescriptor {
         val gameId = state.room.selectedGame

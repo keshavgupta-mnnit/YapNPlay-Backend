@@ -31,7 +31,9 @@ fun Route.webSocketRoutes(
 ) {
     webSocket(BackendConstants.WS_PATH) {
         val userId = call.userId
-        val connection = ClientConnection(userId, this)
+        // A newer app lists its games, so a room never starts a game someone's app can't show.
+        val games = call.request.headers[BackendConstants.APP_GAMES_HEADER]?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toSet()
+        val connection = ClientConnection(userId, this, games)
         registry.register(connection)?.close(
             CloseReason(BackendConstants.WS_SESSION_REPLACED_CODE, BackendStrings.SESSION_REPLACED),
         )

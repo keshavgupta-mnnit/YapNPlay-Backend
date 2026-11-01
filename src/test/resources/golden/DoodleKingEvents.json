@@ -1,0 +1,15 @@
+[
+    {
+        "type": "DoodleGuessed",
+        "seat": 2,
+        "points": 100
+    },
+    {
+        "type": "DoodleRevealed",
+        "word": "bicycle",
+        "points": {
+            "1": 55,
+            "2": 100
+        }
+    }
+]

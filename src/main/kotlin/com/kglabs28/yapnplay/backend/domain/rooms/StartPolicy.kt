@@ -16,7 +16,7 @@ class StartPolicy {
 
     fun canStart(members: Collection<LiveMember>, leaderId: String, game: GameDescriptor, botFill: Boolean): Boolean {
         val ready = readyHumans(members, leaderId).size
-        return ready >= BackendConstants.MIN_HUMANS_TO_START && (ready >= game.minPlayers || botFill)
+        return ready >= BackendConstants.MIN_HUMANS_TO_START && (ready >= game.minPlayers || (botFill && game.cpuFillAllowed))
     }
 
     fun plan(
@@ -28,7 +28,7 @@ class StartPolicy {
         entryCoins: Int = 0,
     ): SeatPlan {
         val players = readyHumans(members, leaderId).take(game.maxPlayers).map { it.userId }
-        val bots = if (botFill && players.size < game.minPlayers) game.minPlayers - players.size else 0
+        val bots = if (botFill && game.cpuFillAllowed && players.size < game.minPlayers) game.minPlayers - players.size else 0
         val spectators = members.filter { it.online && it.userId !in players }.map { it.userId }
         return SeatPlan(game.id.value, players, bots, spectators, houseRules, entryCoins)
     }
