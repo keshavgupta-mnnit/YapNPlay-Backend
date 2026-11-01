@@ -27,7 +27,7 @@ val realtimeModule = module {
     single { EnvelopeCodec(get(), get()) }
     single { ConnectionRegistry(get()) } bind ClientNotifier::class
     single { RoomChannelHandler(get(), get(), get(), get(), get(), get()) }
-    single { MatchChannelHandler(get(), get(), get()) }
+    single { MatchChannelHandler(get(), get(), get(), get()) }
     single { MatchmakingChannelHandler(get(), get()) }
     single { ModerationChannelHandler(get(), get()) }
     single { EnvelopeRouter(get(), get(), get(), get(), get()) }

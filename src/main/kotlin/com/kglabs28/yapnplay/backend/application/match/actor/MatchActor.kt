@@ -3,6 +3,7 @@ package com.kglabs28.yapnplay.backend.application.match.actor
 import kotlinx.serialization.json.JsonObject
 import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.contract.EndVoted
+import com.kglabs28.yapnplay.backend.contract.EmojiGift
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.application.economy.MatchCoins
 import kotlinx.serialization.json.jsonObject
@@ -174,6 +175,8 @@ class MatchActor(
             is MatchAction.Play -> play(userId, action)
             // A drawing stroke: no turn or timer changes, so nothing to reschedule.
             is MatchAction.Relay -> return relay(userId, action)
+            // An emoji: no turn or timer changes either.
+            is MatchAction.SendEmoji -> return sendEmoji(userId, action)
             is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId))
             is MatchAction.SetAutoplay -> setAutoplay(userId, action.enabled)
             is MatchAction.SetMic -> setMic(userId, action.on)
@@ -230,6 +233,18 @@ class MatchActor(
             state.viewers().filter { it != userId }.forEach { deps.notifier.send(it, push) }
         }
         out.toSender?.let { deps.notifier.send(userId, deps.codec.push(Channel.MATCH, MessageType.MATCH_RELAY, JsonObject.serializer(), it)) }
+        return MatchResult.Done
+    }
+
+    /** An emoji from the user's seat to another seat: every viewer (the sender too) gets it to fly. */
+    private fun sendEmoji(userId: String, action: MatchAction.SendEmoji): MatchResult {
+        val from = state.seatOf(userId)?.seat ?: throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
+        if (action.toSeat == from || state.seats.none { it.seat == action.toSeat }) {
+            throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_EMOJI_TARGET)
+        }
+        val gift = EmojiGift(matchId = matchId, fromSeat = from, toSeat = action.toSeat, emojiId = action.emojiId)
+        val push = deps.codec.push(Channel.MATCH, MessageType.MATCH_RELAY, EmojiGift.serializer(), gift)
+        state.viewers().forEach { deps.notifier.send(it, push) }
         return MatchResult.Done
     }
 

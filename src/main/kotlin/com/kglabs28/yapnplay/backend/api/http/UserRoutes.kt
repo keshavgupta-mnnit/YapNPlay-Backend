@@ -42,6 +42,7 @@ fun Route.userRoutes(
     get(HttpPaths.ONLINE_STATS) { call.respond(onlineStats()) }
     post(HttpPaths.AD_REWARD) { call.respond(coins.adReward(call.userId, call.receive<AdRewardBody>().adId)) }
     get(HttpPaths.LEAGUES) { call.respond(coins.leagues(call.userId)) }
+    get(HttpPaths.EMOJI_GIFTS) { call.respond(coins.emojiGiftPrices(call.userId)) }
     get(HttpPaths.AD_STATUS) { call.respond(coins.adStatus(call.userId)) }
     get(HttpPaths.ROOM_INVITES) { call.respond(roomInvites.list(call.userId)) }
     post(HttpPaths.INVITE_TO_ROOM) {

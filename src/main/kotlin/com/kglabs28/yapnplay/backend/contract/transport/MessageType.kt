@@ -64,6 +64,8 @@ object MessageType {
     const val DOODLE_UNDO = "DoodleUndo"
     const val DOODLE_CLEAR = "DoodleClear"
     const val DOODLE_SYNC = "DoodleSync"
+    /** 0.11.0: send an emoji to a seat for coins (answered with EmojiGiftResult). */
+    const val SEND_EMOJI_GIFT = "SendEmojiGift"
 
     // ── Match channel: server to client ───────────────────────────────────
     const val MATCH_SNAPSHOT = "MatchSnapshot"
@@ -71,6 +73,10 @@ object MessageType {
     const val MATCH_ENDED = "MatchEnded"
     /** A side message forwarded as it is (a Doodle King stroke), with no full snapshot; the payload has its own `"type"`. */
     const val MATCH_RELAY = "MatchRelay"
+    /** 0.11.0: reply to SendEmojiGift. */
+    const val EMOJI_GIFT_RESULT = "EmojiGiftResult"
+    /** 0.11.0: the `"type"` of a MatchRelay carrying an emoji one seat sent another. */
+    const val EMOJI_GIFT = "EmojiGift"
 
     // ── Matchmaking channel: client to server ─────────────────────────────
     const val JOIN_QUEUE = "JoinQueue"

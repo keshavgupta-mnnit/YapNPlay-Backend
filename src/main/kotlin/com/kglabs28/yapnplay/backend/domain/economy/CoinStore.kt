@@ -1,7 +1,7 @@
 package com.kglabs28.yapnplay.backend.domain.economy
 
 /** Why coins moved (stored in the ledger). */
-enum class CoinReason { DAILY, AD, ENTRY, WIN, COMPLETION, ADMIN }
+enum class CoinReason { DAILY, AD, ENTRY, WIN, COMPLETION, ADMIN, EMOJI_GIFT }
 
 /** An ad reward claim: [granted] is 0 when this ad id was already paid. */
 data class AdClaim(val granted: Int, val adsLeftToday: Int, val lastAdAt: Long)

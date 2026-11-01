@@ -4,6 +4,8 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.11.0 — emoji gifts: SendEmojiGift / EmojiGiftResult on the MATCH channel, EmojiGift
+ * (MatchRelay) to the whole table, `GET /coins/emoji-gifts` (EmojiGiftPrices).
  * 0.10.0 — RankedSeat.stake; coinsWon shown for every seat (CPUs and leavers too, display
  * only) and CPUs show completionCoins.
  * 0.9.0 — RenameRoom room message (admin only); InviteToRoomBody.userCodes (invite by
@@ -31,4 +33,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.10.0"
+const val CONTRACT_VERSION: String = "0.11.0"

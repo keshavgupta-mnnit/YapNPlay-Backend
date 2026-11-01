@@ -7,6 +7,9 @@ import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
 import com.kglabs28.yapnplay.backend.contract.VoteExtension
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.match.SendMatchActionUseCase
+import com.kglabs28.yapnplay.backend.application.match.SendEmojiGiftUseCase
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftResult
+import com.kglabs28.yapnplay.backend.contract.SendEmojiGift
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchAction
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchResult
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
@@ -37,6 +40,7 @@ class MatchChannelHandler(
     private val codec: EnvelopeCodec,
     private val send: SendMatchActionUseCase,
     private val users: UserRepository,
+    private val emojiGifts: SendEmojiGiftUseCase,
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope = when (request.type) {
         MessageType.MATCH_REQUEST_SNAPSHOT -> {
@@ -51,6 +55,11 @@ class MatchChannelHandler(
                 ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_REQUEST)
             send(userId, matchId, MatchAction.Play(request.type, request.payload))
             codec.ack(request)
+        }
+        // An emoji for coins: paid, then flown at the whole table; the reply carries the coins left.
+        MessageType.SEND_EMOJI_GIFT -> {
+            val result = emojiGifts(userId, codec.payload(request, SendEmojiGift.serializer()))
+            codec.reply(request, MessageType.EMOJI_GIFT_RESULT, EmojiGiftResult.serializer(), result)
         }
         // Doodle King's drawing: forwarded to the table at once, no full update.
         MessageType.DOODLE_STROKE, MessageType.DOODLE_UNDO, MessageType.DOODLE_CLEAR, MessageType.DOODLE_SYNC -> {

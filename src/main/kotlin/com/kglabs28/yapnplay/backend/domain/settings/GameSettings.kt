@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.domain.settings
 
+import com.kglabs28.yapnplay.backend.domain.economy.EmojiGifts
+
 /** The admin "Game settings" sub-tab a setting shows on, in tab order. */
 enum class SettingGroup(val label: String) {
     MONO("MONO"),
@@ -80,6 +82,17 @@ object GameSettings {
             fees.first() != 0 -> "Starter must be free (0)"
             fees.zipWithNext().any { (a, b) -> b <= a } -> "Each league must cost more than the one before"
             fees.last() > MAX_COINS -> "At most $MAX_COINS"
+            else -> null
+        }
+    }
+    val EMOJI_GIFT_PRICES = IntListSetting(
+        "coins.emoji_gift_prices", SettingGroup.ECONOMY,
+        "Emoji gift prices for emojis 1 to ${EmojiGifts.IDS.size}, in picker order",
+        listOf(100, 100, 200, 200, 200, 200, 300, 300), "One price per emoji, ${EmojiGifts.IDS.size} numbers, e.g. [100,100,200,200,200,200,300,300]",
+    ) { prices ->
+        when {
+            prices.size != EmojiGifts.IDS.size -> "Needs exactly ${EmojiGifts.IDS.size} prices"
+            prices.any { it !in 1..MAX_COINS } -> "Each between 1 and $MAX_COINS"
             else -> null
         }
     }
@@ -215,7 +228,7 @@ object GameSettings {
     val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "TESTING ONLY: 1 lets CPU players fill Doodle King tables (set 0 live)", 1, 0, 1)
 
     val ALL: List<GameSetting<*>> = listOf(
-        DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,

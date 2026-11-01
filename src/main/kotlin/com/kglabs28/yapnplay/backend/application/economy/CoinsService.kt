@@ -1,6 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.economy
 
 import com.kglabs28.yapnplay.backend.contract.AdRewardStatus
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrice
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrices
+import com.kglabs28.yapnplay.backend.domain.economy.EmojiGifts
 import com.kglabs28.yapnplay.backend.domain.economy.AdRefusal
 import com.kglabs28.yapnplay.backend.domain.economy.AdClaimResult
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
@@ -97,6 +100,26 @@ class CoinsService(
     private fun cooldownMillis(): Long = settings[GameSettings.AD_COOLDOWN_MINUTES] * MILLIS_PER_MINUTE
 
     suspend fun balance(userId: String): Int = store.balance(userId)
+
+    /** `GET /coins/emoji-gifts`: the emojis on sale with their prices, and the user's coins. */
+    suspend fun emojiGiftPrices(userId: String): EmojiGiftPrices {
+        val prices = settings[GameSettings.EMOJI_GIFT_PRICES]
+        return EmojiGiftPrices(store.balance(userId), EmojiGifts.IDS.mapNotNull { id -> EmojiGifts.priceOf(id, prices)?.let { EmojiGiftPrice(id, it) } })
+    }
+
+    /** What [emojiId] costs now; BAD_REQUEST when it is not on sale. */
+    fun emojiGiftPrice(emojiId: String): Int =
+        EmojiGifts.priceOf(emojiId, settings[GameSettings.EMOJI_GIFT_PRICES]) ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_EMOJI)
+
+    /** Takes [coins] for an emoji sent at [matchId]: the new balance, or NOT_ENOUGH_COINS (nothing taken). */
+    suspend fun payForEmojiGift(userId: String, matchId: String, coins: Int): Int =
+        store.change(userId, -coins, CoinReason.EMOJI_GIFT, matchId, clock.nowMillis())
+            ?: throw ServiceException(ErrorCode.NOT_ENOUGH_COINS, BackendStrings.NOT_ENOUGH_COINS_EMOJI)
+
+    /** Gives back an emoji's [coins] the table refused (the seat left, the match ended). */
+    suspend fun refundEmojiGift(userId: String, matchId: String, coins: Int) {
+        store.change(userId, coins, CoinReason.EMOJI_GIFT, matchId, clock.nowMillis())
+    }
 
     /** The Quick Play leagues, and which ones this player can afford now. */
     suspend fun leagues(userId: String): Leagues {

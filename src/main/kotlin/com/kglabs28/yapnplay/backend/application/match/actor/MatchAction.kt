@@ -10,6 +10,9 @@ sealed interface MatchAction {
     /** A side message (a drawing stroke): kept by the game and forwarded at once, with no full update. */
     data class Relay(val type: String, val payload: JsonObject) : MatchAction
 
+    /** An emoji (already paid for) from the user's seat to [toSeat]: the whole table sees it fly. */
+    data class SendEmoji(val emojiId: String, val toSeat: Int) : MatchAction
+
     /** Snapshot for a player, or start watching (room members only). */
     data class RequestSnapshot(val displayName: String, val avatarId: String = "") : MatchAction
 

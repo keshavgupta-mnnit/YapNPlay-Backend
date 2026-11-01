@@ -1,5 +1,10 @@
 package com.kglabs28.yapnplay.backend.contract
 
+import com.kglabs28.yapnplay.backend.contract.EmojiGift
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrice
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrices
+import com.kglabs28.yapnplay.backend.contract.EmojiGiftResult
+import com.kglabs28.yapnplay.backend.contract.SendEmojiGift
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleClear
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleDrawing
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleFeedEntry
@@ -160,6 +165,10 @@ object GoldenSamples {
         ),
         GoldenCase("SetAutoplay", SetAutoplay.serializer(), SetAutoplay(MATCH, true)),
         GoldenCase("SetMic", SetMic.serializer(), SetMic(MATCH, true)),
+        GoldenCase("SendEmojiGift", SendEmojiGift.serializer(), SendEmojiGift(MATCH, "2", toSeat = 2)),
+        GoldenCase("EmojiGiftResult", EmojiGiftResult.serializer(), EmojiGiftResult(coins = 500, spent = 100)),
+        GoldenCase("EmojiGift", EmojiGift.serializer(), EmojiGift(matchId = MATCH, fromSeat = 0, toSeat = 2, emojiId = "2")),
+        GoldenCase("EmojiGiftPrices", EmojiGiftPrices.serializer(), EmojiGiftPrices(coins = 600, gifts = listOf(EmojiGiftPrice("1", 100), EmojiGiftPrice("2", 100)))),
         GoldenCase("SetPresence", SetPresence.serializer(), SetPresence(MATCH, away = true)),
         GoldenCase("ConfirmPresence", ConfirmPresence.serializer(), ConfirmPresence(MATCH)),
         GoldenCase("LeaveSeat", LeaveSeat.serializer(), LeaveSeat(MATCH, FRIEND)),

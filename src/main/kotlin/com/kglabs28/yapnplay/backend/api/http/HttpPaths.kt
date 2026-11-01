@@ -35,6 +35,7 @@ object HttpPaths {
     const val AD_REWARD = "/coins/ad-reward"
     const val AD_STATUS = "/coins/ad-status"
     const val LEAGUES = "/coins/leagues"
+    const val EMOJI_GIFTS = "/coins/emoji-gifts"
     const val ROOM_INVITES = "/rooms/invites"
     const val INVITE_TO_ROOM = "/rooms/{roomId}/invites"
     const val ACCEPT_INVITE = "/rooms/invites/{inviteId}/accept"

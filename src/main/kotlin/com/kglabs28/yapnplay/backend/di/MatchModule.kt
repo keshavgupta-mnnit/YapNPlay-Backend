@@ -20,6 +20,7 @@ import com.kglabs28.yapnplay.backend.application.match.MatchResultRecorder
 import com.kglabs28.yapnplay.backend.application.match.GetActiveMatchUseCase
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.application.match.SendMatchActionUseCase
+import com.kglabs28.yapnplay.backend.application.match.SendEmojiGiftUseCase
 import com.kglabs28.yapnplay.backend.application.match.actor.MatchDeps
 import com.kglabs28.yapnplay.backend.application.match.games.GameSessionFactory
 import com.kglabs28.yapnplay.backend.application.match.games.citybazaar.CityBazaarSessionFactory
@@ -60,6 +61,7 @@ val matchModule = module {
     factory { GetMatchHistoryUseCase(get()) }
     single { MatchService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>(), get<Settings>()) }
     single { SendMatchActionUseCase(get()) }
+    single { SendEmojiGiftUseCase(get(), get()) }
     single { MatchPresenceUseCase(get()) }
     single { MatchmakingService(get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE), get<CoinsService>(), get<Settings>()) }
 }
