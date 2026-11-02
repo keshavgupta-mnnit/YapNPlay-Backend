@@ -88,7 +88,7 @@ object GameSettings {
     val EMOJI_GIFT_PRICES = IntListSetting(
         "coins.emoji_gift_prices", SettingGroup.ECONOMY,
         "Emoji gift prices for emojis 1 to ${EmojiGifts.IDS.size}, in picker order",
-        listOf(100, 100, 200, 200, 200, 200, 300, 300), "One price per emoji, ${EmojiGifts.IDS.size} numbers, e.g. [100,100,200,200,200,200,300,300]",
+        listOf(100, 100, 100, 200, 200, 200, 300, 300, 300), "One price per emoji, ${EmojiGifts.IDS.size} numbers, e.g. [100,100,100,200,200,200,300,300,300]",
     ) { prices ->
         when {
             prices.size != EmojiGifts.IDS.size -> "Needs exactly ${EmojiGifts.IDS.size} prices"
