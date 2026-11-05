@@ -12,6 +12,8 @@ sealed interface RoomAction {
     data class Exit(val force: Boolean) : RoomAction
 
     data object Leave : RoomAction
+    /** A Quick Play party was saved as the Game Room [roomId], whose members are [members] now (sent by the server). */
+    data class SetSavedRoom(val roomId: String, val members: Set<String>) : RoomAction
     data class SelectGame(val gameId: String?) : RoomAction
     data class SetBotFill(val enabled: Boolean) : RoomAction
     data class SetLeague(val entryCoins: Int) : RoomAction

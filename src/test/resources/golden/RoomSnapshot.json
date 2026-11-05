@@ -49,6 +49,8 @@
         "matchInProgress": null,
         "waitingList": [],
         "countdownStop": null,
-        "temporary": false
+        "temporary": false,
+        "savedRoomId": null,
+        "savedRoomMissing": 0
     }
 }

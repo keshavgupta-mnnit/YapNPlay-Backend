@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.api.ws
 
+import com.kglabs28.yapnplay.backend.application.rooms.SaveTempRoomUseCase
+import com.kglabs28.yapnplay.backend.contract.SaveRoom
 import com.kglabs28.yapnplay.backend.contract.SetTalkingMuted
 import com.kglabs28.yapnplay.backend.contract.SetLeague
 import com.kglabs28.yapnplay.backend.contract.CreateRoom
@@ -43,11 +45,16 @@ class RoomChannelHandler(
     private val sendAction: SendRoomActionUseCase,
     private val presence: RoomPresence,
     private val matchPresence: MatchPresenceUseCase,
+    private val saveRoom: SaveTempRoomUseCase,
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope = when (request.type) {
         MessageType.CREATE_ROOM -> {
             val snapshot = createRoom(userId, codec.payload(request, CreateRoom.serializer()))
             codec.reply(request, MessageType.ROOM_SNAPSHOT, RoomSnapshot.serializer(), snapshot)
+        }
+        MessageType.SAVE_ROOM -> {
+            saveRoom(userId, codec.payload(request, SaveRoom.serializer()).name)
+            codec.ack(request)
         }
         MessageType.JOIN_ROOM -> {
             val result = joinRoom(userId, codec.payload(request, JoinRoom.serializer()).code)

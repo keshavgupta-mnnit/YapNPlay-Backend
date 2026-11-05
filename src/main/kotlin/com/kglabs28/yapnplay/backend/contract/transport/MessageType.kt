@@ -9,6 +9,8 @@ object MessageType {
     const val CREATE_ROOM = "CreateRoom"
     const val JOIN_ROOM = "JoinRoom"
     const val LEAVE_ROOM = "LeaveRoom"
+    /** 0.12.4: the leader saves a Quick Play party as a Game Room (or adds newcomers to it). */
+    const val SAVE_ROOM = "SaveRoom"
     const val EXIT_LOBBY = "ExitLobby"
     const val SET_READY = "SetReady"
     const val START_COUNTDOWN = "StartCountdown"

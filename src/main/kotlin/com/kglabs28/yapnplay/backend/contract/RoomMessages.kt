@@ -28,6 +28,14 @@ data class JoinRoom(
     val code: String,
 )
 
+/**
+ * 0.12.4: the leader of a Quick Play party saves it as a Game Room: [name]
+ * makes a new room with everyone in the party as members (no invites); null
+ * adds the people who joined the party since (Update). The party carries on.
+ */
+@Serializable
+data class SaveRoom(val name: String? = null)
+
 /** Give up membership in the room. */
 @Serializable
 data object LeaveRoom
@@ -213,6 +221,10 @@ data class RoomInfo(
     val countdownStop: CountdownStop? = null,
     /** 0.12.2: a Quick Play with friends room (see CreateRoom.temporary); its admin is always the leader. */
     val temporary: Boolean = false,
+    /** 0.12.4: the Game Room this party was saved as (SaveRoom), or null. */
+    val savedRoomId: String? = null,
+    /** 0.12.4: people in the party who aren't in the saved room yet (Update adds them). */
+    val savedRoomMissing: Int = 0,
 )
 
 /**

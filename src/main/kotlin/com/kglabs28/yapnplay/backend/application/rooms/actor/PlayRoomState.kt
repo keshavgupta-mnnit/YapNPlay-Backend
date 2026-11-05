@@ -39,6 +39,10 @@ class PlayRoomState(
     var leagueFees: List<Int> = emptyList()
     var affordableEntry: Int = Int.MAX_VALUE
 
+    /** A Quick Play party saved as a Game Room: that room, and who is in it (Update adds the rest). */
+    var savedRoomId: String? = null
+    var savedMembers: Set<String> = emptySet()
+
     /** Users who must get the next snapshot although they are no longer members (removed). */
     val extraRecipients = mutableSetOf<String>()
 
@@ -78,6 +82,8 @@ class PlayRoomState(
             matchInProgress = matchInProgress,
             countdownStop = countdownStop,
             temporary = room.temporary,
+            savedRoomId = savedRoomId,
+            savedRoomMissing = savedRoomId?.let { members.keys.count { it !in savedMembers } } ?: 0,
             waitingList = if (receiver != null && receiver == room.adminId) {
                 waiting.map { JoinRequestInfo(it.userId, it.displayName, it.requestedAt) }
             } else {

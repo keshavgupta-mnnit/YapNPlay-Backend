@@ -128,6 +128,7 @@ object GoldenSamples {
         ),
         GoldenCase("JoinRoom", JoinRoom.serializer(), JoinRoom("482193")),
         GoldenCase("LeaveRoom", LeaveRoom.serializer(), LeaveRoom),
+        GoldenCase("SaveRoom", SaveRoom.serializer(), SaveRoom("Hostel Night")),
         GoldenCase("ExitLobby", ExitLobby.serializer(), ExitLobby),
         GoldenCase("SelectGame", SelectGame.serializer(), SelectGame("royal-ludo")),
         GoldenCase("SetBotFill", SetBotFill.serializer(), SetBotFill(true)),

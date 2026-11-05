@@ -42,6 +42,8 @@ object BackendStrings {
     const val ROOM_NOT_FOUND = "No room has this code."
     const val TEMP_ROOM_INVITE_ONLY = "This party is invite only. Ask a friend in it to invite you."
     const val TEMP_ROOM_ONE_LEADER = "A Quick Play party has only its leader."
+    const val SAVE_ONLY_PARTY = "Only a Quick Play party can be saved as a room."
+    const val SAVE_NEEDS_PEOPLE = "Save the room once someone else is in the party."
     const val ROOM_FULL = "This room is full."
     const val NO_INVITE = "That invite is no longer open."
     const val AD_REWARDS_USED = "That's all the ad rewards for today. Come back tomorrow."

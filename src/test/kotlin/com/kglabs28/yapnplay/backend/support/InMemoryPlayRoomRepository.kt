@@ -23,7 +23,9 @@ class InMemoryPlayRoomRepository(private val names: (String) -> String = { it })
         members[roomId].orEmpty().map { (user, joined) -> PlayRoomMembership(roomId, user, names(user), joined) }
 
     override suspend fun roomsOf(userId: String) = rooms.values.filter { userId in members[it.id].orEmpty() }
-    override suspend fun membershipCount(userId: String) = members.values.count { userId in it }
+    /** Game Rooms only, like the database: temporary (Quick Play) rooms don't count. */
+    override suspend fun membershipCount(userId: String) =
+        members.count { (roomId, people) -> userId in people && rooms[roomId]?.temporary != true }
     override suspend fun memberCount(roomId: String) = members[roomId].orEmpty().size
 
     override suspend fun addMember(roomId: String, userId: String, joinedAt: Long) {

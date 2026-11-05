@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.rooms.PlayRoomInserter
+import com.kglabs28.yapnplay.backend.application.rooms.SaveTempRoomUseCase
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.application.rooms.RoomInvitesUseCase
@@ -72,7 +74,9 @@ fun roomsModule(config: BackendConfig) = module {
     // Lazy: matches need the room actors, and rooms need matches (MatchStarter).
     single<RoomGateway> { PlayRoomGateway(lazy { get<PlayRoomActors>() }, get()) }
     single { ExitCurrentRoomUseCase(get(), get()) }
-    single { CreatePlayRoomUseCase(get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get(), get()) }
+    single { PlayRoomInserter(get(), get(), get(), get()) }
+    single { CreatePlayRoomUseCase(get(), get(), get(), get(), config.maxRoomsPerUser, get(), get(), get()) }
+    single { SaveTempRoomUseCase(get(), get(), get(), get(), config.maxRoomsPerUser) }
     single { RoomInvitesUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get()) }
     single { JoinPlayRoomUseCase(get(), get(), get(), get(), get()) }
     single { SendRoomActionUseCase(get(), get()) }
