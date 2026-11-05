@@ -33,6 +33,7 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
                 it[selectedGame] = room.selectedGame
                 it[botFill] = room.botFill
                 it[entryCoins] = room.entryCoins
+                it[temporary] = room.temporary
                 it[createdAt] = room.createdAt
             }
             PlayRoomMembersTable.insert {
@@ -78,8 +79,13 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
             .map { it.toRoom() }
     }
 
+    /** Game Rooms only: temporary (Quick Play with friends) rooms never count toward the limit. */
     override suspend fun membershipCount(userId: String): Int = db.run {
-        PlayRoomMembersTable.selectAll().where { PlayRoomMembersTable.userId eq userId.toUuid() }.count().toInt()
+        PlayRoomMembersTable.join(PlayRoomsTable, JoinType.INNER, PlayRoomMembersTable.roomId, PlayRoomsTable.id)
+            .selectAll()
+            .where { (PlayRoomMembersTable.userId eq userId.toUuid()) and (PlayRoomsTable.temporary eq false) }
+            .count()
+            .toInt()
     }
 
     override suspend fun memberCount(roomId: String): Int = db.run {
@@ -153,6 +159,7 @@ class ExposedPlayRoomRepository(private val db: DbQuery) : PlayRoomRepository {
         selectedGame = this[PlayRoomsTable.selectedGame],
         botFill = this[PlayRoomsTable.botFill],
         entryCoins = this[PlayRoomsTable.entryCoins],
+        temporary = this[PlayRoomsTable.temporary],
         createdAt = this[PlayRoomsTable.createdAt],
     )
 

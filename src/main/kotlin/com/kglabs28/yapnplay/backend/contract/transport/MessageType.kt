@@ -34,6 +34,8 @@ object MessageType {
     const val REJECTED = "Rejected"
     const val ROOM_SNAPSHOT = "RoomSnapshot"
     const val MATCH_STARTING = "MatchStarting"
+    /** 0.12.3: a play-now invite to a Quick Play party (server push, ROOM channel). */
+    const val PLAY_INVITE = "PlayInvite"
     /** Reply to JoinRoom. */
     const val JOIN_ROOM_RESULT = "JoinRoomResult"
     /** Pushed to someone whose join request the admin approved. */

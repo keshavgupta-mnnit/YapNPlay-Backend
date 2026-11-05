@@ -1,5 +1,10 @@
 package com.kglabs28.yapnplay.backend.application.rooms
 
+import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
+import com.kglabs28.yapnplay.backend.contract.PlayInvite
+import com.kglabs28.yapnplay.backend.contract.transport.Channel
+import com.kglabs28.yapnplay.backend.contract.transport.MessageType
+import com.kglabs28.yapnplay.backend.domain.identity.User
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.push.PushMessage
 import com.kglabs28.yapnplay.backend.application.push.PushSender
@@ -45,6 +50,7 @@ class RoomInvitesUseCase(
     private val ids: IdGenerator,
     private val clock: Clock,
     private val maxRoomsPerUser: Int,
+    private val codec: EnvelopeCodec,
 ) {
     /**
      * `POST /rooms/{roomId}/invites` (and CreateRoom's invitees): who got an
@@ -83,6 +89,7 @@ class RoomInvitesUseCase(
             }
         }
         if (invited.isNotEmpty()) notify(invited, room, inviter.displayName)
+        if (room.temporary) invited.forEach { askNow(it, room, inviter) }
         return InviteToRoomReply(invited, skipped)
     }
 
@@ -108,6 +115,7 @@ class RoomInvitesUseCase(
                         avatarId = inviter.avatarId,
                     ),
                     invitedAt = invite.createdAt,
+                    temporary = room.temporary,
                 )
             }
         }
@@ -141,6 +149,7 @@ class RoomInvitesUseCase(
             onlineCount = presence.onlineCount(room.id),
             isLeader = room.leaderId == userId,
             icon = room.icon,
+            temporary = room.temporary,
         )
     }
 
@@ -151,13 +160,21 @@ class RoomInvitesUseCase(
         invites.delete(invite.id)
     }
 
+    /** A Quick Play party invite: a friend who is connected is asked at once (the app shows a popup). */
+    private suspend fun askNow(userId: String, room: PlayRoom, inviter: User) {
+        if (!connections.isConnected(userId)) return
+        val inviteId = invites.forUser(userId).firstOrNull { it.roomId == room.id }?.id ?: return
+        val from = FriendSummary(inviter.id, inviter.displayName, online = true, userCode = inviter.userCode.orEmpty(), avatarId = inviter.avatarId)
+        connections.send(userId, codec.push(Channel.ROOM, MessageType.PLAY_INVITE, PlayInvite.serializer(), PlayInvite(inviteId, room.id, room.name, from)))
+    }
+
     private suspend fun notify(userIds: List<String>, room: PlayRoom, inviterName: String) {
         val message = PushMessage(
             mapOf(
                 PushKeys.TYPE to PushKeys.TYPE_ROOM_INVITE,
                 PushKeys.ROOM_ID to room.id,
                 PushKeys.ROOM_NAME to room.name,
-                PushKeys.TITLE to BackendStrings.roomInviteTitle(inviterName, room.name),
+                PushKeys.TITLE to if (room.temporary) BackendStrings.playNowInviteTitle(inviterName) else BackendStrings.roomInviteTitle(inviterName, room.name),
                 PushKeys.BODY to BackendStrings.ROOM_INVITE_BODY,
             ),
         )

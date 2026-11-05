@@ -265,7 +265,7 @@ internal class CityBazaarTurn(private var s: CityBazaarState, private val random
         val level = s.level(tile) - 1
         s = s.copy(levels = s.levels + (tile to level), cash = s.cash + (seat to s.cashOf(seat) + amount))
         events += BuildingSold(seat, tile, level, amount)
-        events += MoneyMoved(null, seat, amount, MoneyReason.SELL, tile)
+        events += MoneyMoved(null, seat, amount, MoneyReason.SELL_BUILDING, tile)
         return true
     }
 

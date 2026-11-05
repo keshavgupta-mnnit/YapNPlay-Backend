@@ -48,6 +48,7 @@
         "countdownDeadline": 1760000010000,
         "matchInProgress": null,
         "waitingList": [],
-        "countdownStop": null
+        "countdownStop": null,
+        "temporary": false
     }
 }

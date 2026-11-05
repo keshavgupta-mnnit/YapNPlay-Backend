@@ -62,7 +62,7 @@ import kotlinx.serialization.json.buildJsonObject
  */
 object GoldenSamples {
     private val f = GoldenFixtures
-    private val asha = FriendSummary(FRIEND, "Asha", online = true, userCode = "P4RT8X", avatarId = "a07")
+    private val asha = FriendSummary(FRIEND, "Asha", online = true, userCode = "P4RT8X", avatarId = "a07", activity = FriendActivity.IN_ROOM)
 
     val all: List<GoldenCase<*>> = listOf(
         // ── HTTP ────────────────────────────────────────────────────────
@@ -154,6 +154,7 @@ object GoldenSamples {
         GoldenCase("JoinRoomResultPending", JoinRoomResult.serializer(), JoinRoomResult(JoinStatus.PENDING_APPROVAL, "College Crew")),
         GoldenCase("JoinApproved", JoinApproved.serializer(), JoinApproved(ROOM, "College Crew")),
         GoldenCase("MatchStarting", MatchStarting.serializer(), MatchStarting(MATCH)),
+        GoldenCase("PlayInvite", PlayInvite.serializer(), PlayInvite("inv-2", ROOM, "Asha's Party", asha)),
         // ── MATCH channel ───────────────────────────────────────────────
         GoldenCase("MatchRequestSnapshot", MatchRequestSnapshot.serializer(), MatchRequestSnapshot(MATCH, 0)),
         GoldenCase("RollDice", RollDice.serializer(), RollDice(MATCH)),

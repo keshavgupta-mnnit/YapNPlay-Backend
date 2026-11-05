@@ -10,6 +10,9 @@ object BackendStrings {
 
     fun defaultRoomName(ownerName: String): String = "$ownerName's Room"
 
+    /** A Quick Play with friends room's name. */
+    fun tempRoomName(ownerName: String): String = "$ownerName's Party"
+
     const val QUICK_PLAY_TITLE = "Quick Play"
 
     fun cpuName(number: Int): String = "CPU $number"
@@ -37,6 +40,8 @@ object BackendStrings {
     const val INVALID_ROOM_NAME = "Room name must be at most 30 visible characters."
     const val INVALID_CODE = "Room codes are 6 digits."
     const val ROOM_NOT_FOUND = "No room has this code."
+    const val TEMP_ROOM_INVITE_ONLY = "This party is invite only. Ask a friend in it to invite you."
+    const val TEMP_ROOM_ONE_LEADER = "A Quick Play party has only its leader."
     const val ROOM_FULL = "This room is full."
     const val NO_INVITE = "That invite is no longer open."
     const val AD_REWARDS_USED = "That's all the ad rewards for today. Come back tomorrow."
@@ -58,6 +63,7 @@ object BackendStrings {
     const val GROUP_NAME_REQUIRED = "Give your room a name."
     const val GROUP_NEEDS_INVITEES = "Pick at least one friend to invite."
     fun roomInviteTitle(inviter: String, room: String) = "$inviter invited you to $room"
+    fun playNowInviteTitle(inviter: String) = "$inviter wants to play with you now"
     fun friendRequestTitle(from: String) = "$from sent you a friend request"
     const val FRIEND_REQUEST_BODY = "Tap to answer"
     fun friendAcceptedTitle(by: String) = "$by accepted your friend request"

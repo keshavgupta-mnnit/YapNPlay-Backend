@@ -5,6 +5,7 @@ import com.kglabs28.yapnplay.backend.contract.RoomSnapshot
 import com.kglabs28.yapnplay.backend.contract.transport.Channel
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.config.BackendStrings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -68,6 +69,10 @@ class PlayRoomActor(
                 countdown.elapsed(command.deadline)
                 broadcast()
             }
+            RoomCommand.DesertedCheck -> if (membership.dissolveIfDeserted()) {
+                onDeleted(roomId)
+                stop()
+            }
         }
     }
 
@@ -101,7 +106,9 @@ class PlayRoomActor(
             is RoomAction.ApproveJoin -> done { membership.approve(userId, action.userId) }
             is RoomAction.AcceptInvite -> done { membership.acceptInvite(userId, action.displayName, action.avatarId) }
             is RoomAction.DeclineJoin -> done { membership.decline(userId, action.userId) }
-            is RoomAction.MatchEnded -> done { if (state.matchInProgress == action.matchId) state.matchInProgress = null }
+            is RoomAction.MatchEnded -> done {
+                if (state.matchInProgress == action.matchId) state.matchInProgress = null
+            }
             RoomAction.Resend -> {
                 if (state.members[userId]?.online == true) sendSnapshot(userId)
                 RoomResult.Done
@@ -109,6 +116,8 @@ class PlayRoomActor(
         }
         leaderId = state.room.leaderId
         adminId = state.room.adminId
+        // A Quick Play party everyone dropped out of (or whose match ended with nobody back) gets a grace to return.
+        if (!deleted && membership.isDeserted()) scheduleDesertedCheck()
         if (deleted) {
             onDeleted(roomId)
             stop()
@@ -146,6 +155,13 @@ class PlayRoomActor(
     private suspend fun sendSnapshot(userId: String) {
         val snapshot = state.snapshot(deps.clock.nowMillis(), userId, deps.friends.friendsOf(userId))
         deps.notifier.send(userId, deps.codec.push(Channel.ROOM, MessageType.ROOM_SNAPSHOT, RoomSnapshot.serializer(), snapshot))
+    }
+
+    private fun scheduleDesertedCheck() {
+        scope.launch {
+            delay(BackendConstants.TEMP_ROOM_GRACE_MS)
+            inbox.trySend(RoomCommand.DesertedCheck)
+        }
     }
 
     private fun scheduleElapsed(deadline: Long, delayMillis: Long): Job = scope.launch {

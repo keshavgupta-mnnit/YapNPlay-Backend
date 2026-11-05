@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.social
 
+import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
+import com.kglabs28.yapnplay.backend.contract.FriendActivity
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.rooms.PlayRoomActors
@@ -40,6 +42,8 @@ class FriendsUseCase(
     private val ids: IdGenerator,
     private val clock: Clock,
     private val pushes: FriendPushes,
+    /** Who is at a table right now (a friend's "Playing a game"). */
+    private val matches: MatchRegistry,
 ) {
     suspend fun list(userId: String): Friends = Friends(
         friends.friendsOf(userId).mapNotNull { users.findById(it)?.toSummary() }
@@ -132,11 +136,20 @@ class FriendsUseCase(
         userIds.forEach { user -> presence.roomOf(user)?.let { rooms.get(it)?.ask(user, RoomAction.Resend) } }
     }
 
-    private fun User.toSummary() = FriendSummary(
-        userId = id,
-        displayName = displayName,
-        online = connections.isConnected(id),
-        userCode = userCode.orEmpty(),
-        avatarId = avatarId,
-    )
+    private fun User.toSummary(): FriendSummary {
+        val online = connections.isConnected(id)
+        return FriendSummary(
+            userId = id,
+            displayName = displayName,
+            online = online,
+            userCode = userCode.orEmpty(),
+            avatarId = avatarId,
+            activity = when {
+                !online -> FriendActivity.OFFLINE
+                matches.activeMatchOf(id) != null -> FriendActivity.PLAYING
+                presence.roomOf(id) != null -> FriendActivity.IN_ROOM
+                else -> FriendActivity.ONLINE
+            },
+        )
+    }
 }

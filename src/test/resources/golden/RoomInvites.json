@@ -11,9 +11,11 @@
                 "displayName": "Asha",
                 "online": true,
                 "userCode": "K7Q2M9",
-                "avatarId": "a03"
+                "avatarId": "a03",
+                "activity": "OFFLINE"
             },
-            "invitedAt": 1760000000000
+            "invitedAt": 1760000000000,
+            "temporary": false
         }
     ]
 }

@@ -54,6 +54,7 @@
                 "requestedAt": 1760000000100
             }
         ],
-        "countdownStop": null
+        "countdownStop": null,
+        "temporary": false
     }
 }

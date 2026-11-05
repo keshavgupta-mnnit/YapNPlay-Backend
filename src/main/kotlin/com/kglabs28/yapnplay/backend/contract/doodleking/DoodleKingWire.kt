@@ -22,7 +22,7 @@ sealed interface DoodleRelay
  * Part of one stroke, sent by the drawer about every 60 ms and forwarded
  * as it is to everyone else (`MatchRelay`). The first part of stroke [id]
  * starts it with its [colour] and [size]; later parts add [points]. Points
- * are x,y pairs on a 4:3 canvas, each 0–4095.
+ * are x,y pairs across the whole board, each 0–4095.
  */
 @Serializable
 @SerialName("DoodleStroke")

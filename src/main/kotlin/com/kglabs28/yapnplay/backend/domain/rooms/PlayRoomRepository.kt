@@ -8,6 +8,7 @@ interface PlayRoomRepository {
     suspend fun findByCode(code: String): PlayRoom?
     suspend fun members(roomId: String): List<PlayRoomMembership>
     suspend fun roomsOf(userId: String): List<PlayRoom>
+    /** Game Rooms the user belongs to (temporary rooms not counted). */
     suspend fun membershipCount(userId: String): Int
     suspend fun memberCount(roomId: String): Int
     suspend fun addMember(roomId: String, userId: String, joinedAt: Long)

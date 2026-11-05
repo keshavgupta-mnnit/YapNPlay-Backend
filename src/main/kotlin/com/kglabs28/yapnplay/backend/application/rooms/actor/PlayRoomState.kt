@@ -77,6 +77,7 @@ class PlayRoomState(
             countdownDeadline = countdownDeadline,
             matchInProgress = matchInProgress,
             countdownStop = countdownStop,
+            temporary = room.temporary,
             waitingList = if (receiver != null && receiver == room.adminId) {
                 waiting.map { JoinRequestInfo(it.userId, it.displayName, it.requestedAt) }
             } else {
@@ -93,6 +94,7 @@ class PlayRoomState(
         onlineCount = members.values.count { it.online },
         isLeader = room.leaderId == userId,
         icon = room.icon,
+        temporary = room.temporary,
     )
 
     private fun LiveMember.toWire(isFriend: Boolean) = RoomMember(

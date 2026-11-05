@@ -18,6 +18,11 @@ class RoomGuards(private val state: PlayRoomState, private val deps: PlayRoomDep
         if (state.room.adminId != userId) throw ServiceException(ErrorCode.NOT_ADMIN, BackendStrings.NOT_ADMIN)
     }
 
+    /** Admin-only settings (rename, a separate admin) belong to Game Rooms, not Quick Play parties. */
+    fun requireGameRoom() {
+        if (state.room.temporary) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.TEMP_ROOM_ONE_LEADER)
+    }
+
     fun requireTarget(userId: String) {
         if (userId !in state.members) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.TARGET_NOT_MEMBER)
     }

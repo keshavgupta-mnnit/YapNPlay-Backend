@@ -54,6 +54,7 @@ class LobbyHandler(
     /** The admin renames the room: trimmed, 1..ROOM_NAME_MAX_LENGTH characters, no control characters. */
     suspend fun rename(userId: String, name: String) {
         guards.requireAdmin(userId)
+        guards.requireGameRoom()
         val trimmed = name.trim()
         if (trimmed.isEmpty() || trimmed.length > BackendConstants.ROOM_NAME_MAX_LENGTH || trimmed.any { it.isISOControl() }) {
             throw ServiceException(ErrorCode.BAD_REQUEST, "Room name: 1 to ${BackendConstants.ROOM_NAME_MAX_LENGTH} characters")
@@ -100,13 +101,16 @@ class LobbyHandler(
         if (!state.members.getValue(targetId).online) {
             throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.TARGET_OFFLINE)
         }
-        state.room = state.room.copy(leaderId = targetId)
-        deps.repository.updateRoles(state.room.id, targetId, state.room.adminId)
+        // A temporary room has one leader only: the admin role goes along.
+        val admin = if (state.room.temporary) targetId else state.room.adminId
+        state.room = state.room.copy(leaderId = targetId, adminId = admin)
+        deps.repository.updateRoles(state.room.id, targetId, admin)
         countdown.revalidate(CountdownStopReason.SETTINGS_CHANGED, userId)
     }
 
     suspend fun transferAdmin(userId: String, targetId: String) {
         guards.requireAdmin(userId)
+        guards.requireGameRoom()
         guards.requireTarget(targetId)
         state.room = state.room.copy(adminId = targetId)
         deps.repository.updateRoles(state.room.id, state.room.leaderId, targetId)

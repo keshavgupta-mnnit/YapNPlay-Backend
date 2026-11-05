@@ -36,6 +36,8 @@ class DoodleKingWireMapper(private val json: Json) {
             word = s.word?.takeIf { wordShown },
             options = if (isDrawer && s.phase == DoodlePhase.PICK) s.options else emptyList(),
             hint = s.word?.let { DoodleKingHints.mask(it, s.hintOrder.take(s.hintsShown)) }.orEmpty(),
+            wordCategory = s.wordCategory.takeIf { s.phase == DoodlePhase.DRAW || s.phase == DoodlePhase.REVEAL }.orEmpty(),
+            wordLanguage = s.wordLanguage.takeIf { s.phase == DoodlePhase.DRAW || s.phase == DoodlePhase.REVEAL }.orEmpty(),
             seats = (1..s.seatCount).map { seat ->
                 DoodleSeatState(seat, s.scores[seat] ?: 0, seat in s.guessed, s.turnPoints[seat] ?: 0, seat in s.removed)
             },
