@@ -14,7 +14,10 @@ import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
  * Short-lived voice passes (10 minutes). Members of a room share its
  * lobby's voice room; every match has its own, for its players and
  * spectators only, so the lobby never hears the table (or the other way
- * round). The app asks again before the pass runs out.
+ * round). A Nearby party lives on its host's phone, so the server can't
+ * check who is in it: its random id (from the phone) is the voice room,
+ * and only those who know the id find it. The app asks again before the
+ * pass runs out.
  */
 class IssueVoiceTokenUseCase(
     private val signer: VoiceTokenSigner?,
@@ -32,6 +35,11 @@ class IssueVoiceTokenUseCase(
         val match = matches.find(matchId) ?: throw ServiceException(ErrorCode.NOT_FOUND, BackendStrings.NO_SUCH_MATCH)
         if (userId !in match.presentUsers + match.seatedUsers) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
         return issue(userId, BackendConstants.VOICE_MATCH_PREFIX + matchId)
+    }
+
+    suspend fun forNearby(userId: String, partyId: String): VoiceToken {
+        if (!BackendConstants.NEARBY_PARTY_ID.matches(partyId)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NOT_A_NEARBY_PARTY)
+        return issue(userId, partyId)
     }
 
     private suspend fun issue(userId: String, voiceRoom: String): VoiceToken {

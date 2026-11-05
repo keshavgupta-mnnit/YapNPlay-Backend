@@ -28,6 +28,9 @@ object HttpPaths {
     const val REQUEST_ID_PARAM = "requestId"
     const val ROOM_VOICE_TOKEN = "/rooms/{roomId}/voice-token"
     const val MATCH_VOICE_TOKEN = "/matches/{matchId}/voice-token"
+    /** A Nearby party (hosted on a phone, unknown here) talking while its phones have internet. */
+    const val NEARBY_VOICE_TOKEN = "/nearby/{partyId}/voice-token"
+    const val PARTY_ID_PARAM = "partyId"
     const val ACTIVE_MATCH = "/matches/active"
     const val MATCH_HISTORY = "/matches/history"
     const val FEEDBACK = "/feedback"

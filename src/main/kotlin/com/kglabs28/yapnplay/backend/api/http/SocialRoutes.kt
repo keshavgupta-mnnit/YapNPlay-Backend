@@ -62,6 +62,9 @@ fun Route.socialRoutes(
     post(HttpPaths.MATCH_VOICE_TOKEN) {
         call.respond(voice.forMatch(call.userId, call.parameters[HttpPaths.MATCH_ID_PARAM].orEmpty()))
     }
+    post(HttpPaths.NEARBY_VOICE_TOKEN) {
+        call.respond(voice.forNearby(call.userId, call.parameters[HttpPaths.PARTY_ID_PARAM].orEmpty()))
+    }
     post(HttpPaths.CLEAR_PENALTY_WITH_AD) {
         moderation.clearWithAd(call.userId)
         call.respond(HttpStatusCode.NoContent)

@@ -1,5 +1,9 @@
 package com.kglabs28.yapnplay.backend.application.match.actor
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
+import com.kglabs28.yapnplay.backend.config.BackendStrings
+import com.kglabs28.yapnplay.backend.contract.SeatPresence
+import com.kglabs28.yapnplay.backend.domain.identity.Avatars
 import com.kglabs28.yapnplay.backend.application.match.RoomGateway
 import com.kglabs28.yapnplay.backend.contract.EndVoteInfo
 import com.kglabs28.yapnplay.backend.domain.economy.PotRules
@@ -55,21 +59,36 @@ class MatchSnapshotBuilder(private val state: MatchState, private val rooms: Roo
         )
     }
 
-    private fun MatchSeatState.toWire() = SeatInfo(
-        seat = seat,
-        colour = colour,
-        controllerUserId = userId,
-        status = if (removed) MatchSeatStatus.REMOVED else MatchSeatStatus.ACTIVE,
-        connected = connected,
-        autoPlay = autoplay,
-        consecutiveMisses = state.missedTurns[seat] ?: 0,
-        cpu = cpu,
-        displayName = displayName,
-        level = level,
-        micOn = micOn,
-        presence = presence,
-        avatarId = avatarId,
-    )
+    private fun MatchSeatState.toWire(): SeatInfo {
+        // A seat its owner gave up mid-game (nobody took it) is a CPU's from then on, and shows as one;
+        // the leaver still ranks last in the results.
+        val cpuNumber = cpuNumberIfGivenUp()
+        return SeatInfo(
+            seat = seat,
+            colour = colour,
+            controllerUserId = cpuNumber?.let { BackendConstants.CPU_USER_PREFIX + it } ?: userId,
+            status = if (removed) MatchSeatStatus.REMOVED else MatchSeatStatus.ACTIVE,
+            connected = connected || cpuNumber != null,
+            autoPlay = autoplay,
+            consecutiveMisses = state.missedTurns[seat] ?: 0,
+            cpu = cpu || cpuNumber != null,
+            displayName = cpuNumber?.let(BackendStrings::cpuName) ?: displayName,
+            level = if (cpuNumber != null) BackendConstants.CPU_LEVEL else level,
+            micOn = micOn && cpuNumber == null,
+            presence = if (cpuNumber != null) SeatPresence.PLAYING else presence,
+            avatarId = cpuNumber?.let(Avatars::forCpu) ?: avatarId,
+        )
+    }
+
+    /** The CPU number of a seat given up mid-game and played by the bot (after the table's own CPUs), or null. */
+    private fun MatchSeatState.cpuNumberIfGivenUp(): Int? {
+        if (!givenUp()) return null
+        val givenUp = state.seats.filter { it.givenUp() }
+        return state.seats.count { it.cpu } + givenUp.indexOfFirst { it.seat == seat } + 1
+    }
+
+    /** Left mid-game, still in it (not removed), and the bot plays it (no spectator took it). */
+    private fun MatchSeatState.givenUp(): Boolean = left && !removed && !outBeforeLeaving && !cpu
 
     private fun SeatOfferState.toWire(): SeatOfferInfo = when (val s = stage) {
         is OfferStage.ConfirmingAbsence -> SeatOfferInfo(seat, leaverName, SeatOfferStageName.CONFIRMING_ABSENCE, endsAt, s.userId, s.name)

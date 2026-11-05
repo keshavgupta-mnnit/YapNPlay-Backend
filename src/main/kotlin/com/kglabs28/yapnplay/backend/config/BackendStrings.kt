@@ -112,6 +112,7 @@ object BackendStrings {
     const val NO_JOIN_REQUEST = "This person has not asked to join."
     const val MATCH_RUNNING = "A match is already running in this room."
     const val VOICE_UNAVAILABLE = "Voice is not set up on this server."
+    const val NOT_A_NEARBY_PARTY = "That is not a Nearby party."
     const val CANNOT_REPORT = "At least two other people must be present to confirm a report."
     const val NO_SUCH_REPORT = "This vote is closed."
     const val CANNOT_FRIEND_SELF = "You cannot add yourself."

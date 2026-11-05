@@ -112,6 +112,8 @@ object BackendConstants {
     const val VOICE_TOKEN_TTL_SECONDS = 600L
     const val VOICE_ROOM_PREFIX = "room-"
     const val VOICE_MATCH_PREFIX = "match-"
+    /** A Nearby party's lobby or table id, made on the host's phone ("nearby-room-…", "nearby-match-…"). */
+    val NEARBY_PARTY_ID = Regex("^nearby-(room|match)-[a-z0-9]{8,24}$")
 
     // ── Pushes ───────────────────────────────────────────────────────────
     /** One room-activity push per user and room in this window. */
