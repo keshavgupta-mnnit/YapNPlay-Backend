@@ -4,5 +4,6 @@
     "inviteUserIds": [
         "u-friend-1",
         "u-friend-2"
-    ]
+    ],
+    "temporary": false
 }

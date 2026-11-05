@@ -73,7 +73,7 @@ fun roomsModule(config: BackendConfig) = module {
     single<RoomGateway> { PlayRoomGateway(lazy { get<PlayRoomActors>() }, get()) }
     single { ExitCurrentRoomUseCase(get(), get()) }
     single { CreatePlayRoomUseCase(get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get(), get()) }
-    single { RoomInvitesUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser) }
+    single { RoomInvitesUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get()) }
     single { JoinPlayRoomUseCase(get(), get(), get(), get(), get()) }
     single { SendRoomActionUseCase(get(), get()) }
     single { GetMyRoomsUseCase(get(), get()) }

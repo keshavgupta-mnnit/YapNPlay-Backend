@@ -4,6 +4,10 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.12.3 — FriendSummary.activity (OFFLINE, ONLINE, IN_ROOM, PLAYING); PlayInvite push (ROOM channel)
+ * when a friend invites the user to a Quick Play party.
+ * 0.12.2 — Quick Play with friends: CreateRoom.temporary, RoomInfo.temporary, RoomSummary.temporary,
+ * RoomInviteSummary.temporary (a room with one leader, deleted once everyone has left its lobby).
  * 0.12.1 — Doodle King: DoodleKingPublicState.wordCategory / wordLanguage (the word's group and
  * language, shown to the guessers); words are at most 6 letters.
  * 0.12.0 — City Royale: MoneyMoved.reason SELL_BUILDING (a house or hotel sold to the bank);
@@ -37,4 +41,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.12.1"
+const val CONTRACT_VERSION: String = "0.12.3"

@@ -44,6 +44,8 @@ object BackendConstants {
     const val ROOM_CODE_ALPHABET = "0123456789"
     const val ROOM_CODE_MAX_ATTEMPTS = 20
     const val ROOM_NAME_MAX_LENGTH = 30
+    /** A Quick Play party nobody is in any more waits this long (a dropped connection coming back) before it is deleted. */
+    const val TEMP_ROOM_GRACE_MS = 30_000L
     const val MAX_MEMBERS_PER_ROOM = 10
     const val MIN_HUMANS_TO_START = 2
     const val DEFAULT_ROOM_ICON = "group"

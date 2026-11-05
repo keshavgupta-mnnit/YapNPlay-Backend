@@ -36,5 +36,5 @@ fun socialModule(config: BackendConfig) = module {
     single { GetRoomLeaderboardUseCase(get(), get()) }
     single { GetRoomPendingInvitesUseCase(get(), get()) }
     single { FriendPushes(get()) }
-    single { FriendsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { FriendsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
 }

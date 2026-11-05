@@ -17,6 +17,8 @@ object PlayRoomsTable : Table("play_rooms") {
     val botFill = bool("bot_fill")
     /** V23: the room's league (each player's entry, coins). */
     val entryCoins = integer("entry_coins")
+    /** V24: a Quick Play with friends room (deleted once everyone has left it). */
+    val temporary = bool("temporary")
     val createdAt = long("created_at")
 
     override val primaryKey = PrimaryKey(id)

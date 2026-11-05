@@ -108,7 +108,13 @@ data class FriendSummary(
     val online: Boolean,
     val userCode: String = "",
     val avatarId: String = "",
+    /** 0.12.3: what they are doing now (playing a game, in a room lobby, just online, offline). */
+    val activity: FriendActivity = FriendActivity.OFFLINE,
 )
+
+/** 0.12.3: a friend's current activity, shown on the play-now invite list. */
+@Serializable
+enum class FriendActivity { OFFLINE, ONLINE, IN_ROOM, PLAYING }
 
 /**
  * What a room looks like before joining (`GET /rooms/preview/{code}`),
@@ -163,6 +169,8 @@ data class RoomSummary(
     val isLeader: Boolean = false,
     /** Room badge: group, dice, family or gamepad (unknown → group). */
     val icon: String? = null,
+    /** 0.12.2: a Quick Play with friends room; the app keeps it out of Your Rooms. */
+    val temporary: Boolean = false,
 )
 
 /** Response with a voice provider connection token. */
@@ -299,6 +307,8 @@ data class RoomInviteSummary(
     val invitedBy: FriendSummary,
     /** Epoch millis. */
     val invitedAt: Long,
+    /** 0.12.2: an invite to play now (Quick Play with friends): accepting opens its lobby. */
+    val temporary: Boolean = false,
 )
 
 /** `POST /auth/play-games` (0.4.3): the Play Games server auth code from the app. */

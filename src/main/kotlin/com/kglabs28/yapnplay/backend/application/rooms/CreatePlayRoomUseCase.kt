@@ -22,7 +22,9 @@ import com.kglabs28.yapnplay.backend.domain.rooms.RoomCodeGenerator
  * [CreateRoom.inviteUserIds] get an invite. A name and at least one
  * invitee are required; a group the creator already has with exactly these
  * people (members and open invites) is refused with GROUP_EXISTS, its name
- * in the message. Answers with the first snapshot.
+ * in the message. A temporary room (Quick Play with friends) needs neither,
+ * gets a default name and never counts toward the rooms-per-user limit.
+ * Answers with the first snapshot.
  */
 class CreatePlayRoomUseCase(
     private val rooms: PlayRoomRepository,
@@ -39,16 +41,15 @@ class CreatePlayRoomUseCase(
     suspend operator fun invoke(userId: String, request: CreateRoom): RoomSnapshot {
         val user = users.findById(userId)
             ?: throw ServiceException(ErrorCode.NOT_AUTHENTICATED, BackendStrings.NOT_AUTHENTICATED)
-        if (request.name.isNullOrBlank()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.GROUP_NAME_REQUIRED)
         val invitees = request.inviteUserIds.filter { it.isNotBlank() && it != userId }.distinct()
-        if (invitees.isEmpty()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.GROUP_NEEDS_INVITEES)
-        if (rooms.membershipCount(userId) >= maxRoomsPerUser) {
-            throw ServiceException(ErrorCode.ROOM_LIMIT_REACHED, BackendStrings.ROOM_LIMIT_REACHED)
+        val name = if (request.temporary) {
+            BackendStrings.tempRoomName(user.displayName).take(BackendConstants.ROOM_NAME_MAX_LENGTH)
+        } else {
+            checkGroup(userId, request, invitees)
+            roomName(request.name, user.displayName)
         }
-        sameGroup(userId, invitees.toSet() + userId)?.let { throw ServiceException(ErrorCode.GROUP_EXISTS, it.name) }
-        val name = roomName(request.name, user.displayName)
         exitCurrentRoom(userId, force = false)
-        val room = insertWithFreeCode(userId, name, iconOf(request.icon))
+        val room = insertWithFreeCode(userId, name, iconOf(request.icon), request.temporary)
         val actor = checkNotNull(actors.get(room.id))
         actor.ask(userId, RoomAction.Join(user.displayName, user.avatarId)).orThrow()
         // Friends get an invite; anyone else is skipped silently.
@@ -56,9 +57,19 @@ class CreatePlayRoomUseCase(
         return (actor.ask(userId, RoomAction.Snapshot).orThrow() as RoomResult.Snapshot).snapshot
     }
 
-    /** A group [userId] belongs to whose members and open invites are exactly [people]. */
+    /** A Game Room needs a name and an invitee, fits the user's limit and isn't a copy of one they have. */
+    private suspend fun checkGroup(userId: String, request: CreateRoom, invitees: List<String>) {
+        if (request.name.isNullOrBlank()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.GROUP_NAME_REQUIRED)
+        if (invitees.isEmpty()) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.GROUP_NEEDS_INVITEES)
+        if (rooms.membershipCount(userId) >= maxRoomsPerUser) {
+            throw ServiceException(ErrorCode.ROOM_LIMIT_REACHED, BackendStrings.ROOM_LIMIT_REACHED)
+        }
+        sameGroup(userId, invitees.toSet() + userId)?.let { throw ServiceException(ErrorCode.GROUP_EXISTS, it.name) }
+    }
+
+    /** A Game Room [userId] belongs to whose members and open invites are exactly [people]. */
     private suspend fun sameGroup(userId: String, people: Set<String>): PlayRoom? =
-        rooms.roomsOf(userId).firstOrNull { room ->
+        rooms.roomsOf(userId).filterNot { it.temporary }.firstOrNull { room ->
             rooms.members(room.id).map { it.userId }.toSet() + openInvites.invitedTo(room.id) == people
         }
 
@@ -74,7 +85,7 @@ class CreatePlayRoomUseCase(
     }
 
     /** Random codes collide rarely; the unique column catches it and we try another. */
-    private suspend fun insertWithFreeCode(userId: String, name: String, icon: String): PlayRoom {
+    private suspend fun insertWithFreeCode(userId: String, name: String, icon: String, temporary: Boolean): PlayRoom {
         repeat(BackendConstants.ROOM_CODE_MAX_ATTEMPTS) {
             val now = clock.nowMillis()
             val room = PlayRoom(
@@ -89,6 +100,7 @@ class CreatePlayRoomUseCase(
                 selectedGame = null,
                 botFill = false,
                 createdAt = now,
+                temporary = temporary,
             )
             if (rooms.insertWithCreator(room, now)) return room
         }

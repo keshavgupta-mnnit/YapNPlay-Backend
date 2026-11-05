@@ -29,6 +29,8 @@ class MembershipHandler(
      */
     suspend fun join(userId: String, displayName: String, avatarId: String = ""): JoinRoomResult {
         if (userId !in state.members) {
+            // A Quick Play party has no Waiting List: only an invite gets someone in.
+            if (state.room.temporary) throw ServiceException(ErrorCode.NOT_FOUND, BackendStrings.TEMP_ROOM_INVITE_ONLY)
             checkRoomFor(userId)
             if (state.waiting.none { it.userId == userId }) {
                 val now = deps.clock.nowMillis()
@@ -112,6 +114,21 @@ class MembershipHandler(
         countdown.revalidate(CountdownStopReason.LEFT, userId)
     }
 
+    /**
+     * A temporary room (Quick Play with friends) nobody is in: no one online
+     * in its lobby and no match of it running (players come back after one).
+     */
+    fun isDeserted(): Boolean =
+        state.room.temporary && state.matchInProgress == null && state.members.values.none { it.online }
+
+    /** Deletes a deserted temporary room; true when it was deleted. */
+    suspend fun dissolveIfDeserted(): Boolean {
+        if (!isDeserted()) return false
+        countdown.cancel()
+        deps.repository.delete(state.room.id)
+        return true
+    }
+
     /** Returns true when the room was deleted because nobody is left. */
     suspend fun leave(userId: String): Boolean {
         state.member(userId)
@@ -143,6 +160,7 @@ class MembershipHandler(
             deps.repository.delete(state.room.id)
             return true
         }
+        if (dissolveIfDeserted()) return true
         val roles = deps.rolePolicy
         val leader = if (wasLeader) {
             roles.nextLeader(state.members.values, userId) ?: roles.nextAdmin(state.members.values, userId)
@@ -162,8 +180,10 @@ class MembershipHandler(
         deps.presence.exit(userId, state.room.id)
     }
 
+    /** A temporary room has one leader only: its admin always follows the leader. */
     private suspend fun setRoles(leaderId: String, adminId: String) {
-        state.room = state.room.copy(leaderId = leaderId, adminId = adminId)
-        deps.repository.updateRoles(state.room.id, leaderId, adminId)
+        val admin = if (state.room.temporary) leaderId else adminId
+        state.room = state.room.copy(leaderId = leaderId, adminId = admin)
+        deps.repository.updateRoles(state.room.id, leaderId, admin)
     }
 }

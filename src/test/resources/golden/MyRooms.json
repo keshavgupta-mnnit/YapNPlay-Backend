@@ -7,7 +7,8 @@
             "memberCount": 2,
             "onlineCount": 1,
             "isLeader": true,
-            "icon": "group"
+            "icon": "group",
+            "temporary": false
         }
     ]
 }

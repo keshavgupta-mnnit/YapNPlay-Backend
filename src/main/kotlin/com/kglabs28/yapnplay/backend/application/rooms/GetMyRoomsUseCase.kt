@@ -4,7 +4,7 @@ import com.kglabs28.yapnplay.backend.contract.MyRooms
 import com.kglabs28.yapnplay.backend.contract.RoomSummary
 import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
 
-/** `GET /rooms/mine`: the user's rooms with member and live counts. */
+/** `GET /rooms/mine`: the user's rooms with member and live counts (temporary ones flagged; the app hides them). */
 class GetMyRoomsUseCase(
     private val rooms: PlayRoomRepository,
     private val presence: RoomPresence,
@@ -19,6 +19,7 @@ class GetMyRoomsUseCase(
                 onlineCount = presence.onlineCount(room.id),
                 isLeader = room.leaderId == userId,
                 icon = room.icon,
+                temporary = room.temporary,
             )
         },
     )
