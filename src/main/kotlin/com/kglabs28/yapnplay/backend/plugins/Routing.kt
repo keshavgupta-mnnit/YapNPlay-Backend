@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.plugins
 
 import com.kglabs28.yapnplay.backend.api.http.roomStatsRoutes
 import com.kglabs28.yapnplay.backend.api.http.openLinkRoutes
+import com.kglabs28.yapnplay.backend.api.http.appAdsTxtRoutes
 import com.kglabs28.yapnplay.backend.api.http.feedbackRoutes
 import io.ktor.server.plugins.ratelimit.rateLimit
 import com.kglabs28.yapnplay.backend.api.auth.BearerUserAuthProvider
@@ -20,6 +21,7 @@ fun Application.configureRouting(koin: Koin) {
     routing {
         publicRoutes(koin.get(), koin.get(), koin.get(), GUEST_RATE_LIMIT)
         openLinkRoutes()
+        appAdsTxtRoutes()
         adminRoutes(koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get(), koin.get())
         authenticate(BearerUserAuthProvider.NAME) {
             rateLimit(PLAYER_RATE_LIMIT) {

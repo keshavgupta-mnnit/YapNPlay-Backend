@@ -39,6 +39,9 @@ object BackendConstants {
     val LINK_KINDS = setOf("friend", "join")
     const val LINK_CODE_MAX_LENGTH = 12
 
+    /** `/app-ads.txt`: Google may sell this publisher's ads directly (the app's AdMob publisher id). */
+    const val APP_ADS_TXT = "google.com, pub-9904831041173979, DIRECT, f08c47fec0942fa0\n"
+
     // ── Rooms ────────────────────────────────────────────────────────────
     const val ROOM_CODE_LENGTH = 6
     const val ROOM_CODE_ALPHABET = "0123456789"

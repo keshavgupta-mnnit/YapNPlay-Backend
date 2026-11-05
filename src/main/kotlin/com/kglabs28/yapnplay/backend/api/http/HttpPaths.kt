@@ -3,6 +3,8 @@ package com.kglabs28.yapnplay.backend.api.http
 /** Every HTTP path, from the contract. */
 object HttpPaths {
     const val HEALTH = "/health"
+    /** Public: the ad sellers allowed to sell YapNPlay's ads (AdMob reads it from the store listing's website). */
+    const val APP_ADS_TXT = "/app-ads.txt"
     /** A shared invite (`friend` or `join` + code): a page that opens the app, or the Play Store without it. */
     const val OPEN_LINK = "/open/{kind}/{code}"
     const val LINK_KIND_PARAM = "kind"
