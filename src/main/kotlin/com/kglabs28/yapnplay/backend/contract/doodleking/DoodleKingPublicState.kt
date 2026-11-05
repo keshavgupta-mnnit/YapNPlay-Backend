@@ -30,6 +30,13 @@ data class DoodleKingPublicState(
     val options: List<String> = emptyList(),
     /** The word as the guessers see it: `_` for a hidden letter, letters given as hints, spaces and hyphens as they are. */
     val hint: String = "",
+    /**
+     * 0.12.1: what the word is, for everyone while it is drawn and at the reveal, so it is easier to guess:
+     * a simple category ("Animals", "Food", "Objects", "Nature", "Places", "Body", "Fun") and its
+     * language ("English" or "Hinglish"). Empty before a word is picked. Words are at most 6 letters.
+     */
+    val wordCategory: String = "",
+    val wordLanguage: String = "",
     val seats: List<DoodleSeatState>,
     /** This turn's guesses and news, oldest first (cleared each turn); only what this viewer may see. */
     val feed: List<DoodleFeedEntry> = emptyList(),

@@ -4,6 +4,10 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.12.1 — Doodle King: DoodleKingPublicState.wordCategory / wordLanguage (the word's group and
+ * language, shown to the guessers); words are at most 6 letters.
+ * 0.12.0 — City Royale: MoneyMoved.reason SELL_BUILDING (a house or hotel sold to the bank);
+ * SELL now means a whole city or company sold.
  * 0.11.0 — emoji gifts: SendEmojiGift / EmojiGiftResult on the MATCH channel, EmojiGift
  * (MatchRelay) to the whole table, `GET /coins/emoji-gifts` (EmojiGiftPrices).
  * 0.10.0 — RankedSeat.stake; coinsWon shown for every seat (CPUs and leavers too, display
@@ -33,4 +37,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.11.0"
+const val CONTRACT_VERSION: String = "0.12.1"

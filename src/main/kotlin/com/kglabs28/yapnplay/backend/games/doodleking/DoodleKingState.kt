@@ -31,6 +31,9 @@ data class DoodleKingState(
     val drawer: Int = 1,
     val options: List<String> = emptyList(),
     val word: String? = null,
+    /** What this turn's word is (a [DoodleCategory] / [DoodleLanguage] label); empty until it is picked. */
+    val wordCategory: String = "",
+    val wordLanguage: String = "",
     val used: Set<String> = emptySet(),
     /** Letter positions given as hints, in order; the first [hintsShown] are showing. */
     val hintOrder: List<Int> = emptyList(),
