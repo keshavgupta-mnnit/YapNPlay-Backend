@@ -67,7 +67,7 @@ is on hold or finished. `SeatInfo` gained `displayName`, `level`, `micOn`,
 
 ## HTTP
 - `POST /matches/{matchId}/voice-token` → `VoiceToken` (players and watchers;
-  a room match uses the room's voice room).
+  every match, room or Quick Play, has its own voice room for its players and spectators).
 - `POST /rooms/{roomId}/voice-token` → `VoiceToken` (members), 10-minute pass.
 - `POST /devices`, `POST /penalties/clear-with-ad` → 204.
 - Profile, friends and blocks exactly as the app contract (0.3.1 + `GET /blocks`, `DELETE /blocks/{userId}`); `avatarId` accepts `a01`…`a18`.

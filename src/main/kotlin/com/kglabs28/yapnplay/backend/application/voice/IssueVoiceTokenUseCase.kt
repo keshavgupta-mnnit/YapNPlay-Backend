@@ -11,9 +11,10 @@ import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
 
 /**
- * Short-lived voice passes (10 minutes). Voice follows the room: members
- * of a room share its voice room; a Quick Play table gets its own. The
- * app asks again before the pass runs out.
+ * Short-lived voice passes (10 minutes). Members of a room share its
+ * lobby's voice room; every match has its own, for its players and
+ * spectators only, so the lobby never hears the table (or the other way
+ * round). The app asks again before the pass runs out.
  */
 class IssueVoiceTokenUseCase(
     private val signer: VoiceTokenSigner?,
@@ -30,9 +31,7 @@ class IssueVoiceTokenUseCase(
     suspend fun forMatch(userId: String, matchId: String): VoiceToken {
         val match = matches.find(matchId) ?: throw ServiceException(ErrorCode.NOT_FOUND, BackendStrings.NO_SUCH_MATCH)
         if (userId !in match.presentUsers + match.seatedUsers) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
-        // A room match talks in the room's voice room; Quick Play has its own.
-        val voiceRoom = match.roomId?.let { BackendConstants.VOICE_ROOM_PREFIX + it } ?: (BackendConstants.VOICE_MATCH_PREFIX + matchId)
-        return issue(userId, voiceRoom)
+        return issue(userId, BackendConstants.VOICE_MATCH_PREFIX + matchId)
     }
 
     private suspend fun issue(userId: String, voiceRoom: String): VoiceToken {
