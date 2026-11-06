@@ -4,6 +4,8 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.12.5 — web app: POST /auth/google (GoogleSignInBody -> GoogleSignedIn, GOOGLE_SIGN_IN_UNAVAILABLE),
+ * POST /auth/ws-ticket (WsTicket) and `/ws?ticket=&games=` (browsers cannot set WebSocket headers), CORS for WEB_APP_ORIGINS.
  * 0.12.4 — SaveRoom(name?) (ROOM channel): the leader saves a Quick Play party as a Game Room with
  * everyone in it (null name: add newcomers); RoomInfo.savedRoomId / savedRoomMissing.
  * 0.12.3 — FriendSummary.activity (OFFLINE, ONLINE, IN_ROOM, PLAYING); PlayInvite push (ROOM channel)
@@ -43,4 +45,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.12.4"
+const val CONTRACT_VERSION: String = "0.12.5"

@@ -29,6 +29,8 @@ object UsersTable : Table("users") {
     val lastSeenAt = long("last_seen_at")
     /** V18: the phone the guest was made on (Android's per-app id), or null. */
     val deviceId = varchar("device_id", DEVICE_ID_MAX_LENGTH).nullable()
+    /** V25: the linked Google account's subject id (web sign-in, unique), or null. */
+    val googleSubject = varchar("google_subject", GOOGLE_SUBJECT_MAX_LENGTH).nullable()
 
     override val primaryKey = PrimaryKey(id)
 
@@ -37,4 +39,5 @@ object UsersTable : Table("users") {
     private const val USER_CODE_LENGTH = 6
     private const val AVATAR_ID_MAX_LENGTH = 8
     private const val PLAY_GAMES_ID_MAX_LENGTH = 128
+    private const val GOOGLE_SUBJECT_MAX_LENGTH = 255
 }

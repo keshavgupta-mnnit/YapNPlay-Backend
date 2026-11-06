@@ -19,6 +19,7 @@ import com.kglabs28.yapnplay.backend.application.match.MatchRegistry
 import com.kglabs28.yapnplay.backend.application.match.MatchService
 import com.kglabs28.yapnplay.backend.infrastructure.db.DatabaseHandle
 import com.kglabs28.yapnplay.backend.plugins.configureHttp
+import com.kglabs28.yapnplay.backend.plugins.configureCors
 import com.kglabs28.yapnplay.backend.plugins.configureRouting
 import com.kglabs28.yapnplay.backend.plugins.configureSecurity
 import com.kglabs28.yapnplay.backend.plugins.configureSockets
@@ -65,8 +66,9 @@ fun Application.module(config: BackendConfig, overrides: BackendOverrides = Back
     if (restored > 0) log.info("Brought back $restored running match(es)")
 
     configureHttp(koin.get())
+    configureCors(config.webAppOrigins)
     configureStatusPages()
-    configureSecurity(koin.get(), config.devMode, config.guestCreationsPerHour)
+    configureSecurity(koin.get(), koin.get(), config.devMode, config.guestCreationsPerHour)
     configureSockets()
     configureRouting(koin)
 

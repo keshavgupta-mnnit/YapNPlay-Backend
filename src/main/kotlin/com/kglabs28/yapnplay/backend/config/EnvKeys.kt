@@ -29,6 +29,10 @@ object EnvKeys {
     /** Play Games server sign-in: the game server (web) OAuth client. The secret is a real secret. */
     const val PLAY_GAMES_CLIENT_ID = "PLAY_GAMES_CLIENT_ID"
     const val PLAY_GAMES_CLIENT_SECRET = "PLAY_GAMES_CLIENT_SECRET"
+    /** The web app's Google sign-in OAuth client id (public). Google sign-in is off when unset. */
+    const val GOOGLE_WEB_CLIENT_ID = "GOOGLE_WEB_CLIENT_ID"
+    /** Comma-separated origins the web app is served from (CORS). Browsers are refused when unset. */
+    const val WEB_APP_ORIGINS = "WEB_APP_ORIGINS"
     /** City Bazaar rounds before the richest player wins (when the room keeps the round limit on). */
     const val CITY_BAZAAR_ROUND_LIMIT = "CITY_BAZAAR_ROUND_LIMIT"
     /** Rounds added when City Bazaar players vote to keep going. */

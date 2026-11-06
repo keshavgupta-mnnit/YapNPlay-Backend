@@ -106,6 +106,20 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
         if (e.sqlState == UNIQUE_VIOLATION) false else throw e
     }
 
+    override suspend fun findByGoogleSubject(subject: String): User? =
+        db.run { UsersTable.selectAll().where { UsersTable.googleSubject eq subject }.singleOrNull()?.toUser() }
+
+    override suspend fun linkGoogle(id: String, subject: String): Boolean = try {
+        val uuid = id.toUuidOrNull() ?: return false
+        db.run {
+            UsersTable.update({ (UsersTable.id eq uuid) and UsersTable.googleSubject.isNull() }) {
+                it[googleSubject] = subject
+            } > 0
+        }
+    } catch (e: ExposedSQLException) {
+        if (e.sqlState == UNIQUE_VIOLATION) false else throw e
+    }
+
     override suspend fun updateSecretHash(id: String, secretHash: String) {
         val uuid = id.toUuidOrNull() ?: return
         db.run { UsersTable.update({ UsersTable.id eq uuid }) { it[UsersTable.secretHash] = secretHash } }

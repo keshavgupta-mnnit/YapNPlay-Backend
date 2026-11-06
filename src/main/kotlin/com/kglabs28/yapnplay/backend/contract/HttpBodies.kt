@@ -329,6 +329,31 @@ data class PlayGamesSignedIn(
     val restored: Boolean,
 )
 
+/** `POST /auth/google` (0.12.5): the Google ID token from the web app's sign-in. */
+@Serializable
+data class GoogleSignInBody(
+    val idToken: String,
+)
+
+/**
+ * The account to use from now on. [restored] true: an account already
+ * linked to this Google account came back; its secret is new, so other
+ * browsers signed in to it must sign in again.
+ */
+@Serializable
+data class GoogleSignedIn(
+    val userId: String,
+    val secret: String,
+    val restored: Boolean,
+)
+
+/** `POST /auth/ws-ticket` (0.12.5): opens `/ws?ticket=` once, before [expiresAt] (epoch ms). */
+@Serializable
+data class WsTicket(
+    val ticket: String,
+    val expiresAt: Long,
+)
+
 /** 0.4.5 `POST /coins/ad-reward`: after a fully watched rewarded ad. [coins] is the new balance. */
 @Serializable
 data class CoinsReward(

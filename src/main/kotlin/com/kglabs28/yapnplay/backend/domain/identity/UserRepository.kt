@@ -32,6 +32,12 @@ interface UserRepository {
     /** Links [playerId] to user [id]; false when that user already has a link or the player is taken. */
     suspend fun linkPlayGames(id: String, playerId: String): Boolean
 
+    /** The account linked to Google account [subject] (web sign-in), if any. */
+    suspend fun findByGoogleSubject(subject: String): User?
+
+    /** Links Google account [subject] to user [id]; false when that user already has one or the subject is taken. */
+    suspend fun linkGoogle(id: String, subject: String): Boolean
+
     /** Replaces the user's secret (only its hash is stored). */
     suspend fun updateSecretHash(id: String, secretHash: String)
 

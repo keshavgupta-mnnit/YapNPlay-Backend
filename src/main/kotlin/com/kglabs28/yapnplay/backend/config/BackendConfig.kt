@@ -36,4 +36,8 @@ data class BackendConfig(
     val playGamesClientId: String = BackendConstants.PLAY_GAMES_CLIENT_ID,
     /** Its client secret; null: Play Games sign-in answers PLAY_GAMES_UNAVAILABLE. */
     val playGamesClientSecret: String? = null,
+    /** The web app's Google OAuth client id (public); null: Google sign-in answers GOOGLE_SIGN_IN_UNAVAILABLE. */
+    val googleWebClientId: String? = null,
+    /** Origins the web app is served from (e.g. https://play.example.com); browsers may call the API only from these. */
+    val webAppOrigins: Set<String> = emptySet(),
 )

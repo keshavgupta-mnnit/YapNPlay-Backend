@@ -32,6 +32,9 @@ class BackendConfigLoader(private val env: (String) -> String? = System::getenv)
             cityBazaarBankStart = int(EnvKeys.CITY_BAZAAR_BANK_START)?.takeIf { it > 0 } ?: BANK_START,
             playGamesClientId = env(EnvKeys.PLAY_GAMES_CLIENT_ID)?.trim()?.takeIf { it.isNotEmpty() } ?: BackendConstants.PLAY_GAMES_CLIENT_ID,
             playGamesClientSecret = env(EnvKeys.PLAY_GAMES_CLIENT_SECRET)?.trim()?.takeIf { it.isNotEmpty() },
+            googleWebClientId = env(EnvKeys.GOOGLE_WEB_CLIENT_ID)?.trim()?.takeIf { it.isNotEmpty() },
+            webAppOrigins = env(EnvKeys.WEB_APP_ORIGINS).orEmpty()
+                .split(',').map { it.trim().trimEnd('/') }.filter { it.isNotEmpty() }.toSet(),
         )
     }
 

@@ -72,6 +72,9 @@ object BackendConstants {
     const val WS_RECENT_REPLIES = 128
     const val WS_OUTGOING_BUFFER = 256
     const val WS_DEV_TOKEN_QUERY = "token"
+    /** 0.12.5: the web app's one-time WebSocket ticket (`/ws?ticket=`), and how long one lasts. */
+    const val WS_TICKET_QUERY = "ticket"
+    const val WS_TICKET_SECONDS = 30L
     /** Private-use close code (4000–4999) sent to a connection a newer one replaced. */
     const val WS_SESSION_REPLACED_CODE: Short = 4000
 
@@ -81,6 +84,8 @@ object BackendConstants {
     val GAMES_IN_EVERY_APP = setOf("royal-ludo", "city-bazaar", "mono", "mono-chaos")
     /** The WebSocket header a newer app lists its games in, comma-separated. */
     const val APP_GAMES_HEADER = "X-YapNPlay-Games"
+    /** 0.12.5: the same list as `/ws?games=` (browsers cannot set WebSocket headers). */
+    const val APP_GAMES_QUERY = "games"
     /** A dropped connection counts as away after this grace (contract). */
     const val DISCONNECT_GRACE_MS = 5_000L
     /** Ticks or turn wakes in a row that throw before the match is aborted (ABORTED_ERROR). */

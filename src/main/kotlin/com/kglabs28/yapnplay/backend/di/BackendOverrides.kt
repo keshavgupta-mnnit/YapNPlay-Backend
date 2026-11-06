@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.domain.identity.GoogleIdVerifier
 import com.kglabs28.yapnplay.backend.domain.identity.PlayGamesVerifier
 import com.kglabs28.yapnplay.backend.domain.common.Clock
 import com.kglabs28.yapnplay.backend.infrastructure.db.DatabaseHandle
@@ -13,4 +14,6 @@ data class BackendOverrides(
     val clock: Clock? = null,
     /** Tests replace Google's Play Games check. */
     val playGames: PlayGamesVerifier? = null,
+    /** Tests replace Google's ID-token check. */
+    val google: GoogleIdVerifier? = null,
 )

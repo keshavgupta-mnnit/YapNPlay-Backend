@@ -60,6 +60,17 @@ class InMemoryUserRepository : UserRepository {
         return true
     }
 
+    private val google = mutableMapOf<String, String>()
+
+    override suspend fun findByGoogleSubject(subject: String): User? =
+        google.entries.firstOrNull { it.value == subject }?.key?.let { users[it] }
+
+    override suspend fun linkGoogle(id: String, subject: String): Boolean {
+        if (id in google || subject in google.values) return false
+        google[id] = subject
+        return true
+    }
+
     override suspend fun updateSecretHash(id: String, secretHash: String) {
         users[id]?.let { users[id] = it.copy(secretHash = secretHash) }
     }

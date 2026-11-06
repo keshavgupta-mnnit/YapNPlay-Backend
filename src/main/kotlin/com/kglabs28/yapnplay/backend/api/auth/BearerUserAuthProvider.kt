@@ -3,6 +3,7 @@ package com.kglabs28.yapnplay.backend.api.auth
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.application.identity.AuthenticateUseCase
+import com.kglabs28.yapnplay.backend.application.identity.WsTicketIssuer
 import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.config.BackendStrings
 import io.ktor.http.HttpStatusCode
@@ -15,17 +16,25 @@ import io.ktor.server.request.path
 import io.ktor.server.response.respond
 
 /**
- * `Authorization: Bearer <userId>.<secret>` on every call. In DEV_MODE the
- * WebSocket may pass `?token=<userId>.<secret>` instead, because browser
- * consoles cannot set headers on a WebSocket.
+ * `Authorization: Bearer <userId>.<secret>` on every call. Browsers cannot
+ * set headers on a WebSocket, so `/ws` also takes a one-time
+ * `?ticket=` (the web app, 0.12.5), and in DEV_MODE `?token=<userId>.<secret>`
+ * (browser consoles).
  */
 class BearerUserAuthProvider(config: Config) : AuthenticationProvider(config) {
 
     private val authenticate = config.authenticate
     private val devMode = config.devMode
+    private val tickets = config.tickets
 
     override suspend fun onAuthenticate(context: AuthenticationContext) {
         val call = context.call
+        if (call.request.path() == BackendConstants.WS_PATH) {
+            call.request.queryParameters[BackendConstants.WS_TICKET_QUERY]?.let(tickets::redeem)?.let {
+                context.principal(UserPrincipal(it))
+                return
+            }
+        }
         val token = headerToken(call.request.parseAuthorizationHeader())
             ?: call.request.queryParameters[BackendConstants.WS_DEV_TOKEN_QUERY]
                 ?.takeIf { devMode && call.request.path() == BackendConstants.WS_PATH }
@@ -51,6 +60,7 @@ class BearerUserAuthProvider(config: Config) : AuthenticationProvider(config) {
         name: String,
         val authenticate: AuthenticateUseCase,
         val devMode: Boolean,
+        val tickets: WsTicketIssuer,
     ) : AuthenticationProvider.Config(name)
 
     companion object {

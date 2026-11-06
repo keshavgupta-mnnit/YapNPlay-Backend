@@ -35,6 +35,8 @@ enum class ErrorCode {
     GROUP_EXISTS,
     /** 0.4.3: Play Games sign-in is not set up on this server. */
     PLAY_GAMES_UNAVAILABLE,
+    /** 0.12.5: Google sign-in (web app) is not set up on this server. */
+    GOOGLE_SIGN_IN_UNAVAILABLE,
     /** 0.4.5: Quick Play needs the entry fee in coins. */
     NOT_ENOUGH_COINS,
 }

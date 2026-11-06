@@ -1,6 +1,9 @@
 package com.kglabs28.yapnplay.backend.contract
 
 import com.kglabs28.yapnplay.backend.contract.EmojiGift
+import com.kglabs28.yapnplay.backend.contract.GoogleSignInBody
+import com.kglabs28.yapnplay.backend.contract.GoogleSignedIn
+import com.kglabs28.yapnplay.backend.contract.WsTicket
 import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrice
 import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrices
 import com.kglabs28.yapnplay.backend.contract.EmojiGiftResult
@@ -120,6 +123,9 @@ object GoldenSamples {
         GoldenCase("ContinueVoted", MonoWireEvent.serializer(), MonoWireEvent.ContinueVoted(continued = true, yes = 2, voters = 3)),
         GoldenCase("PlayGamesSignInBody", PlayGamesSignInBody.serializer(), PlayGamesSignInBody("4/0AeanS0Z-server-auth-code")),
         GoldenCase("PlayGamesSignedIn", PlayGamesSignedIn.serializer(), PlayGamesSignedIn("u-asha", "s3cr3t-from-server", restored = true)),
+        GoldenCase("GoogleSignInBody", GoogleSignInBody.serializer(), GoogleSignInBody("eyJhbGciOiJSUzI1NiJ9.example.not-real")),
+        GoldenCase("GoogleSignedIn", GoogleSignedIn.serializer(), GoogleSignedIn("u-asha", "s3cr3t-from-server", restored = false)),
+        GoldenCase("WsTicket", WsTicket.serializer(), WsTicket("t1ck3t-example-not-real", 1_700_000_030_000)),
         GoldenCase("InviteToRoomReply", InviteToRoomReply.serializer(), InviteToRoomReply(listOf("u-friend-1"), listOf("u-stranger"))),
         GoldenCase(
             "RoomInvites",

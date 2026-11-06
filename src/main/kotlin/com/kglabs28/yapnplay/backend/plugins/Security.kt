@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.plugins
 
 import com.kglabs28.yapnplay.backend.api.auth.BearerUserAuthProvider
 import com.kglabs28.yapnplay.backend.application.identity.AuthenticateUseCase
+import com.kglabs28.yapnplay.backend.application.identity.WsTicketIssuer
 import com.kglabs28.yapnplay.backend.config.BackendConstants
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -16,9 +17,9 @@ val GUEST_RATE_LIMIT = RateLimitName("guest-creation")
 val PLAYER_RATE_LIMIT = RateLimitName("player-calls")
 
 /** Bearer sign-in for every protected route, and the guest-creation rate limit. */
-fun Application.configureSecurity(authenticate: AuthenticateUseCase, devMode: Boolean, guestCreationsPerHour: Int) {
+fun Application.configureSecurity(authenticate: AuthenticateUseCase, tickets: WsTicketIssuer, devMode: Boolean, guestCreationsPerHour: Int) {
     install(Authentication) {
-        register(BearerUserAuthProvider(BearerUserAuthProvider.Config(BearerUserAuthProvider.NAME, authenticate, devMode)))
+        register(BearerUserAuthProvider(BearerUserAuthProvider.Config(BearerUserAuthProvider.NAME, authenticate, devMode, tickets)))
     }
     install(RateLimit) {
         register(GUEST_RATE_LIMIT) {

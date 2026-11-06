@@ -61,6 +61,8 @@ object BackendStrings {
     const val END_VOTE_TOO_SOON = "You asked to end the match a moment ago. Try again in a few minutes."
     const val PLAY_GAMES_UNAVAILABLE = "Play Games sign-in is not available right now."
     const val PLAY_GAMES_REJECTED = "Google could not confirm this Play Games sign-in."
+    const val GOOGLE_SIGN_IN_UNAVAILABLE = "Google sign-in is not available right now."
+    const val GOOGLE_SIGN_IN_REJECTED = "Google could not confirm this sign-in."
     const val ROOM_INVITE_BODY = "Tap to answer"
     const val GROUP_NAME_REQUIRED = "Give your room a name."
     const val GROUP_NEEDS_INVITEES = "Pick at least one friend to invite."

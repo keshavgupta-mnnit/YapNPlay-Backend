@@ -37,6 +37,8 @@ object HttpPaths {
     const val FEEDBACK_TICKET = "/feedback/{ticketId}"
     const val TICKET_ID_PARAM = "ticketId"
     const val PLAY_GAMES_SIGN_IN = "/auth/play-games"
+    const val GOOGLE_SIGN_IN = "/auth/google"
+    const val WS_TICKET = "/auth/ws-ticket"
     const val AD_REWARD = "/coins/ad-reward"
     const val AD_STATUS = "/coins/ad-status"
     const val LEAGUES = "/coins/leagues"

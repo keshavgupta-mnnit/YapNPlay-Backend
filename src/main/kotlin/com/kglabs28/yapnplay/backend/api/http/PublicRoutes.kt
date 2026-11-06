@@ -8,6 +8,8 @@ import com.kglabs28.yapnplay.backend.config.BuildInfo
 import io.ktor.server.request.receive
 import io.ktor.http.HttpHeaders
 import com.kglabs28.yapnplay.backend.contract.PlayGamesSignInBody
+import com.kglabs28.yapnplay.backend.contract.GoogleSignInBody
+import com.kglabs28.yapnplay.backend.application.identity.GoogleSignInUseCase
 import com.kglabs28.yapnplay.backend.application.identity.PlayGamesSignInUseCase
 import com.kglabs28.yapnplay.backend.contract.transport.CONTRACT_VERSION
 import com.kglabs28.yapnplay.backend.application.identity.CreateGuestUseCase
@@ -20,8 +22,14 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 
-/** Routes that need no sign-in: health check, guest creation and Play Games sign-in. */
-fun Route.publicRoutes(createGuest: CreateGuestUseCase, playGames: PlayGamesSignInUseCase, findDevice: FindDeviceAccountUseCase, guestLimit: RateLimitName) {
+/** Routes that need no sign-in: health check, guest creation, Play Games and Google (web) sign-in. */
+fun Route.publicRoutes(
+    createGuest: CreateGuestUseCase,
+    playGames: PlayGamesSignInUseCase,
+    google: GoogleSignInUseCase,
+    findDevice: FindDeviceAccountUseCase,
+    guestLimit: RateLimitName,
+) {
     get(HttpPaths.HEALTH) {
         call.respond(HealthResponse(BackendStrings.STATUS_OK, CONTRACT_VERSION, BuildInfo.version))
     }
@@ -41,6 +49,10 @@ fun Route.publicRoutes(createGuest: CreateGuestUseCase, playGames: PlayGamesSign
                 ?.takeIf { it.startsWith(BEARER_PREFIX, ignoreCase = true) }
                 ?.substring(BEARER_PREFIX.length)?.trim()
             call.respond(playGames(call.receive<PlayGamesSignInBody>().serverAuthCode, bearer))
+        }
+        // The web app's only way in (it never makes a guest).
+        post(HttpPaths.GOOGLE_SIGN_IN) {
+            call.respond(google(call.receive<GoogleSignInBody>().idToken))
         }
     }
 }
