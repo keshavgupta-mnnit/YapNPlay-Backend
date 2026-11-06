@@ -1,0 +1,52 @@
+[
+    {
+        "type": "CyberFrame",
+        "frame": 121,
+        "time": 9050,
+        "phase": "PLAYING",
+        "countdownMs": 0,
+        "closingInMs": null,
+        "players": [
+            {
+                "seat": 1,
+                "x": 2660,
+                "y": 500,
+                "facing": "RIGHT",
+                "moving": true,
+                "lives": 4,
+                "score": 210,
+                "radius": 4,
+                "boostMs": 0,
+                "shieldMs": 0,
+                "out": false,
+                "kills": 0,
+                "streak": 0
+            }
+        ],
+        "bombs": [],
+        "flames": [],
+        "items": [],
+        "crates": [
+            4,
+            5
+        ],
+        "walls": null,
+        "hits": [
+            {
+                "victim": 2,
+                "by": 1,
+                "livesLeft": 4,
+                "victimPoints": -25,
+                "byPoints": 100,
+                "self": false,
+                "crushed": false
+            }
+        ],
+        "broken": [
+            20
+        ],
+        "booms": [
+            36
+        ]
+    }
+]

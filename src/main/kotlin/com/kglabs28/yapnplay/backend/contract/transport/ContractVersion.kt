@@ -4,6 +4,11 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.13.2 — Cyber Blast: CyberPlayerWire.kills / streak; no bomb limit by default, 3 s fuse, reach 1 + kills in a row.
+ * 0.13.1 — Cyber Blast room toggles (big_arena, mini_map, fewer_blockers, more_blockers); CyberBlastPublicState.miniMap;
+ * tiles are `row * 64 + col` on any board size (cols / rows in the public state).
+ * 0.13.0 — Cyber Blast (game id cyber-blast), a real-time game: CyberInput (MATCH channel, acked, nothing
+ * forwarded), CyberFrame MatchRelay about every 50 ms, CyberBlastPublicState, CyberHit / CyberOut events.
  * 0.12.5 — web app: POST /auth/google (GoogleSignInBody -> GoogleSignedIn, GOOGLE_SIGN_IN_UNAVAILABLE),
  * POST /auth/ws-ticket (WsTicket) and `/ws?ticket=&games=` (browsers cannot set WebSocket headers), CORS for WEB_APP_ORIGINS.
  * 0.12.4 — SaveRoom(name?) (ROOM channel): the leader saves a Quick Play party as a Game Room with
@@ -45,4 +50,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.12.5"
+const val CONTRACT_VERSION: String = "0.13.2"

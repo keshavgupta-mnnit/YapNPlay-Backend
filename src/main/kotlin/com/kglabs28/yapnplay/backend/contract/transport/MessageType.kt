@@ -68,6 +68,8 @@ object MessageType {
     const val DOODLE_UNDO = "DoodleUndo"
     const val DOODLE_CLEAR = "DoodleClear"
     const val DOODLE_SYNC = "DoodleSync"
+    /** 0.13.0 Cyber Blast: the player's steering and bombs (frames come back as MatchRelay `CyberFrame`). */
+    const val CYBER_INPUT = "CyberInput"
     /** 0.11.0: send an emoji to a seat for coins (answered with EmojiGiftResult). */
     const val SEND_EMOJI_GIFT = "SendEmojiGift"
 

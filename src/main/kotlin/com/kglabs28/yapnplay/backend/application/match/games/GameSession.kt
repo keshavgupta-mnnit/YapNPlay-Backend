@@ -41,6 +41,19 @@ interface GameSession {
      */
     fun relay(seat: Int?, type: String, payload: JsonObject): RelayOut? = null
 
+    /**
+     * A real-time game (Cyber Blast): how often the match runs [frame], in ms; null for
+     * turn games, which only use [tick].
+     */
+    val frameMillis: Long? get() = null
+
+    /**
+     * One real-time frame at [now]: the game moves on, [cpuSeats] (seats the server plays)
+     * act, and [FrameOut.broadcast] goes to the whole table as a `MatchRelay`. Its
+     * [FrameOut.events] (a heart lost, the end) also make a full update. Null: nothing to send.
+     */
+    fun frame(now: Long, cpuSeats: Set<Int>): FrameOut? = null
+
     /** True while [seat] may not talk (Doodle King: their own turn to draw); the server keeps their mic off. */
     fun silenced(seat: Int): Boolean = false
 
@@ -120,3 +133,6 @@ interface GameSession {
 
 /** What a side message ([GameSession.relay]) sends on: to everyone else at the table, and back to the sender. */
 data class RelayOut(val toOthers: JsonObject? = null, val toSender: JsonObject? = null)
+
+/** A real-time frame ([GameSession.frame]): what every viewer gets, and events worth a full update. */
+data class FrameOut(val broadcast: JsonObject?, val events: List<GameEvent> = emptyList())

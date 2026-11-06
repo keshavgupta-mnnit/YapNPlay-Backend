@@ -1,0 +1,18 @@
+[
+    {
+        "type": "CyberHit",
+        "hit": {
+            "victim": 2,
+            "by": 2,
+            "livesLeft": 3,
+            "victimPoints": -15,
+            "byPoints": 0,
+            "self": true,
+            "crushed": false
+        }
+    },
+    {
+        "type": "CyberOut",
+        "seat": 3
+    }
+]

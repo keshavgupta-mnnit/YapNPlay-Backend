@@ -26,6 +26,7 @@ import com.kglabs28.yapnplay.backend.contract.SeatPresence
 import com.kglabs28.yapnplay.backend.contract.transport.Channel
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -79,6 +80,17 @@ class MatchActor(
             inbox.trySend(MatchCommand.Tick)
         }
     }
+    /** A frame is waiting in the inbox: a slow worker skips frames instead of piling them up. */
+    private val frameQueued = AtomicBoolean(false)
+    /** A real-time game's frames (Cyber Blast), on top of the regular tick; none for turn games. */
+    private val framer: Job? = state.session.frameMillis?.let { every ->
+        scope.launch {
+            while (isActive) {
+                delay(every)
+                if (frameQueued.compareAndSet(false, true)) inbox.trySend(MatchCommand.Frame)
+            }
+        }
+    }
 
     init {
         // Saved from the start, so even a match nobody has moved in yet survives a restart.
@@ -120,6 +132,7 @@ class MatchActor(
     /** Stops play; the last checkpoint is still written ([awaitSaved]). */
     fun stop() {
         ticker.cancel()
+        framer?.cancel()
         inbox.close()
         worker.cancel()
         checkpoints.close()
@@ -133,6 +146,7 @@ class MatchActor(
             is MatchCommand.Request -> command.reply.complete(handle(command.userId, command.action))
             is MatchCommand.Wake -> runTimer(command) { if (command.token == wakeToken) playDueTurn() }
             MatchCommand.Tick -> runTimer(command) { tick() }
+            MatchCommand.Frame -> runTimer(command) { frame() }
         }
     }
 
@@ -157,6 +171,7 @@ class MatchActor(
         state.ended = true
         state.offer = null
         ticker.cancel()
+        framer?.cancel()
         checkpoints.trySend(null)
         checkpoints.close()
         val reason = BackendStrings.matchBroke(cause::class.simpleName, cause.message)
@@ -226,6 +241,8 @@ class MatchActor(
     private fun relay(userId: String, action: MatchAction.Relay): MatchResult {
         val seat = state.seatOf(userId)?.seat
         if (seat == null && userId !in state.spectators) throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
+        // Sending something means they are at the table (a Cyber Blast player steering again).
+        state.seatOf(userId)?.takeIf { it.presence == SeatPresence.AWAY }?.let { handover.setAway(it.seat, away = false) }
         val out = state.session.relay(seat, action.type, action.payload)
             ?: throw ServiceException(ErrorCode.ILLEGAL_MOVE, BackendStrings.ILLEGAL_MOVE)
         out.toOthers?.let { message ->
@@ -430,6 +447,22 @@ class MatchActor(
         scheduleWake()
     }
 
+    /**
+     * A real-time game's frame: its board goes to every viewer as a light relay;
+     * a big moment in it (a heart lost, the end) also makes a full update. The
+     * board stands still while the match waits to start or players vote to end.
+     */
+    private fun frame() {
+        frameQueued.set(false)
+        if (state.ended || state.onHold || state.endVote != null) return
+        val out = state.session.frame(deps.clock.nowMillis(), state.serverSeats()) ?: return
+        out.broadcast?.let { message ->
+            val push = deps.codec.push(Channel.MATCH, MessageType.MATCH_RELAY, JsonObject.serializer(), message)
+            state.viewers().forEach { deps.notifier.send(it, push) }
+        }
+        if (out.events.isNotEmpty()) publish(out.events, outOfTurn = true)
+    }
+
     private fun tick() {
         if (state.ended) return
         val now = deps.clock.nowMillis()
@@ -588,6 +621,7 @@ class MatchActor(
         state.ended = true
         state.offer = null
         ticker.cancel()
+        framer?.cancel()
         checkpoints.trySend(null)
         checkpoints.close()
         // A player who left (and didn't take a seat back) ranks below everyone still in, the latest leaver first.

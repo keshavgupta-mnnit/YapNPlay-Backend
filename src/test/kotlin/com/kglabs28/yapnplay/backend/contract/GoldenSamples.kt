@@ -8,6 +8,16 @@ import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrice
 import com.kglabs28.yapnplay.backend.contract.EmojiGiftPrices
 import com.kglabs28.yapnplay.backend.contract.EmojiGiftResult
 import com.kglabs28.yapnplay.backend.contract.SendEmojiGift
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBlastPublicState
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBlastWireEvent
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBombWire
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberFlameWire
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberFrame
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberHitWire
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberInput
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberItemWire
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberPlayerWire
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberRelay
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleClear
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleDrawing
 import com.kglabs28.yapnplay.backend.contract.doodleking.DoodleFeedEntry
@@ -215,6 +225,39 @@ object GoldenSamples {
         GoldenCase(
             "DoodleKingEvents", ListSerializer(DoodleKingWireEvent.serializer()),
             listOf(DoodleKingWireEvent.Guessed(2, 100), DoodleKingWireEvent.Revealed("bicycle", mapOf(1 to 55, 2 to 100))),
+        ),
+        GoldenCase("CyberInput", CyberInput.serializer(), CyberInput("m-1", dir = "LEFT", bomb = true)),
+        GoldenCase(
+            "CyberBlastPublicState", CyberBlastPublicState.serializer(),
+            CyberBlastPublicState(
+                cols = 15, rows = 11, lives = 5, frameMs = 50, fuseMs = 2_500, boostMs = 30_000,
+                frame = CyberFrame(
+                    frame = 120, time = 9_000, phase = "PLAYING", closingInMs = 171_000,
+                    players = listOf(
+                        CyberPlayerWire(1, 2_500, 500, "RIGHT", moving = true, lives = 4, score = 110, radius = 3, boostMs = 12_000),
+                        CyberPlayerWire(2, 7_500, 4_500, "DOWN", moving = false, lives = 5, score = -15, radius = 2, shieldMs = 800),
+                    ),
+                    bombs = listOf(CyberBombWire(7, 36, 1, 3, 1_200)),
+                    flames = listOf(CyberFlameWire(60, 2, "CENTRE", 300), CyberFlameWire(61, 2, "HORIZONTAL", 300)),
+                    items = listOf(CyberItemWire(92, "SPEED", 9_000)),
+                    crates = listOf(4, 5, 20), walls = emptyList(),
+                ),
+            ),
+        ),
+        GoldenCase(
+            "CyberRelay", ListSerializer(CyberRelay.serializer()),
+            listOf(
+                CyberFrame(
+                    frame = 121, time = 9_050, phase = "PLAYING",
+                    players = listOf(CyberPlayerWire(1, 2_660, 500, "RIGHT", moving = true, lives = 4, score = 210, radius = 4)),
+                    hits = listOf(CyberHitWire(victim = 2, by = 1, livesLeft = 4, victimPoints = -25, byPoints = 100)),
+                    broken = listOf(20), booms = listOf(36), crates = listOf(4, 5),
+                ),
+            ),
+        ),
+        GoldenCase(
+            "CyberBlastEvents", ListSerializer(CyberBlastWireEvent.serializer()),
+            listOf(CyberBlastWireEvent.Hit(CyberHitWire(2, 2, 3, -15, 0, self = true)), CyberBlastWireEvent.Out(3)),
         ),
         // ── MATCHMAKING channel ─────────────────────────────────────────
         GoldenCase("JoinQueue", JoinQueue.serializer(), JoinQueue("royal-ludo", entryCoins = 500)),

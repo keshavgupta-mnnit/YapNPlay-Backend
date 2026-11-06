@@ -61,8 +61,8 @@ class MatchChannelHandler(
             val result = emojiGifts(userId, codec.payload(request, SendEmojiGift.serializer()))
             codec.reply(request, MessageType.EMOJI_GIFT_RESULT, EmojiGiftResult.serializer(), result)
         }
-        // Doodle King's drawing: forwarded to the table at once, no full update.
-        MessageType.DOODLE_STROKE, MessageType.DOODLE_UNDO, MessageType.DOODLE_CLEAR, MessageType.DOODLE_SYNC -> {
+        // Doodle King's drawing (forwarded to the table at once) and Cyber Blast's steering: no full update.
+        MessageType.DOODLE_STROKE, MessageType.DOODLE_UNDO, MessageType.DOODLE_CLEAR, MessageType.DOODLE_SYNC, MessageType.CYBER_INPUT -> {
             val matchId = request.payload[MATCH_ID]?.jsonPrimitive?.contentOrNull
                 ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_REQUEST)
             send(userId, matchId, MatchAction.Relay(request.type, request.payload))

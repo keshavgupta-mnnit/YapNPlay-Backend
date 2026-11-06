@@ -32,6 +32,8 @@ import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoEngine
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedMatchCheckpointStore
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedMatchOutcomeStore
 import com.kglabs28.yapnplay.backend.infrastructure.security.SecureGameRandom
+import com.kglabs28.yapnplay.backend.application.match.games.cyberblast.CyberBlastSessionFactory
+import com.kglabs28.yapnplay.backend.games.cyberblast.CyberBlastEngine
 import org.koin.dsl.module
 
 /** The games the server runs, matches and Quick Play. A new game adds its factory to the list. */
@@ -45,6 +47,7 @@ val matchModule = module {
             MonoChaosSessionFactory(MonoChaosEngine(), get(), get(), get(), get<Settings>()),
             // CPU players only while testing (admin setting), read on every check.
             DoodleKingSessionFactory(DoodleKingEngine { get<Settings>()[GameSettings.DK_TEST_BOTS] == 1 }, get(), get(), get(), get<Settings>()),
+            CyberBlastSessionFactory(CyberBlastEngine(), get(), get(), get<Settings>()),
         )
     }
     single { MatchRegistry() }

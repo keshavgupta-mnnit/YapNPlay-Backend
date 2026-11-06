@@ -15,4 +15,7 @@ sealed interface MatchCommand {
 
     /** The regular clock: presence, handover timeouts, the game's own timers. */
     data object Tick : MatchCommand
+
+    /** A real-time game's frame (Cyber Blast). */
+    data object Frame : MatchCommand
 }
