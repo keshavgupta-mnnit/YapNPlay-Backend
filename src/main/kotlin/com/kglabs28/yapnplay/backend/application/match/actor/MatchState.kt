@@ -31,6 +31,8 @@ class MatchState(
     var offer: SeatOfferState? = null
     /** Spectators who passed on the current handover. */
     val declined = mutableSetOf<String>()
+    /** Players who said no to their own seat back (they want to watch): never offered it again this match. */
+    val declinedSeatBack = mutableSetOf<String>()
     /** People whose seat someone else took over (not counting anyone seated again): ranked last at the end. */
     val pastHolders = mutableListOf<PastHolder>()
     /** Players and spectators talking with their mic off (shown as a grey glow). */

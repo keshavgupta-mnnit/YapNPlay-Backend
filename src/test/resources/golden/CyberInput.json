@@ -1,6 +1,7 @@
 {
     "matchId": "m-1",
     "dir": "LEFT",
+    "alt": "UP",
     "bomb": true,
     "tile": 129
 }

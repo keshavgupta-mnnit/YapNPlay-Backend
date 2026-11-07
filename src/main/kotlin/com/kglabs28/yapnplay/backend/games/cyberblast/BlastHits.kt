@@ -35,7 +35,7 @@ object BlastHits {
         var s = state.copy(players = state.players.map { p ->
             when {
                 // Losing a heart ends the streak: back to the starting reach.
-                p.seat == victim -> p.copy(lives = p.lives - 1, score = p.score + victimPoints, held = null, boostUntil = 0L, streak = 0, radius = rules.startRadius)
+                p.seat == victim -> p.copy(lives = p.lives - 1, score = p.score + victimPoints, held = null, heldAlt = null, boostUntil = 0L, streak = 0, radius = rules.startRadius)
                 p.seat == by && byPoints > 0 -> p.copy(
                     score = p.score + byPoints,
                     hits = p.hits + 1,

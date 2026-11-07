@@ -3,8 +3,8 @@ package com.kglabs28.yapnplay.backend.games.cyberblast
 import com.kglabs28.yapnplay.backend.games.base.play.Action
 import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
 
-/** The player pushes [dir] (null: lets go, stands still). */
-data class BlastSteer(val dir: BlastDir?) : Action
+/** The player pushes [dir] (null: lets go, stands still), and [alt] too when pushing between two ways (taken when [dir] is blocked). */
+data class BlastSteer(val dir: BlastDir?, val alt: BlastDir? = null) : Action
 
 /**
  * The player drops a bomb where they stand, or on [at]: the tile their own screen shows them on

@@ -116,7 +116,7 @@ class SeatHandover(
     private fun offerSeatBackToOwner(): Boolean {
         if (!isRoomMatch) return false
         val seat = state.seats.firstOrNull { s ->
-            !s.cpu && !s.removed && s.presence == SeatPresence.BOT && s.userId in state.spectators && s.userId !in state.declined
+            !s.cpu && !s.removed && s.presence == SeatPresence.BOT && s.userId in state.spectators && s.userId !in state.declined && s.userId !in state.declinedSeatBack
         } ?: return false
         offerTo(seat.seat, seat.displayName, state.spectators.getValue(seat.userId), round = 2)
         return true
@@ -212,6 +212,8 @@ class SeatHandover(
     /** Declined or ran out: the first time the leader decides, the second time the bot. */
     private fun passed(offer: SeatOfferState, stage: OfferStage.ToSpectator) {
         state.declined += stage.userId
+        // Their own seat, which the bot kept: they chose to watch, so it isn't offered again (the bot plays on).
+        if (state.seat(offer.seat).userId == stage.userId) state.declinedSeatBack += stage.userId
         if (stage.round > 1) toBot(offer.seat) else askLeader(offer)
     }
 

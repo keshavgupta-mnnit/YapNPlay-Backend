@@ -11,9 +11,20 @@ import kotlin.math.sign
  */
 object BlastMovement {
 
-    /** [player] walks [distance] (thousandths of a tile) the way they hold. */
+    /**
+     * [player] walks [distance] (thousandths of a tile) the way they hold. Pushing between two ways
+     * (a diagonal on the pad), the main one goes first; when it is blocked they go the side way
+     * ([BlastPlayer.heldAlt]), so turning into a corridor never needs an exact push.
+     */
     fun walk(state: CyberBlastState, player: BlastPlayer, distance: Int): BlastPlayer {
-        val dir = player.held ?: return player
+        val main = player.held ?: return player
+        val moved = walkTowards(state, player, main, distance)
+        val alt = player.heldAlt
+        if (alt == null || moved.x != player.x || moved.y != player.y) return moved
+        return walkTowards(state, player, alt, distance)
+    }
+
+    private fun walkTowards(state: CyberBlastState, player: BlastPlayer, dir: BlastDir, distance: Int): BlastPlayer {
         var x = player.x
         var y = player.y
         var left = distance

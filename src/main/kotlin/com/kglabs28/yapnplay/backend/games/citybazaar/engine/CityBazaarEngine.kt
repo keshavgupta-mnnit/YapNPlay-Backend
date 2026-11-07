@@ -127,7 +127,8 @@ class CityBazaarEngine : Game {
             }
             is StartAuction -> s.phase == CityBazaarPhase.DEBT && turn.startAuction(me, action.tile)
             CloseAuction -> s.phase == CityBazaarPhase.AUCTION && turn.closeAuction()
-            DeclareBankruptcy -> (s.phase == CityBazaarPhase.DEBT).also { if (it) turn.giveUp(me, s.debt?.payees.orEmpty()) }
+            // Bankrupt at once: every house and city back to the bank, what that raises to whoever is owed, out of the match.
+            DeclareBankruptcy -> (s.phase == CityBazaarPhase.DEBT).also { if (it) turn.bankrupt(me, s.debt?.payees.orEmpty()) }
             LateRollFine -> (s.phase == CityBazaarPhase.ROLL || s.phase == CityBazaarPhase.JAIL_ROLL).also { if (it) turn.lateRollFine(me) }
             EndMatch -> true.also { turn.finish() }
             else -> return reject("BAD_REQUEST", "Unknown action for City Royale")

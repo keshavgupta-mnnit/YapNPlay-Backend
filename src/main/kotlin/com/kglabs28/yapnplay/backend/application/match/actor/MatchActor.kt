@@ -68,6 +68,8 @@ class MatchActor(
     private var wakeToken = 0L
     /** Something changed since the last wake was planned (set by publish, cleared by scheduleWake). */
     private var rescheduleNeeded = true
+    /** The game ran on its own clock (an auction) at the last update: when it stops, the turn clock starts again. */
+    private var waitedForTick = false
     /** Timer runs (ticks, wakes) in a row that threw; too many and the match is aborted. */
     private var failuresInARow = 0
     /** The latest checkpoint to save; null means the match is over and its row goes. Older ones are skipped. */
@@ -557,8 +559,11 @@ class MatchActor(
         if (events.isNotEmpty()) state.pauseMs = session.pauseAfter(events) + if (newTurn) deps.settings[GameSettings.TURN_GAP_MS] else 0
         val deadline = state.deadline
         val fullTurn = now + state.pauseMs + session.turnSeconds * BackendConstants.MILLIS_PER_SECOND
+        // The game's own clock just let go (an auction closed): the seat whose turn it is gets a fresh clock.
+        val resumed = waitedForTick && !session.waitsForTick
+        waitedForTick = session.waitsForTick
         state.deadline = when {
-            deadline == null || newTurn -> fullTurn
+            deadline == null || newTurn || resumed -> fullTurn
             events.isEmpty() -> deadline
             outOfTurn -> maxOf(deadline, now + state.pauseMs)
             session.restartsClockOn(events) -> fullTurn

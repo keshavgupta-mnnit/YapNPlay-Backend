@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
 data class CyberInput(
     val matchId: String,
     val dir: String? = null,
+    /** 0.13.4: the side way also pushed (a diagonal on the pad), taken when [dir] is blocked. */
+    val alt: String? = null,
     val bomb: Boolean = false,
     /** 0.13.3: with [bomb], the tile the player's screen shows them on (it runs ahead of the server); the bomb goes there when it is beside the server's tile. */
     val tile: Int? = null,

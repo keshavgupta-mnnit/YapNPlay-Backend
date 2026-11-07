@@ -60,7 +60,9 @@ class BlastGoalDecision(
     private fun walkTo(goal: BlastGoal): Evaluation {
         val arrival = now + goal.steps * stepMs
         // Its own tile's bomb is the "bomb here" option, not a reason to wait.
-        val planned = if (goal.tile == me.tile) 0.0 else bombValue(goal.tile, arrival)?.let { it * settings.plannedBombPct / PERCENT } ?: 0.0
+        // A bomb it could drop there later: worth a share of what it would catch now (no escape search for
+        // every tile, that runs only for a bomb it really drops), and only for spots a few steps away.
+        val planned = if (goal.tile == me.tile || goal.steps > PLAN_STEPS) 0.0 else catchValue(goal.tile, arrival) * settings.plannedBombPct / PERCENT
         val boots = if (state.items.any { it.tile == goal.tile }) settings.boostValue * if (me.boosted(now)) USED_BOOTS else 1.0 else 0.0
         val hunt = huntAt(goal.tile)
         val fireRisk = danger[goal.tile]?.takeIf { it.until >= arrival }?.let { w ->
@@ -93,13 +95,19 @@ class BlastGoalDecision(
      * its fire (likelier the less room they have). Null when there'd be no way out in time.
      */
     private fun bombValue(tile: Int, at: Long): Double? {
+        val value = catchValue(tile, at)
+        if (value <= 0.0) return 0.0
+        return if (escapeSteps(tile, at) == null) null else value
+    }
+
+    /** Blockers a bomb on [tile] at [at] would break and players it would likely catch, cached per tile for this look. */
+    private val caught = mutableMapOf<Int, Double>()
+
+    private fun catchValue(tile: Int, at: Long): Double = caught.getOrPut(tile) {
         val reach = BlastGrid.reach(state, tile, me.radius)
         val fire = reach.fire.map { it.first }.toSet()
         val crates = reach.crates.size * rules.cratePoints.toDouble()
-        val caught = others.filter { it.tile in fire && !it.shielded(at + rules.fuseMs) }.sumOf { rules.hitPoints * catchChance(it, fire) }
-        val value = crates + caught
-        if (value <= 0.0) return 0.0
-        return if (escapeSteps(tile, at) == null) null else value
+        crates + others.filter { it.tile in fire && !it.shielded(at + rules.fuseMs) }.sumOf { rules.hitPoints * catchChance(it, fire) }
     }
 
     /** A player in the fire's way gets caught more often the fewer tiles they have to run to. */
@@ -131,6 +139,8 @@ class BlastGoalDecision(
         /** A tile's worth of walking at 1 tile a second, in ms × 1000 (speeds are thousandths of a tile a second). */
         const val MICROS_PER_TILE = 1_000_000L
         const val MAX_STEPS = 10
+        /** A bomb planned for later counts only at spots this many steps away or nearer. */
+        const val PLAN_STEPS = 6
         const val MARGIN_MS = 200L
         const val ROOM_STEPS = 3
         const val ROOM_FULL = 6

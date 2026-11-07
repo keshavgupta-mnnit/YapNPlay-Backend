@@ -73,6 +73,8 @@ data class BlastPlayer(
     val lives: Int,
     val radius: Int,
     val held: BlastDir? = null,
+    /** The side way they also push (a diagonal on the pad): taken when [held] is blocked. */
+    val heldAlt: BlastDir? = null,
     val facing: BlastDir = BlastDir.DOWN,
     val score: Int = 0,
     val boostUntil: Long = 0L,

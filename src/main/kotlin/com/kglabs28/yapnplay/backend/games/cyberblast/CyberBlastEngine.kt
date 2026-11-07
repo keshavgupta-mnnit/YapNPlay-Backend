@@ -70,7 +70,7 @@ class CyberBlastEngine : Game {
             is BlastAdvance -> BlastSimulation.advance(s, action.elapsedMs, random).let { (next, events) -> ApplyResult.Success(next, events) }
             is BlastSteer -> {
                 val p = s.player(seat.value)?.takeIf { it.inPlay } ?: return reject("ILLEGAL_ACTION", "Not on the board")
-                ApplyResult.Success(s.copy(players = s.players.map { if (it.seat == p.seat) it.copy(held = action.dir) else it }), emptyList())
+                ApplyResult.Success(s.copy(players = s.players.map { if (it.seat == p.seat) it.copy(held = action.dir, heldAlt = action.alt?.takeIf { action.dir != null && it.horizontal != action.dir.horizontal }) else it }), emptyList())
             }
             is BlastDropBomb -> dropBomb(s, seat.value, action.at)
             BlastEnd -> ApplyResult.Success(s.copy(phase = BlastPhase.FINISHED), listOf(BlastFinished))
@@ -102,7 +102,7 @@ class CyberBlastEngine : Game {
         val wasIn = s.player(seat.value)?.inPlay == true
         val left = s.copy(
             removed = s.removed + seat.value,
-            players = s.players.map { if (it.seat == seat.value) it.copy(removed = true, held = null) else it },
+            players = s.players.map { if (it.seat == seat.value) it.copy(removed = true, held = null, heldAlt = null) else it },
             outOrder = if (wasIn) s.outOrder + seat.value else s.outOrder,
         )
         return BlastSimulation.endIfDecided(left)

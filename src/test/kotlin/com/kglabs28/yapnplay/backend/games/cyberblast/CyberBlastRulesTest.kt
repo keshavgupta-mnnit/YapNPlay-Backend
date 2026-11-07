@@ -188,6 +188,16 @@ class CyberBlastRulesTest {
     }
 
     @Test
+    fun `pushing between two ways goes the side way when the main way is blocked`() {
+        // On the top row: up is the edge, so up-and-right walks right.
+        val start = board(player(1, 2, 0), player(2, 14, 10))
+        val (pushed, _) = start.act(1, BlastSteer(BlastDir.UP, BlastDir.RIGHT))
+        val (after, _) = pushed.wait(300)
+        assertTrue(after.player(1)!!.x > start.player(1)!!.x)
+        assertEquals(start.player(1)!!.y, after.player(1)!!.y)
+    }
+
+    @Test
     fun `blockers start mirrored left to right and top to bottom`() {
         val crates = BlastLayout.crates(15, 11, 60, random)
         crates.forEach { t ->

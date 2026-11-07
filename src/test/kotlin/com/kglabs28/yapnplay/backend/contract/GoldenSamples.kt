@@ -226,7 +226,7 @@ object GoldenSamples {
             "DoodleKingEvents", ListSerializer(DoodleKingWireEvent.serializer()),
             listOf(DoodleKingWireEvent.Guessed(2, 100), DoodleKingWireEvent.Revealed("bicycle", mapOf(1 to 55, 2 to 100))),
         ),
-        GoldenCase("CyberInput", CyberInput.serializer(), CyberInput("m-1", dir = "LEFT", bomb = true, tile = 129)),
+        GoldenCase("CyberInput", CyberInput.serializer(), CyberInput("m-1", dir = "LEFT", alt = "UP", bomb = true, tile = 129)),
         GoldenCase(
             "CyberBlastPublicState", CyberBlastPublicState.serializer(),
             CyberBlastPublicState(

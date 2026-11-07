@@ -4,6 +4,7 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.13.4 — Cyber Blast: CyberInput.alt (side way of a diagonal push); CyberBlastPublicState.tuning (CyberClientTuning, admin settings for the app's feel and layout).
  * 0.13.3 — Cyber Blast: CyberInput.tile (a bomb on the tile the player sees, when beside the server's); CyberBlastPublicState.speed / boostSpeed.
  * 0.13.2 — Cyber Blast: CyberPlayerWire.kills / streak; no bomb limit by default, 3 s fuse, reach 1 + kills in a row.
  * 0.13.1 — Cyber Blast room toggles (big_arena, mini_map, fewer_blockers, more_blockers); CyberBlastPublicState.miniMap;
@@ -51,4 +52,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.13.3"
+const val CONTRACT_VERSION: String = "0.13.4"

@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.application.match.games.cyberblast
 
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBlastPublicState
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBlastWireEvent
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberClientTuning
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberBombWire
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberFlameWire
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberFrame
@@ -60,7 +61,7 @@ class CyberBlastWireMapper(private val json: Json) {
         )
     }
 
-    fun publicState(state: CyberBlastState, frame: CyberFrame, frameMs: Long): JsonObject = json.encodeToJsonElement(
+    fun publicState(state: CyberBlastState, frame: CyberFrame, frameMs: Long, tuning: CyberClientTuning): JsonObject = json.encodeToJsonElement(
         CyberBlastPublicState.serializer(),
         CyberBlastPublicState(
             cols = state.cols,
@@ -72,6 +73,7 @@ class CyberBlastWireMapper(private val json: Json) {
             miniMap = state.blastRules.house.miniMap,
             speed = state.mandatory.speed,
             boostSpeed = state.mandatory.boostSpeed,
+            tuning = tuning,
             frame = frame,
         ),
     ).jsonObject

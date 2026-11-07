@@ -40,8 +40,8 @@ data class CyberBlastMandatoryRules(
     /** "3, 2, 1, Go" before anyone may move. */
     val countdownMs: Long = 3_000,
     /** The arena starts closing in after this long (0: never), one tile every [closeStepMs]. */
-    val closeAfterMs: Long = 180_000,
-    val closeStepMs: Long = 600,
+    val closeAfterMs: Long = 300_000,
+    val closeStepMs: Long = 1_500,
     /** The board's size (a Big Arena is about twice as big each way). */
     val cols: Int = BLAST_COLS,
     val rows: Int = BLAST_ROWS,

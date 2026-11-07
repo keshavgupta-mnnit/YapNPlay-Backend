@@ -5,6 +5,7 @@ import com.kglabs28.yapnplay.backend.application.match.games.FrameOut
 import com.kglabs28.yapnplay.backend.application.match.games.GameSession
 import com.kglabs28.yapnplay.backend.application.match.games.RelayOut
 import com.kglabs28.yapnplay.backend.contract.Colour
+import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberClientTuning
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberInput
 import com.kglabs28.yapnplay.backend.contract.cyberblast.CyberRelay
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
@@ -49,6 +50,8 @@ class CyberBlastSession(
     private val json: Json,
     private val frameMs: Long,
     botSettings: () -> BlastBotSettings,
+    /** How the app shows and controls the game (admin settings), read for every snapshot. */
+    private val tuning: () -> CyberClientTuning = { CyberClientTuning() },
 ) : GameSession {
     private val mapper = CyberBlastWireMapper(json)
     private val bot = BlastBot(botSettings, random)
@@ -108,7 +111,8 @@ class CyberBlastSession(
         val input = runCatching { json.decodeFromJsonElement(CyberInput.serializer(), payload) }.getOrNull() ?: return null
         val me = state.player(seat)?.takeIf { it.inPlay } ?: return RelayOut()
         val dir = BlastDir.of(input.dir)
-        if (dir != me.held) take(engine.apply(state, SeatNumber(seat), BlastSteer(dir), random))
+        val alt = BlastDir.of(input.alt)
+        if (dir != me.held || alt != me.heldAlt) take(engine.apply(state, SeatNumber(seat), BlastSteer(dir, alt), random))
         // A bomb that can't go down (none left, one already there) is simply not dropped.
         if (input.bomb) take(engine.apply(state, SeatNumber(seat), BlastDropBomb(input.tile), random))
         return RelayOut()
@@ -124,7 +128,7 @@ class CyberBlastSession(
     }
 
     override fun publicState(viewerSeat: Int?): JsonObject =
-        mapper.publicState(state, mapper.frame(state, frameNumber, emptyList(), withCrates = true, withWalls = true), frameMs)
+        mapper.publicState(state, mapper.frame(state, frameNumber, emptyList(), withCrates = true, withWalls = true), frameMs, tuning())
 
     override fun legalMoves(viewerSeat: Int?): List<LegalMove> = emptyList()
 
