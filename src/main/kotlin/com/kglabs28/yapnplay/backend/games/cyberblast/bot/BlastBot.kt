@@ -42,7 +42,7 @@ class BlastBot(
                 mind = when {
                     goal == null -> mind.copy(path = emptyList())
                     goal.bomb -> {
-                        out += seat to BlastDropBomb
+                        out += seat to BlastDropBomb()
                         // Looks again at once, with its bomb on the board: time to run.
                         mind.copy(path = emptyList(), nextBombAt = state.time + jitter(tuning.bombGapMs, tuning.bombGapJitterMs), nextLookAt = state.time)
                     }

@@ -1,5 +1,6 @@
 {
     "matchId": "m-1",
     "dir": "LEFT",
-    "bomb": true
+    "bomb": true,
+    "tile": 129
 }

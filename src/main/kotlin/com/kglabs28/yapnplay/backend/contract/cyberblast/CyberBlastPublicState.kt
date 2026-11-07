@@ -15,6 +15,9 @@ data class CyberBlastPublicState(
     val frameMs: Long,
     val fuseMs: Long,
     val boostMs: Long,
+    /** 0.13.3: walking speed and with the boots (thousandths of a tile a second), so the app can move the user's own character at once. */
+    val speed: Int = 3_200,
+    val boostSpeed: Int = 4_800,
     /** 0.13.1: the room's Mini-map toggle (the app shows the whole arena small in a corner). */
     val miniMap: Boolean = false,
     val frame: CyberFrame,

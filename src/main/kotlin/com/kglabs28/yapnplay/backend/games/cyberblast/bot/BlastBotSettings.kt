@@ -21,7 +21,7 @@ data class BlastBotSettings(
     /** Worth of the speed boots. */
     val boostValue: Double = 60.0,
     /** Worth of each step closer to the nearest player when nothing else is near. */
-    val huntValue: Double = 3.0,
+    val huntValue: Double = 8.0,
     /** Chance (%) of being bombed for each player who has the tile in their line. */
     val threatPct: Int = 12,
     /** A spot it walks to is worth this % of the bomb it could drop there. */

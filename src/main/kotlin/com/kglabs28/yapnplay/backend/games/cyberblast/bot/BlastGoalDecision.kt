@@ -62,8 +62,7 @@ class BlastGoalDecision(
         // Its own tile's bomb is the "bomb here" option, not a reason to wait.
         val planned = if (goal.tile == me.tile) 0.0 else bombValue(goal.tile, arrival)?.let { it * settings.plannedBombPct / PERCENT } ?: 0.0
         val boots = if (state.items.any { it.tile == goal.tile }) settings.boostValue * if (me.boosted(now)) USED_BOOTS else 1.0 else 0.0
-        val nearest = others.minOfOrNull { BlastGrid.distance(it.tile, goal.tile) } ?: HUNT_RANGE
-        val hunt = settings.huntValue * (HUNT_RANGE - nearest).coerceAtLeast(0)
+        val hunt = huntAt(goal.tile)
         val fireRisk = danger[goal.tile]?.takeIf { it.until >= arrival }?.let { w ->
             // Fire coming where it would stand: it would have to run again, maybe too late.
             settings.lifeValue * if (w.from - arrival < stepMs * RUN_STEPS) 1.0 else LATER_FIRE
@@ -78,8 +77,15 @@ class BlastGoalDecision(
         if (value <= 0.0) return Evaluation.never("nothing to hit")
         // Running out of its own blast: the tighter, the likelier a slip.
         val tight = (escape * stepMs).toDouble() / rules.fuseMs
-        // A sure thing now beats the same chance later: a bomb dropped now counts a little more.
-        return Evaluation(gain = value * NOW_BONUS, risk = settings.lifeValue * tight * tight * SLIP, note = "escape $escape steps")
+        // A sure thing now beats the same chance later: a bomb dropped now counts a little more. It stays put, so the spot's own worth counts too.
+        return Evaluation(gain = value * NOW_BONUS + huntAt(me.tile), risk = settings.lifeValue * tight * tight * SLIP, note = "escape $escape steps")
+    }
+
+    /** Closer to the nearest player is worth more, anywhere on the board, so a bot with nothing near goes looking. */
+    private fun huntAt(tile: Int): Double {
+        val range = state.cols + state.rows
+        val nearest = others.minOfOrNull { BlastGrid.distance(it.tile, tile) } ?: range
+        return settings.huntValue * (range - nearest).coerceAtLeast(0)
     }
 
     /**
@@ -126,7 +132,6 @@ class BlastGoalDecision(
         const val MICROS_PER_TILE = 1_000_000L
         const val MAX_STEPS = 10
         const val MARGIN_MS = 200L
-        const val HUNT_RANGE = 12
         const val ROOM_STEPS = 3
         const val ROOM_FULL = 6
         const val RUN_STEPS = 2

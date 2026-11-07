@@ -6,8 +6,11 @@ import com.kglabs28.yapnplay.backend.games.base.play.GameEvent
 /** The player pushes [dir] (null: lets go, stands still). */
 data class BlastSteer(val dir: BlastDir?) : Action
 
-/** The player drops a bomb where they stand. */
-data object BlastDropBomb : Action
+/**
+ * The player drops a bomb where they stand, or on [at]: the tile their own screen shows them on
+ * (it runs a moment ahead of the server), taken when it is that tile or the one beside it.
+ */
+data class BlastDropBomb(val at: Int? = null) : Action
 
 /** The match clock moves on by [elapsedMs] (the session's frame). */
 data class BlastAdvance(val elapsedMs: Long) : Action

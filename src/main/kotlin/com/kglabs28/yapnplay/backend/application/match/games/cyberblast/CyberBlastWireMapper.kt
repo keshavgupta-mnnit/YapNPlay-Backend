@@ -70,6 +70,8 @@ class CyberBlastWireMapper(private val json: Json) {
             fuseMs = state.mandatory.fuseMs,
             boostMs = state.mandatory.boostMs,
             miniMap = state.blastRules.house.miniMap,
+            speed = state.mandatory.speed,
+            boostSpeed = state.mandatory.boostSpeed,
             frame = frame,
         ),
     ).jsonObject

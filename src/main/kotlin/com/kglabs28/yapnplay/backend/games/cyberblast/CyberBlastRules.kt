@@ -21,8 +21,8 @@ data class CyberBlastMandatoryRules(
     val bombs: Int = 0,
     val fuseMs: Long = 3_000,
     val flameMs: Long = 500,
-    val speed: Int = 3_200,
-    val boostSpeed: Int = 4_800,
+    val speed: Int = 4_000,
+    val boostSpeed: Int = 5_600,
     val boostMs: Long = 30_000,
     /** After coming back from a hit: can't be hurt for this long. */
     val shieldMs: Long = 2_000,

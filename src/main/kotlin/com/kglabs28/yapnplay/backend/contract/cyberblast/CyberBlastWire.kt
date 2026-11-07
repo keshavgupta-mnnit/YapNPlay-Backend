@@ -10,7 +10,13 @@ import kotlinx.serialization.Serializable
  * (the next [CyberFrame] shows it).
  */
 @Serializable
-data class CyberInput(val matchId: String, val dir: String? = null, val bomb: Boolean = false)
+data class CyberInput(
+    val matchId: String,
+    val dir: String? = null,
+    val bomb: Boolean = false,
+    /** 0.13.3: with [bomb], the tile the player's screen shows them on (it runs ahead of the server); the bomb goes there when it is beside the server's tile. */
+    val tile: Int? = null,
+)
 
 /** Cyber Blast's `MatchRelay` messages; `"type"` names each. */
 @Serializable

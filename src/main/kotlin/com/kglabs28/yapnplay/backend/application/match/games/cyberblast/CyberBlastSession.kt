@@ -110,7 +110,7 @@ class CyberBlastSession(
         val dir = BlastDir.of(input.dir)
         if (dir != me.held) take(engine.apply(state, SeatNumber(seat), BlastSteer(dir), random))
         // A bomb that can't go down (none left, one already there) is simply not dropped.
-        if (input.bomb) take(engine.apply(state, SeatNumber(seat), BlastDropBomb, random))
+        if (input.bomb) take(engine.apply(state, SeatNumber(seat), BlastDropBomb(input.tile), random))
         return RelayOut()
     }
 

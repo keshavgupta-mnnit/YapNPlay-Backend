@@ -5,6 +5,8 @@
     "frameMs": 50,
     "fuseMs": 2500,
     "boostMs": 30000,
+    "speed": 3200,
+    "boostSpeed": 4800,
     "miniMap": false,
     "frame": {
         "frame": 120,

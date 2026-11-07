@@ -52,7 +52,7 @@ class CyberBlastRulesTest {
         val crate = BlastGrid.of(2, 0)
         val behind = BlastGrid.of(3, 0)
         val start = board(player(1, 0, 0, radius = 3), player(2, 14, 10), crates = setOf(crate, behind))
-        val (dropped, _) = start.act(1, BlastDropBomb)
+        val (dropped, _) = start.act(1, BlastDropBomb())
         val (moved, _) = dropped.act(1, BlastSteer(BlastDir.DOWN))
         val (after, events) = moved.wait(3_100)
         assertFalse(crate in after.crates)
@@ -157,15 +157,15 @@ class CyberBlastRulesTest {
     @Test
     fun `no bomb before the countdown, but then as many as you like, one per tile`() {
         val waiting = board(player(1, 0, 0), player(2, 14, 10)).copy(phase = BlastPhase.COUNTDOWN)
-        assertIs<ApplyResult.Rejected>(engine.apply(waiting, SeatNumber(1), BlastDropBomb, random))
-        val (one, _) = board(player(1, 0, 0), player(2, 14, 10)).act(1, BlastDropBomb)
-        assertIs<ApplyResult.Rejected>(engine.apply(one, SeatNumber(1), BlastDropBomb, random))
+        assertIs<ApplyResult.Rejected>(engine.apply(waiting, SeatNumber(1), BlastDropBomb(), random))
+        val (one, _) = board(player(1, 0, 0), player(2, 14, 10)).act(1, BlastDropBomb())
+        assertIs<ApplyResult.Rejected>(engine.apply(one, SeatNumber(1), BlastDropBomb(), random))
         assertNotEquals(0, one.bombs.size)
         // Four bombs down one after another along the top row.
         var s = one
         repeat(3) { i ->
             s = s.copy(players = s.players.map { if (it.seat == 1) it.copy(x = BlastGrid.centreX(BlastGrid.of((i + 1) * 2, 0))) else it })
-            s = s.act(1, BlastDropBomb).first
+            s = s.act(1, BlastDropBomb()).first
         }
         assertEquals(4, s.bombsOf(1))
     }
@@ -176,6 +176,24 @@ class CyberBlastRulesTest {
         val (after, _) = board(hunter, player(2, 0, 10)).copy(bombs = listOf(BlastBomb(1, BlastGrid.of(14, 2), 2, 2, 10))).wait(50)
         assertEquals(0, after.player(1)!!.streak)
         assertEquals(1, after.player(1)!!.radius)
+    }
+
+    @Test
+    fun `a bomb goes on the tile the player sees themselves on when it is right beside the server's, never further`() {
+        val start = board(player(1, 2, 0), player(2, 14, 10))
+        val (beside, _) = start.act(1, BlastDropBomb(BlastGrid.of(3, 0)))
+        assertEquals(BlastGrid.of(3, 0), beside.bombs.single().tile)
+        val (far, _) = start.act(1, BlastDropBomb(BlastGrid.of(6, 0)))
+        assertEquals(BlastGrid.of(2, 0), far.bombs.single().tile)
+    }
+
+    @Test
+    fun `blockers start mirrored left to right and top to bottom`() {
+        val crates = BlastLayout.crates(15, 11, 60, random)
+        crates.forEach { t ->
+            assertTrue(BlastGrid.of(14 - BlastGrid.col(t), BlastGrid.row(t)) in crates)
+            assertTrue(BlastGrid.of(BlastGrid.col(t), 10 - BlastGrid.row(t)) in crates)
+        }
     }
 
     @Test

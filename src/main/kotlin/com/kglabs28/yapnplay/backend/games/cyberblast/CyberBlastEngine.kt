@@ -53,8 +53,7 @@ class CyberBlastEngine : Game {
         val blastRules = rules as? CyberBlastRules ?: CyberBlastRules()
         val m = blastRules.mandatory
         val spawns = BlastSpawns.startTiles(m.cols, m.rows, seatCount, random)
-        val floor = BlastGrid.tiles(m.cols, m.rows).filter { !BlastGrid.isPillar(it) && it !in spawns }
-        val crates = floor.filter { random.nextInt(PERCENT) < m.crateDensityPct }.toSet()
+        val crates = BlastLayout.crates(m.cols, m.rows, m.crateDensityPct, random) - spawns.toSet()
         val players = spawns.mapIndexed { i, tile ->
             BlastPlayer(seat = i + 1, x = BlastGrid.centreX(tile), y = BlastGrid.centreY(tile), lives = m.lives, radius = m.startRadius)
         }
@@ -73,16 +72,17 @@ class CyberBlastEngine : Game {
                 val p = s.player(seat.value)?.takeIf { it.inPlay } ?: return reject("ILLEGAL_ACTION", "Not on the board")
                 ApplyResult.Success(s.copy(players = s.players.map { if (it.seat == p.seat) it.copy(held = action.dir) else it }), emptyList())
             }
-            BlastDropBomb -> dropBomb(s, seat.value)
+            is BlastDropBomb -> dropBomb(s, seat.value, action.at)
             BlastEnd -> ApplyResult.Success(s.copy(phase = BlastPhase.FINISHED), listOf(BlastFinished))
             else -> reject("BAD_REQUEST", "Unknown action for Cyber Blast")
         }
     }
 
     /** A bomb where [seat] stands: only while playing, on a tile with no bomb yet, and (when the match has a limit) with a bomb left. */
-    private fun dropBomb(s: CyberBlastState, seat: Int): ApplyResult {
+    private fun dropBomb(s: CyberBlastState, seat: Int, at: Int?): ApplyResult {
         val p = s.player(seat)?.takeIf { it.inPlay } ?: return reject("ILLEGAL_ACTION", "Not on the board")
-        val tile = p.tile
+        // Where their screen shows them, when that is right beside where the server has them.
+        val tile = at?.takeIf { BlastGrid.distance(it, p.tile) <= SEEN_TILE_REACH && BlastGrid.inside(s, BlastGrid.col(it), BlastGrid.row(it)) } ?: p.tile
         if (s.phase != BlastPhase.PLAYING || (s.mandatory.bombs > 0 && s.bombsOf(seat) >= s.mandatory.bombs) || !BlastGrid.isOpen(s, tile)) {
             return reject("ILLEGAL_ACTION", "Can't drop a bomb now")
         }
@@ -135,5 +135,7 @@ class CyberBlastEngine : Game {
 
         private const val TURN_SECONDS = 60L
         private const val PERCENT = 100
+        /** How far (tiles) the tile a player sees themselves on may be from the server's for a bomb to go there. */
+        private const val SEEN_TILE_REACH = 1
     }
 }
