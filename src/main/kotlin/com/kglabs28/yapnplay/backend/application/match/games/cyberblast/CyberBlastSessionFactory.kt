@@ -87,6 +87,8 @@ class CyberBlastSessionFactory(
         cols = if (house.bigArena) BLAST_BIG_COLS else BLAST_COLS,
         rows = if (house.bigArena) BLAST_BIG_ROWS else BLAST_ROWS,
         closeStepMs = ms(GameSettings.BLAST_CLOSE_STEP_MS),
+        closeWhenCratesLeftPct = settings[GameSettings.BLAST_CLOSE_WHEN_CLEARED_PCT],
+        closeWhenPlayersLeft = settings[GameSettings.BLAST_CLOSE_WHEN_PLAYERS_LEFT],
     )
 
     /** Read on every bot look, so a change on the admin page applies at once. */

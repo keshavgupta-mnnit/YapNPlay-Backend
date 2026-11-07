@@ -42,6 +42,12 @@ data class CyberBlastMandatoryRules(
     /** The arena starts closing in after this long (0: never), one tile every [closeStepMs]. */
     val closeAfterMs: Long = 300_000,
     val closeStepMs: Long = 1_500,
+    /**
+     * It also starts closing early once only [closeWhenPlayersLeft] players (or fewer) are still in AND only
+     * [closeWhenCratesLeftPct] of the starting blockers are left (%; 0: only the timer).
+     */
+    val closeWhenCratesLeftPct: Int = 25,
+    val closeWhenPlayersLeft: Int = 2,
     /** The board's size (a Big Arena is about twice as big each way). */
     val cols: Int = BLAST_COLS,
     val rows: Int = BLAST_ROWS,

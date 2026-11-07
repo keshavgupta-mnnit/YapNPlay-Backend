@@ -40,9 +40,19 @@ object BlastClosing {
         }
     }
 
+    /** Closing in: it has started, its time is up, or few players are left and most blockers are gone (nothing left to fight over). */
+    private fun due(state: CyberBlastState): Boolean {
+        val rules = state.mandatory
+        if (state.nextCloseAt != 0L) return true
+        val timeUp = rules.closeAfterMs > 0 && state.time >= rules.closeAfterMs
+        val cleared = rules.closeWhenCratesLeftPct > 0 && state.startCrates > 0 && state.crates.size * PERCENT <= state.startCrates * rules.closeWhenCratesLeftPct
+        val fewLeft = state.alive.size <= rules.closeWhenPlayersLeft
+        return timeUp || (cleared && fewLeft)
+    }
+
     fun update(state: CyberBlastState, random: GameRandom): Pair<CyberBlastState, List<BlastEvent>> {
         val rules = state.mandatory
-        if (rules.closeAfterMs <= 0 || state.time < rules.closeAfterMs || state.closed >= order(state.cols, state.rows).size) return state to emptyList()
+        if (!due(state) || state.closed >= order(state.cols, state.rows).size) return state to emptyList()
         if (state.nextCloseAt == 0L) return state.copy(nextCloseAt = state.time) to emptyList()
         if (state.time < state.nextCloseAt) return state to emptyList()
         val tile = order(state.cols, state.rows)[state.closed]
@@ -67,6 +77,8 @@ object BlastClosing {
     /** How long until the arena starts closing (null: it never does, or it has started). */
     fun startsIn(state: CyberBlastState): Long? {
         val after = state.mandatory.closeAfterMs
-        return if (after <= 0 || state.time >= after) null else after - state.time
+        return if (state.nextCloseAt != 0L || after <= 0 || state.time >= after) null else after - state.time
     }
+
+    private const val PERCENT = 100
 }

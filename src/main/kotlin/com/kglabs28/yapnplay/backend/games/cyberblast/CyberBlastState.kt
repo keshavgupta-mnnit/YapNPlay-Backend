@@ -27,6 +27,8 @@ data class CyberBlastState(
     val rows: Int = BLAST_ROWS,
     val players: List<BlastPlayer>,
     val crates: Set<Int>,
+    /** How many blockers the board started with (0: unknown), for closing in once most are gone. */
+    val startCrates: Int = 0,
     val walls: Set<Int> = emptySet(),
     val bombs: List<BlastBomb> = emptyList(),
     val flames: List<BlastFlame> = emptyList(),

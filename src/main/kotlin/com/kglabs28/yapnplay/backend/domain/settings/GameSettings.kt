@@ -257,6 +257,8 @@ object GameSettings {
     val BLAST_COUNTDOWN_SECONDS = IntSetting("blast.countdown_seconds", SettingGroup.CYBER_BLAST, "Countdown before anyone may move (seconds)", 3, 0, 10)
     val BLAST_CLOSE_AFTER_SECONDS = IntSetting("blast.close_after_seconds", SettingGroup.CYBER_BLAST, "The arena starts closing in after (seconds; 0 never)", 300, 0, 1_800)
     val BLAST_CLOSE_STEP_MS = IntSetting("blast.close_step_ms", SettingGroup.CYBER_BLAST, "Closing arena: one tile every (ms)", 1_500, 100, 5_000)
+    val BLAST_CLOSE_WHEN_CLEARED_PCT = IntSetting("blast.close_when_cleared_pct", SettingGroup.CYBER_BLAST, "Early closing in: when only this many of the starting blockers are left (%; 0 only the timer)", 25, 0, 90)
+    val BLAST_CLOSE_WHEN_PLAYERS_LEFT = IntSetting("blast.close_when_players_left", SettingGroup.CYBER_BLAST, "Early closing in: …and only this many players (or fewer) are still in", 2, 2, 8)
     val BLAST_APP_RENDER_DELAY_MS = IntSetting("blast.app_render_delay_ms", SettingGroup.CYBER_BLAST, "App: other players drawn this far behind the newest frame, so they glide (ms)", 100, 0, 400)
     val BLAST_APP_PAD_DEAD_ZONE_PCT = IntSetting("blast.app_pad_dead_zone_pct", SettingGroup.CYBER_BLAST, "App: pad ignores a thumb this near its middle (% of its size)", 10, 0, 40)
     val BLAST_APP_PAD_KEEP_PCT = IntSetting("blast.app_pad_keep_pct", SettingGroup.CYBER_BLAST, "App: pad keeps the direction until another is this much stronger (%)", 115, 100, 300)
@@ -305,7 +307,7 @@ object GameSettings {
         BLAST_FRAME_MS, BLAST_LIVES, BLAST_START_RADIUS, BLAST_MAX_RADIUS, BLAST_RADIUS_PER_HIT, BLAST_BOMBS, BLAST_FUSE_MS, BLAST_FLAME_MS,
         BLAST_SPEED, BLAST_BOOST_SPEED, BLAST_BOOST_SECONDS, BLAST_SHIELD_MS, BLAST_HIT_POINTS, BLAST_HIT_PENALTY, BLAST_SELF_PENALTY,
         BLAST_CRATE_POINTS, BLAST_CRATE_DENSITY_PCT, BLAST_DENSITY_FEW_PCT, BLAST_DENSITY_MANY_PCT, BLAST_DENSITY_PER_PLAYER_PCT, BLAST_BIG_CLOSE_AFTER_SECONDS, BLAST_ITEM_EVERY_SECONDS, BLAST_ITEM_JITTER_SECONDS, BLAST_ITEM_LIFE_SECONDS, BLAST_MAX_ITEMS,
-        BLAST_COUNTDOWN_SECONDS, BLAST_CLOSE_AFTER_SECONDS, BLAST_CLOSE_STEP_MS,
+        BLAST_COUNTDOWN_SECONDS, BLAST_CLOSE_AFTER_SECONDS, BLAST_CLOSE_STEP_MS, BLAST_CLOSE_WHEN_CLEARED_PCT, BLAST_CLOSE_WHEN_PLAYERS_LEFT,
         BLAST_APP_RENDER_DELAY_MS, BLAST_APP_PAD_DEAD_ZONE_PCT, BLAST_APP_PAD_KEEP_PCT, BLAST_APP_PAD_SIDE_PCT, BLAST_APP_SNAP_MILLI, BLAST_APP_DRIFT_MILLI, BLAST_APP_EASE_PCT,
         BLAST_APP_STEP_SOUND_MS, BLAST_APP_BOOSTED_STEP_SOUND_MS, BLAST_APP_SIDE_WIDTH_DP, BLAST_APP_PAD_SIZE_DP, BLAST_APP_BOMB_BUTTON_DP, BLAST_APP_MINI_MAP_HEIGHT_DP, BLAST_APP_VIEW_COLS, BLAST_APP_VIEW_ROWS,
         BLAST_BOT_REACT_MS, BLAST_BOT_REACT_JITTER_MS, BLAST_BOT_BOMB_GAP_MS, BLAST_BOT_BOMB_GAP_JITTER_MS, BLAST_BOT_LIFE_VALUE, BLAST_BOT_STEP_COST,

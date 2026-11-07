@@ -57,7 +57,7 @@ class CyberBlastEngine : Game {
         val players = spawns.mapIndexed { i, tile ->
             BlastPlayer(seat = i + 1, x = BlastGrid.centreX(tile), y = BlastGrid.centreY(tile), lives = m.lives, radius = m.startRadius)
         }
-        var state = CyberBlastState(gameId = id, blastRules = blastRules, seatCount = seatCount, players = players, crates = crates, cols = m.cols, rows = m.rows)
+        var state = CyberBlastState(gameId = id, blastRules = blastRules, seatCount = seatCount, players = players, crates = crates, startCrates = crates.size, cols = m.cols, rows = m.rows)
         // Everyone can get away from their first bomb: a way out of their own reach is opened.
         spawns.forEach { tile -> if (!BlastSpawns.hasEscape(state, tile, m.startRadius, emptyMap())) state = BlastSpawns.openEscape(state, tile, m.startRadius) }
         return state
