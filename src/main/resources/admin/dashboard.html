@@ -77,6 +77,35 @@
   .chips button { margin: 0; padding: 5px 11px; font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
   .chips button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
   #periodCustom { margin-top: 8px; }
+  .live { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px 12px; margin-top: 12px; }
+  .live h2 { display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px rgba(31,138,76,.18); }
+  .live .card { padding: 8px 10px; } .live .card .v { font-size: 20px; }
+  .periodbar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 6px; margin-top: 14px; border-bottom: 1px solid var(--line); }
+  .periodbar .title { font-size: 18px; font-weight: 650; margin: 0 0 8px; }
+  .card .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .chart { padding: 10px 12px 6px; }
+  .chart svg { width: 100%; height: 220px; display: block; }
+  .chart .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+  .chart .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .sources { padding: 10px 14px; }
+  .src { display: grid; grid-template-columns: 170px 1fr 90px; gap: 10px; align-items: center; padding: 4px 0; }
+  .src.sub { padding-left: 16px; color: var(--muted); }
+  .src .track { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+  .src .fill { height: 100%; background: var(--accent); border-radius: 5px; }
+  .src.sub .fill { background: var(--bar); }
+  .src .n { text-align: right; font-variant-numeric: tabular-nums; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--text); }
+  th .arrow { margin-left: 4px; color: var(--accent); }
+  .split { display: grid; grid-template-columns: 230px 1fr; gap: 14px; align-items: start; margin-top: 10px; }
+  .side { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; position: sticky; top: 8px; }
+  .side .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 8px 8px 4px; }
+  .side button { display: block; width: 100%; text-align: left; margin: 2px 0; background: transparent; color: var(--text); border: 0; padding: 8px 10px; }
+  .side button[aria-selected="true"] { background: var(--accent); color: #fff; }
+  .split h3 { margin: 4px 0 6px; font-size: 16px; }
+  @media (max-width: 720px) { .split { grid-template-columns: 1fr; } .side { position: static; } .src { grid-template-columns: 120px 1fr 70px; } }
+  #restartServer { margin: 0; }
   #periodCustom input { flex: 0 1 170px; min-width: 140px; }
   #periodCustom button { margin: 0; }
 </style>
@@ -88,6 +117,7 @@
     <span id="build" title="Running build: version (git tag) · commit"></span>
     <span id="status"></span>
     <span id="whoami"></span>
+    <button type="button" id="restartServer" class="danger" hidden title="For when something is stuck (a room in progress with no match, players who can't play). Running matches are saved and carry on; everyone reconnects in about a minute.">Restart server</button>
     <button id="signout" class="ghost" hidden>Sign out</button>
   </div>
 </header>
@@ -110,7 +140,7 @@
 
 <main id="dash" hidden>
   <nav class="tabs" id="tabs" role="tablist">
-    <button type="button" data-tab="overview">Overview</button>
+    <button type="button" data-tab="overview">Analytics</button>
     <button type="button" data-tab="reports">Reports</button>
     <button type="button" data-tab="feedback">Feedback</button>
     <button type="button" data-tab="audit">Audit</button>
@@ -124,34 +154,47 @@
   <div id="actionMsg" class="msg"></div>
 
   <section id="tab-overview">
-  <h2>Right now</h2>
-  <div class="cards" id="liveCards"></div>
-  <div class="note">Live numbers are in memory and reset when the server restarts.</div>
-  <div id="restartBox" hidden>
-    <h2>Server</h2>
-    <button type="button" id="restartServer" class="ghost">Restart server</button>
-    <div class="note">For when something is stuck (a room "in progress" with no match, players who can't play). Running matches are saved and carry on; everyone reconnects in about a minute.</div>
+  <div class="live">
+    <h2><span class="dot"></span>Live now</h2>
+    <div class="cards" id="liveCards"></div>
+    <div class="note">Right now, whatever the period below. Kept in memory: a server restart sets them back to zero.</div>
   </div>
-  <h2>Period</h2>
-  <div class="chips" id="periodChips"></div>
-  <div class="row" id="periodCustom" hidden>
-    <input type="date" id="periodFrom" aria-label="From"> <span>–</span> <input type="date" id="periodTo" aria-label="To">
-    <button type="button" id="periodApply">Apply</button>
+
+  <div class="periodbar">
+    <div class="title" id="periodTitle">Last 7 days</div>
+    <div class="chips" id="periodChips"></div>
+    <div class="row" id="periodCustom" hidden>
+      <input type="date" id="periodFrom" aria-label="From"> <span>–</span> <input type="date" id="periodTo" aria-label="To">
+      <button type="button" id="periodApply">Apply</button>
+    </div>
   </div>
-  <div class="note">Totals, games, the per-day lists and moderation cover this period (days in India time). Time in app is always every time.</div>
-  <h2 id="totalsTitle">Totals</h2>
-  <div class="cards" id="totalCards"></div>
-  <h2>Games</h2>
-  <div class="panel"><table id="games"></table></div>
-  <div class="note">Finished matches come from the database. Quick Play joins count since the last server start.</div>
+  <div class="note">Everything from here down covers this period (days and hours in India time). All-time totals are at the bottom.</div>
+
+  <h2>Players and matches</h2>
+  <div class="cards" id="kpiCards"></div>
+
   <div class="grid2">
-    <div><h2>New guest players per day</h2><div class="panel"><table id="usersPerDay"></table></div></div>
-    <div><h2>Rooms created per day</h2><div class="panel"><table id="roomsPerDay"></table></div></div>
+    <div><h2 id="playersChartTitle">Players</h2><div class="panel chart" id="playersChart"></div></div>
+    <div><h2 id="matchesChartTitle">Matches</h2><div class="panel chart" id="matchesChart"></div></div>
   </div>
-  <h2>Moderation</h2>
+
+  <div class="grid2">
+    <div><h2>Where new players come from · period</h2><div class="panel sources" id="sourcesPeriod"></div></div>
+    <div><h2>Where all players come from · all time</h2><div class="panel sources" id="sourcesAll"></div></div>
+  </div>
+  <div class="note">Android app or web app, and for the web the device it was opened on. Accounts made before this was recorded are "not recorded" (older web accounts show the web, without the device).</div>
+
+  <h2>Games · period</h2>
+  <div class="panel"><table id="games"></table></div>
+  <div class="note">Audience: different players who played it. Completion: matches played to the end out of those started. Drop rate: players who quit before the end, out of all player seats. Click a column to sort.</div>
+
+  <h2>Moderation · period</h2>
   <div class="cards" id="modCards"></div>
-  <h2>Most reported users</h2>
+  <h2>Most reported · period</h2>
   <div class="panel"><table id="reported"></table></div>
+
+  <h2>All time</h2>
+  <div class="cards" id="totalCards"></div>
   </section>
 
   <section id="tab-reports" hidden>
@@ -179,10 +222,7 @@
     <div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap">
       <label>Period <select id="userPeriod"></select></label>
       <label>by <select id="userBy"><option value="joined">Joined</option><option value="last_seen">Last seen</option></select></label>
-      <label>Sort <select id="userSort">
-        <option value="newest">Newest</option><option value="oldest">Oldest</option><option value="coins">Coins</option>
-        <option value="xp">XP</option><option value="time_in_app">Time in app</option><option value="last_seen">Last seen</option>
-      </select></label>
+      <span class="note" style="margin:0">Click a column to sort; click again to reverse.</span>
     </div>
     <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
   </section>
@@ -196,9 +236,14 @@
   <section id="tab-settings" hidden>
     <h2>Game settings</h2>
     <div class="note">Changes apply to matches that start after them; running matches keep their values. Lists are written like [50, 30, 20].</div>
-    <nav class="tabs sub" id="settingTabs"></nav>
-    <div class="tools"><button type="button" id="saveSettings">Save</button><span id="settingsState" class="note" style="margin:0"></span></div>
-    <div class="panel"><table id="settingsTable"></table></div>
+    <div class="split">
+      <nav class="side" id="settingTabs"></nav>
+      <div>
+        <h3 id="settingTitle"></h3>
+        <div class="tools"><button type="button" id="saveSettings">Save</button><span id="settingsState" class="note" style="margin:0"></span></div>
+        <div class="panel"><table id="settingsTable"></table></div>
+      </div>
+    </div>
   </section>
 
   <section id="tab-bots" hidden>
@@ -296,6 +341,108 @@
     });
   }
 
+  /**
+   * A table sorted by clicking a header (again: the other way). A cell is a
+   * value, or {sort, show} when what's shown (text, a node) isn't what sorts.
+   */
+  var sorts = {};
+  function sortTable(id, headers, rows, emptyText, initial) {
+    var st = sorts[id] || (sorts[id] = { col: initial ? initial[0] : 0, asc: initial ? initial[1] : false });
+    var key = function (c) { return c && typeof c === "object" && !(c instanceof Node) && "sort" in c ? c.sort : c; };
+    var shown = function (c) { return c && typeof c === "object" && !(c instanceof Node) && "show" in c ? c.show : c; };
+    var sorted = rows.slice().sort(function (a, b) {
+      var x = key(a[st.col]), y = key(b[st.col]);
+      var d = typeof x === "number" && typeof y === "number" ? x - y : String(x == null ? "" : x).localeCompare(String(y == null ? "" : y));
+      return st.asc ? d : -d;
+    });
+    table(id, headers, sorted.map(function (r) { return r.map(shown); }), emptyText);
+    var head = $(id).tHead; if (!head) return;
+    Array.prototype.forEach.call(head.rows[0].cells, function (th, i) {
+      if (headers[i][2] === false) return;
+      th.classList.add("sortable");
+      if (i === st.col) th.appendChild(el("span", st.asc ? "▲" : "▼", "arrow"));
+      th.addEventListener("click", function () {
+        if (st.col === i) st.asc = !st.asc; else { st.col = i; st.asc = i === 0; }
+        sortTable(id, headers, rows, emptyText, initial);
+      });
+    });
+  }
+  function pct(part, whole) { return whole ? Math.round(part * 1000 / whole) / 10 : 0; }
+  function pctText(part, whole) { return whole ? pct(part, whole) + "%" : "—"; }
+
+  /** A bar chart in SVG: [series] side by side per label, or stacked. Labels thin out so they never overlap. */
+  function barChart(id, labels, series, stacked, shortLabel) {
+    var box = $(id); box.replaceChildren();
+    var legend = el("div", null, "legend");
+    series.forEach(function (sr) { var it = el("span", sr.name); var dot = el("i"); dot.style.background = sr.color; it.prepend(dot); legend.appendChild(it); });
+    box.appendChild(legend);
+    var W = 640, H = 220, L = 34, B = 26, T = 8, R = 6;
+    var max = 0;
+    labels.forEach(function (_, i) {
+      var vals = series.map(function (sr) { return sr.values[i] || 0; });
+      max = Math.max(max, stacked ? vals.reduce(function (a, b) { return a + b; }, 0) : Math.max.apply(null, vals));
+    });
+    max = Math.max(1, max);
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg"); svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("preserveAspectRatio", "none");
+    var add = function (tag, attrs, text) { var n = document.createElementNS(NS, tag); Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); }); if (text != null) n.textContent = text; svg.appendChild(n); return n; };
+    var plotW = W - L - R, plotH = H - T - B;
+    [0, 0.5, 1].forEach(function (f) {
+      var y = T + plotH - f * plotH;
+      add("line", { x1: L, x2: W - R, y1: y, y2: y, stroke: "currentColor", "stroke-opacity": f ? 0.12 : 0.3 });
+      add("text", { x: L - 4, y: y + 4, "text-anchor": "end", "font-size": 10, fill: "currentColor", "fill-opacity": 0.6 }, fmt(Math.round(max * f)));
+    });
+    var n = Math.max(1, labels.length), slot = plotW / n;
+    var step = Math.ceil(n / 10);
+    labels.forEach(function (label, i) {
+      var x0 = L + i * slot, gap = Math.min(4, slot * 0.2), w = slot - gap;
+      var tip = label + ": " + series.map(function (sr) { return sr.name + " " + fmt(sr.values[i] || 0); }).join(", ");
+      if (stacked) {
+        var acc = 0;
+        series.forEach(function (sr) {
+          var v = sr.values[i] || 0; if (!v) return;
+          var h = v / max * plotH;
+          var rect = add("rect", { x: x0 + gap / 2, y: T + plotH - (acc + v) / max * plotH, width: Math.max(1, w), height: h, fill: sr.color, rx: 1 });
+          rect.appendChild(document.createElementNS(NS, "title")).textContent = tip;
+          acc += v;
+        });
+      } else {
+        var bw = w / series.length;
+        series.forEach(function (sr, k) {
+          var v = sr.values[i] || 0;
+          var rect = add("rect", { x: x0 + gap / 2 + k * bw, y: T + plotH - v / max * plotH, width: Math.max(1, bw - 1), height: v / max * plotH, fill: sr.color, rx: 1 });
+          rect.appendChild(document.createElementNS(NS, "title")).textContent = tip;
+        });
+      }
+      if (i % step === 0) add("text", { x: x0 + slot / 2, y: H - 8, "text-anchor": "middle", "font-size": 10, fill: "currentColor", "fill-opacity": 0.6 }, shortLabel(label));
+    });
+    box.appendChild(svg);
+  }
+
+  /** "Where players come from": Android app, the web (by device), then accounts from before it was recorded. */
+  var OS_LABELS = { ios: "iPhone / iPad", android: "Android phone (browser)", windows: "Windows", mac: "Mac", linux: "Linux / Chromebook", other: "Other device", "": "Device not recorded" };
+  function sourcesPanel(id, list) {
+    var box = $(id); box.replaceChildren();
+    var total = list.reduce(function (a, x) { return a + x.count; }, 0);
+    if (!total) { box.appendChild(el("div", "No new players in this period", "empty")); return; }
+    var sum = function (p) { return list.filter(function (x) { return x.platform === p; }).reduce(function (a, x) { return a + x.count; }, 0); };
+    var line = function (label, n, sub) {
+      var row = el("div", null, "src" + (sub ? " sub" : ""));
+      row.appendChild(el("span", label));
+      var track = el("div", null, "track"), fill = el("div", null, "fill"); fill.style.width = pct(n, total) + "%"; track.appendChild(fill); row.appendChild(track);
+      row.appendChild(el("span", fmt(n) + " · " + pctText(n, total), "n"));
+      box.appendChild(row);
+    };
+    line("Android app", sum("android"));
+    var web = sum("web");
+    line("Web app", web);
+    list.filter(function (x) { return x.platform === "web"; }).sort(function (a, b) { return b.count - a.count; })
+      .forEach(function (x) { line(OS_LABELS[x.os] || x.os, x.count, true); });
+    var unknown = sum("unknown");
+    if (unknown) line("Not recorded (older accounts)", unknown);
+    box.appendChild(el("div", "Total: " + fmt(total), "note"));
+  }
+
   function perDay(id, days) {
     var max = days.reduce(function (m, d) { return Math.max(m, d.count); }, 0) || 1;
     var rows = days.slice().reverse().map(function (d) {
@@ -311,46 +458,92 @@
   /** 95 → "1h 35m", 40 → "40m". */
   function minutes(m) { m = Math.round(m || 0); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m"; }
 
-  function render(s) {
-    var L = s.live, M = s.moderation;
+  function renderLive(s) {
+    var L = s.live;
     cards("liveCards", [
-      ["Online now", L.onlineNow], ["In a match", L.playersInMatchNow], ["Live matches", L.liveMatches],
-      ["Rooms active", L.roomsActiveNow], ["People in rooms", L.usersInRoomsNow], ["Searching Quick Play", L.searchingQuickPlayNow],
-      ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching a match", L.spectatorsNow || 0],
-      ["Players who played · " + periodName(period), L.playersWhoPlayed || 0, "good"]
+      ["Online", L.onlineNow], ["In a match", L.playersInMatchNow], ["Live matches", L.liveMatches],
+      ["In rooms", L.usersInRoomsNow], ["Rooms active", L.roomsActiveNow], ["Searching Quick Play", L.searchingQuickPlayNow],
+      ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching", L.spectatorsNow || 0]
     ]);
-    cards("totalCards", [
-    ].concat(s.users.byType.length > 1 ? [["All players", s.users.total]] : [])
-     .concat(s.users.byType.length ? s.users.byType.map(function (t) { return [accountLabel(t.type), t.count]; })
-                                   : [[accountLabel("guest"), 0]]).concat([
-      ["Rooms (existing)", s.rooms.total],
-      ["Matches finished", s.games.reduce(function (a, g) { return a + g.matchesFinished; }, 0)],
-      ["Matches completed", (s.matches || {}).completed || 0, "good"],
-      ["Matches stopped (server error)", (s.matches || {}).abandoned || 0, "bad"],
-      ["Players who left mid-match", (s.matches || {}).playersLeft || 0, "bad"],
-      ["Time played", minutes((s.matches || {}).minutesPlayed || 0)],
-      ["Time in app (all)", minutes(s.users.appMinutesTotal || 0)],
-      ["Time in app (avg player)", minutes(s.users.appMinutesAverage || 0)],
-      ["Reports filed", M.reportsFiled]
-    ]));
-    table("games",
-      [["Game"], ["Finished", true], ["Quick Play", true], ["In rooms", true], ["Human seats", true],
-       ["Live now", true], ["QP joins", true], ["Searching", true]],
-      s.games.map(function (g) {
-        return [g.displayName, g.matchesFinished, g.quickPlayMatches, g.roomMatches, g.humanSeats,
-                g.liveMatches, g.quickPlayJoinsSinceStart, g.searchingNow];
-      }), "No games");
-    perDay("usersPerDay", s.users.newPerDay);
-    perDay("roomsPerDay", s.rooms.createdPerDay);
+    $("build").textContent = s.version ? "v" + s.version + " · " + s.commit : "";
+  }
+
+  function card(label, value, sub, cls) {
+    var c = el("div", null, "card");
+    c.appendChild(el("div", fmt(value), "v" + (cls ? " " + cls : "")));
+    c.appendChild(el("div", label, "l"));
+    if (sub) c.appendChild(el("div", sub, "sub"));
+    return c;
+  }
+
+  function renderAnalytics(a, s) {
+    var S = a.summary, M = s.moderation;
+    var box = $("kpiCards"); box.replaceChildren();
+    [
+      card("New players", S.newPlayers),
+      card("Active players", S.activePlayers, "played at least one match", "good"),
+      card("Matches started", S.matchesStarted, S.matchesRunning ? fmt(S.matchesRunning) + " still running" : ""),
+      card("Matches completed", S.matchesCompleted, pctText(S.matchesCompleted, S.matchesStarted) + " of started", "good"),
+      card("Matches stopped", S.matchesStopped, "error or server restart · " + pctText(S.matchesStopped, S.matchesStarted), S.matchesStopped ? "bad" : ""),
+      card("Players who quit mid-game", S.playersLeft, "drop rate " + pctText(S.playersLeft, S.humanSeats), S.playersLeft ? "bad" : ""),
+      card("Time played", minutes(S.minutesPlayed)),
+      card("Average match", S.matchesCompleted ? minutes(S.minutesPlayed / S.matchesCompleted) : "—")
+    ].forEach(function (c) { box.appendChild(c); });
+
+    var hourly = a.bucket === "hour";
+    var short = hourly ? function (l) { return l.slice(11, 13) + "h"; } : function (l) { return l.slice(8, 10) + "/" + l.slice(5, 7); };
+    var labels = a.timeline.map(function (p) { return p.label; });
+    var per = hourly ? "per hour" : "per day";
+    $("playersChartTitle").textContent = "Players " + per;
+    $("matchesChartTitle").textContent = "Matches " + per;
+    barChart("playersChart", labels, [
+      { name: "New players", color: "#5b4bdb", values: a.timeline.map(function (p) { return p.newPlayers; }) },
+      { name: "Active players", color: "#1f8a4c", values: a.timeline.map(function (p) { return p.activePlayers; }) }
+    ], false, short);
+    barChart("matchesChart", labels, [
+      { name: "Completed", color: "#1f8a4c", values: a.timeline.map(function (p) { return p.matchesCompleted; }) },
+      { name: "Stopped", color: "#c2362f", values: a.timeline.map(function (p) { return p.matchesStopped; }) },
+      { name: "Still running / other", color: "#9aa3b2", values: a.timeline.map(function (p) { return Math.max(0, p.matchesStarted - p.matchesCompleted - p.matchesStopped); }) }
+    ], true, short);
+
+    sourcesPanel("sourcesPeriod", a.sources);
+    sourcesPanel("sourcesAll", a.allTimeSources);
+
+    var live = {};
+    s.games.forEach(function (g) { live[g.gameId] = g; });
+    var audience = a.games.reduce(function (t, g) { return t + g.players; }, 0);
+    sortTable("games",
+      [["Game"], ["Audience", true], ["Share", true], ["Started", true], ["Completed", true], ["Completion", true], ["Stopped", true],
+       ["Quit mid-game", true], ["Drop rate", true], ["Quick Play", true], ["In rooms", true], ["Live now", true], ["Searching", true]],
+      a.games.map(function (g) {
+        var lv = live[g.gameId] || {};
+        return [g.displayName, g.players,
+          { sort: pct(g.players, audience), show: pctText(g.players, audience) },
+          g.matchesStarted, g.matchesCompleted,
+          { sort: pct(g.matchesCompleted, g.matchesStarted), show: pctText(g.matchesCompleted, g.matchesStarted) },
+          g.matchesStopped, g.playersLeft,
+          { sort: pct(g.playersLeft, g.humanSeats), show: pctText(g.playersLeft, g.humanSeats) },
+          g.quickPlayMatches, g.roomMatches, lv.liveMatches || 0, lv.searchingNow || 0];
+      }), "No games", [1, false]);
+
     cards("modCards", [
       ["Reports filed", M.reportsFiled], ["Upheld", M.upheld, "bad"], ["Rejected", M.rejected, "good"],
-      ["Pending", M.pending], ["Penalties issued", M.penaltiesIssued], ["Penalties active", M.penaltiesActive]
+      ["Pending", M.pending], ["Penalties issued", M.penaltiesIssued], ["Penalties active now", M.penaltiesActive]
     ]);
     table("reported", [["Name"], ["Code"], ["Reports", true], ["Upheld", true]],
       M.mostReported.map(function (u) { return [u.displayName, u.userCode || "—", u.reports, u.upheld]; }),
-      "No reports yet");
-    $("build").textContent = s.version ? "v" + s.version + " · " + s.commit : "";
-    $("status").textContent = "Updated " + new Date(s.generatedAt).toLocaleTimeString() + " · days in " + s.timeZone;
+      "No reports in this period");
+    $("status").textContent = "Updated " + new Date(a.generatedAt).toLocaleTimeString() + " · India time";
+  }
+
+  function renderAllTime(s) {
+    var m = s.matches || {};
+    cards("totalCards", [
+      ["Players", s.users.total], ["Rooms (existing)", s.rooms.total], ["Matches completed", m.completed || 0, "good"],
+      ["Matches stopped", m.abandoned || 0, "bad"], ["Players who quit mid-game", m.playersLeft || 0],
+      ["Time played", minutes(m.minutesPlayed || 0)], ["Time in app (all players)", minutes(s.users.appMinutesTotal || 0)],
+      ["Time in app (average player)", minutes(s.users.appMinutesAverage || 0)]
+    ]);
   }
 
   // ── Sign-in page: how long the server has been up ──
@@ -383,8 +576,8 @@
   function showSignIn(message) {
     if (timer) { clearInterval(timer); timer = null; }
     me = null; dirty = {};
-    $("dash").hidden = true; $("signout").hidden = true; $("signin").hidden = false;
-    ["liveCards", "totalCards", "games", "usersPerDay", "roomsPerDay", "modCards", "reported", "usersTable", "roomsTable",
+    $("dash").hidden = true; $("signout").hidden = true; $("restartServer").hidden = true; $("signin").hidden = false;
+    ["liveCards", "totalCards", "kpiCards", "playersChart", "matchesChart", "sourcesPeriod", "sourcesAll", "games", "modCards", "reported", "usersTable", "roomsTable",
      "reportsTable", "auditTable", "settingsTable", "adminsTable", "matchesTable", "botTable"]
       .forEach(function (id) { $(id).replaceChildren(); });
     $("status").textContent = ""; $("whoami").textContent = "";
@@ -458,7 +651,7 @@
       var needs = b.getAttribute("data-needs");
       b.hidden = !!needs && !can(needs);
     });
-    $("restartBox").hidden = !can("editSettings");
+    $("restartServer").hidden = !can("editSettings");
     syncUptime();
     showTab("overview");
   }
@@ -470,14 +663,13 @@
 
   // ── Period: what the totals below "Right now" cover (remembered in this browser) ──
   var PERIODS = [
-    ["all", "All time"], ["60m", "Last 60 minutes"], ["12h", "Last 12 hours"], ["24h", "Last 24 hours"],
-    ["today", "Today"], ["yesterday", "Yesterday"], ["7d", "Last 7 days"], ["30d", "Last 30 days"], ["90d", "Last 90 days"],
-    ["custom", "Custom range"]
+    ["today", "Today"], ["yesterday", "Yesterday"], ["24h", "Last 24 hours"], ["7d", "Last 7 days"], ["30d", "Last 30 days"],
+    ["90d", "Last 90 days"], ["all", "All time"], ["custom", "Custom range"]
   ];
   var HOUR_MS = 3600000, DAY_MS = 86400000, PERIOD_KEY = "yapnplay.admin.period";
   var period = (function () {
     try { var p = JSON.parse(localStorage.getItem(PERIOD_KEY)); if (p && p.key) return p; } catch (e) {}
-    return { key: "all" };
+    return { key: "7d" };
   })();
   /** The calendar day (YYYY-MM-DD) in India, [offset] days from today. */
   function istDay(offset) { return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(Date.now() + offset * DAY_MS)); }
@@ -530,7 +722,7 @@
     var custom = period.key === "custom";
     $("periodCustom").hidden = !custom;
     if (custom) { $("periodFrom").value = period.from || ""; $("periodTo").value = period.to || ""; $("periodFrom").max = $("periodTo").max = istDay(0); }
-    $("totalsTitle").textContent = "Totals · " + periodName(period);
+    $("periodTitle").textContent = periodName(period);
   }
   $("periodApply").onclick = function () {
     var from = $("periodFrom").value, to = $("periodTo").value;
@@ -540,14 +732,17 @@
   };
   drawPeriod();
 
-  function statsPath() {
+  function rangeQuery() {
     var r = periodRange(period);
-    return "/admin/stats" + (r ? "?from=" + r.from + (r.to ? "&to=" + r.to : "") : "");
+    return r ? "?from=" + r.from + (r.to ? "&to=" + r.to : "") : "";
   }
 
-  // ── Overview ──
+  // ── Analytics ──
   function loadOverview() {
-    api("GET", statsPath()).then(render).catch(function (e) { if (e.message !== "signed out") $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
+    var q = rangeQuery();
+    Promise.all([api("GET", "/admin/analytics" + q), api("GET", "/admin/stats" + q), api("GET", "/admin/stats")])
+      .then(function (r) { renderLive(r[1]); renderAnalytics(r[0], r[1]); renderAllTime(r[2]); })
+      .catch(function (e) { if (e.message !== "signed out") $("status").textContent = "Refresh failed (" + e.message + "), retrying…"; });
   }
 
   // ── Reports, audit ──
@@ -627,13 +822,33 @@
   }
 
   // ── Players ──
+  var userSort = { key: "joined", asc: false };
+  /** The players columns the server can sort by (the others can't). */
+  var USER_SORT_KEYS = { "Name": "name", "Coins": "coins", "XP": "xp", "Games": "games", "Time in app": "time_in_app", "Last seen": "last_seen", "Joined": "joined" };
+  function source(u) {
+    if (u.platform === "android") return "Android app";
+    if (u.platform === "web") return "Web · " + (OS_LABELS[u.deviceOs || ""] || u.deviceOs);
+    return "Not recorded";
+  }
+  function sortableUserHeaders() {
+    var head = $("usersTable").tHead; if (!head) return;
+    Array.prototype.forEach.call(head.rows[0].cells, function (th) {
+      var key = USER_SORT_KEYS[th.textContent]; if (!key) return;
+      th.classList.add("sortable");
+      if (key === userSort.key) th.appendChild(el("span", userSort.asc ? "▲" : "▼", "arrow"));
+      th.addEventListener("click", function () {
+        if (userSort.key === key) userSort.asc = !userSort.asc; else { userSort.key = key; userSort.asc = key === "name"; }
+        loadUsers();
+      });
+    });
+  }
   function loadUsers() {
     var r = periodRange({ key: $("userPeriod").value || "all" });
     var path = "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim()) +
-      "&by=" + $("userBy").value + "&sort=" + $("userSort").value +
+      "&by=" + $("userBy").value + "&sort=" + userSort.key + "&dir=" + (userSort.asc ? "asc" : "desc") +
       (r ? "&from=" + r.from + (r.to ? "&to=" + r.to : "") : "");
     api("GET", path).then(function (users) {
-      table("usersTable", [["Name"], ["Code"], ["ID"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Play Games"], ["Blocked until"], ["Joined"], [""]],
+      table("usersTable", [["Name"], ["Code"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Joined"], ["Source"], ["Play Games"], ["Blocked until"], ["ID"], [""]],
         users.map(function (u) {
           var block = null, coins = null, del = null;
           if (can("moderate")) {
@@ -666,10 +881,12 @@
             }, "danger");
           }
           var groups = (u.groups || []);
-          return [u.displayName, u.userCode || "—", u.userId, u.coins, u.xp, u.gamesPlayed || 0, u.friends || 0,
+          return [u.displayName, u.userCode || "—", u.coins, u.xp, u.gamesPlayed || 0, u.friends || 0,
                   groups.length ? groups.length + ": " + groups.join(", ") : "—", minutes(u.appMinutes || 0),
-                  u.lastSeenAt ? when(u.lastSeenAt) : "—", u.playGamesLinked ? "Linked" : "—", when(u.blockedUntil), when(u.createdAt), group(block, coins, del)];
+                  u.lastSeenAt ? when(u.lastSeenAt) : "—", when(u.createdAt), source(u), u.playGamesLinked ? "Linked" : "—",
+                  when(u.blockedUntil), u.userId, group(block, coins, del)];
         }), "No players found");
+      sortableUserHeaders();
     }).catch(function (e) { say("Players: " + e.message, true); });
   }
 
@@ -691,6 +908,8 @@
 
   // ── Game settings: one sub-tab per group, saved together ──
   var settingsList = [], settingGroup = null, dirty = {};
+  /** Setting groups that aren't a game (listed under "General"). */
+  var GENERAL_SETTING_GROUPS = ["Coins & ads", "XP and level", "All matches", "Groups"];
   function hasDirty() { return Object.keys(dirty).length > 0; }
   function leaveSettingsOk() {
     if (!hasDirty()) return true;
@@ -708,11 +927,18 @@
     settingsList.forEach(function (s) { if (groups.indexOf(s.group) < 0) groups.push(s.group); });
     if (groups.indexOf(settingGroup) < 0) settingGroup = groups[0];
     var nav = $("settingTabs"); nav.replaceChildren();
-    groups.forEach(function (g) {
-      var b = btn(g, function () { if (g === settingGroup || !leaveSettingsOk()) return; settingGroup = g; drawSettings(); });
-      b.setAttribute("aria-selected", String(g === settingGroup));
-      nav.appendChild(b);
+    var general = groups.filter(function (g) { return GENERAL_SETTING_GROUPS.indexOf(g) >= 0; });
+    var gameGroups = groups.filter(function (g) { return general.indexOf(g) < 0; });
+    [["Games", gameGroups], ["General", general]].forEach(function (section) {
+      if (!section[1].length) return;
+      nav.appendChild(el("div", section[0], "label"));
+      section[1].forEach(function (g) {
+        var b = btn(g, function () { if (g === settingGroup || !leaveSettingsOk()) return; settingGroup = g; drawSettings(); });
+        b.setAttribute("aria-selected", String(g === settingGroup));
+        nav.appendChild(b);
+      });
     });
+    $("settingTitle").textContent = settingGroup || "";
     var editable = can("editSettings");
     $("saveSettings").hidden = !editable;
     var rows = settingsList.filter(function (s) { return s.group === settingGroup; }).map(function (s) {
@@ -840,7 +1066,8 @@
   $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); loadUsers(); });
   // The players list's own period (no custom range) and order, from the same list as Overview.
   PERIODS.filter(function (p) { return p[0] !== "custom"; }).forEach(function (p) { $("userPeriod").appendChild(new Option(p[1], p[0])); });
-  ["userPeriod", "userBy", "userSort"].forEach(function (id) { $(id).addEventListener("change", loadUsers); });
+  $("userPeriod").value = "all";
+  ["userPeriod", "userBy"].forEach(function (id) { $(id).addEventListener("change", loadUsers); });
   $("roomSearch").addEventListener("submit", function (e) { e.preventDefault(); loadRooms(); });
   resume();
 })();

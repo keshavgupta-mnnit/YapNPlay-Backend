@@ -37,6 +37,7 @@ class AdminActionsUseCase(
                 it.userId, it.displayName, it.userCode, it.coins, it.xp, it.createdAt, it.playGamesLinked, it.blockedUntil,
                 friends = it.friends, groups = it.groups, gamesPlayed = it.gamesPlayed,
                 appMinutes = it.onlineMs / MILLIS_PER_MINUTE, lastSeenAt = it.lastSeenAt,
+                platform = it.platform, deviceOs = it.deviceOs,
             )
         }
     }
@@ -140,6 +141,9 @@ data class AdminUserView(
     val appMinutes: Long = 0,
     /** When they last left the app (epoch millis; 0: not yet counted). */
     val lastSeenAt: Long = 0,
+    /** Where the account was made (`android`, `web`; null: unknown) and the web device's system. */
+    val platform: String? = null,
+    val deviceOs: String? = null,
 )
 
 /** A minute in millis (time in the app is shown in minutes). */

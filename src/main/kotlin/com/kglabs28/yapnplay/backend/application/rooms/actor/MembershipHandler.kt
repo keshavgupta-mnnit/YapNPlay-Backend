@@ -81,7 +81,7 @@ class MembershipHandler(
     }
 
     private suspend fun checkRoomFor(userId: String) {
-        if (state.members.size >= BackendConstants.MAX_MEMBERS_PER_ROOM) {
+        if (state.members.size >= deps.maxMembers()) {
             throw ServiceException(ErrorCode.ROOM_FULL, BackendStrings.ROOM_FULL)
         }
         if (deps.repository.membershipCount(userId) >= deps.maxRoomsPerUser) {

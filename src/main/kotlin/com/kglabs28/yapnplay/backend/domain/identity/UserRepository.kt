@@ -14,6 +14,15 @@ interface UserRepository {
     /** The newest account made on the phone [deviceId], or null. */
     suspend fun findByDeviceId(deviceId: String): User?
 
+    /** The phone account [id] was made on, or null (web accounts have none). */
+    suspend fun deviceIdOf(id: String): String?
+
+    /** How many accounts were made on the phone [deviceId]. */
+    suspend fun countByDeviceId(deviceId: String): Int
+
+    /** Where the account was made ([platform], and the web device's [os]), when not recorded yet. */
+    suspend fun recordClient(id: String, platform: String, os: String?)
+
     /** Records the phone the account was made on. */
     suspend fun setDeviceId(id: String, deviceId: String)
 

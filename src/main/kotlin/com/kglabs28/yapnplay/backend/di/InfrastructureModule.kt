@@ -10,6 +10,7 @@ import com.kglabs28.yapnplay.backend.domain.admin.AdminAuditRepository
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.domain.settings.SettingsRepository
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
+import com.kglabs28.yapnplay.backend.application.economy.ClaimReferralUseCase
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedCoinStore
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
 import com.kglabs28.yapnplay.backend.infrastructure.identity.GooglePlayGamesVerifier
@@ -74,6 +75,7 @@ fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = m
     single<RoomInviteRepository> { ExposedRoomInviteRepository(get()) }
     single<CoinStore> { ExposedCoinStore(get()) }
     single { CoinsService(get(), get(), settings = get()) }
+    single { ClaimReferralUseCase(get(), get(), get(), get()) }
     single<SettingsRepository> { ExposedSettingsRepository(get()) }
     single<AdminAuditRepository> { ExposedAdminAuditRepository(get()) }
     single {

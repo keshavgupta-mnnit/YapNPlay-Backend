@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.application.identity.RecordClientUseCase
 import com.kglabs28.yapnplay.backend.application.identity.FindDeviceAccountUseCase
 import com.kglabs28.yapnplay.backend.application.identity.PlayGamesSignInUseCase
 import com.kglabs28.yapnplay.backend.application.identity.GoogleSignInUseCase
@@ -30,6 +31,7 @@ val identityModule = module {
     single { GoogleSignInUseCase(get(), get(), get(), get(), get()) }
     single { WsTicketIssuer(get(), get()) }
     single { AuthenticateUseCase(get(), get()) }
-    single { GetMeUseCase(get(), get(), get(), get()) }
+    single { GetMeUseCase(get(), get(), get(), get(), get()) }
+    single { RecordClientUseCase(get()) }
     single { UpdateProfileUseCase(get(), get(), get(), get(), get(), get()) }
 }

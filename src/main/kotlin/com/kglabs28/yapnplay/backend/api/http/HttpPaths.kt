@@ -5,6 +5,8 @@ object HttpPaths {
     const val HEALTH = "/health"
     /** Public: the ad sellers allowed to sell YapNPlay's ads (AdMob reads it from the store listing's website). */
     const val APP_ADS_TXT = "/app-ads.txt"
+    /** Public: Android checks it before opening invite links straight in the app (App Links). */
+    const val ASSET_LINKS = "/.well-known/assetlinks.json"
     /** A shared invite (`friend` or `join` + code): a page that opens the app, or the Play Store without it. */
     const val OPEN_LINK = "/open/{kind}/{code}"
     const val LINK_KIND_PARAM = "kind"
@@ -40,6 +42,8 @@ object HttpPaths {
     const val GOOGLE_SIGN_IN = "/auth/google"
     const val WS_TICKET = "/auth/ws-ticket"
     const val AD_REWARD = "/coins/ad-reward"
+    /** 0.14.0: a new player claims the invite bonus for the friend whose link brought them. */
+    const val REFERRAL_CLAIM = "/referrals/claim"
     const val AD_STATUS = "/coins/ad-status"
     const val LEAGUES = "/coins/leagues"
     const val EMOJI_GIFTS = "/coins/emoji-gifts"
@@ -56,6 +60,8 @@ object HttpPaths {
     /** Operator-only, not part of the app contract. */
     const val ADMIN_PAGE = "/admin"
     const val ADMIN_STATS = "/admin/stats"
+    /** One period's players, matches, sources and games, with a timeline (the dashboard's Analytics). */
+    const val ADMIN_ANALYTICS = "/admin/analytics"
     const val ADMIN_TEST_ERROR = "/admin/test-error"
     const val ADMIN_RESTART = "/admin/restart"
     /** Public: only when the server process started (the sign-in page clock). */

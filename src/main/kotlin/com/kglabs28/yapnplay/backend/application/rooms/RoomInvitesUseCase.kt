@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory
 /**
  * Group invites (contract 0.4.1): a member invites their own friends; the
  * invite is the approval, so accepting makes the user a member at once
- * (no Waiting List). A room holds at most MAX_MEMBERS_PER_ROOM members
+ * (no Waiting List). A room holds at most the admin's `rooms.max_members` members
  * and open invites together; invites past that are skipped.
  */
 class RoomInvitesUseCase(
@@ -51,6 +51,8 @@ class RoomInvitesUseCase(
     private val clock: Clock,
     private val maxRoomsPerUser: Int,
     private val codec: EnvelopeCodec,
+    /** The most members a group may have (admin setting `rooms.max_members`). */
+    private val maxMembers: () -> Int = { BackendConstants.MAX_MEMBERS_PER_ROOM },
 ) {
     /**
      * `POST /rooms/{roomId}/invites` (and CreateRoom's invitees): who got an
@@ -77,7 +79,7 @@ class RoomInvitesUseCase(
                 (userId in myFriends || userId in byCode) &&
                 userId !in members &&
                 userId !in pending &&
-                members.size + pending.size < BackendConstants.MAX_MEMBERS_PER_ROOM &&
+                members.size + pending.size < maxMembers() &&
                 !blocks.isBlocked(inviterId, userId) &&
                 !blocks.isBlocked(userId, inviterId) &&
                 invites.insert(RoomInvite(ids.newId(), roomId, userId, inviterId, clock.nowMillis()))

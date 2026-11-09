@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.identity
 
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.economy.CoinsService
 import com.kglabs28.yapnplay.backend.application.common.ServiceException
 import com.kglabs28.yapnplay.backend.config.BackendStrings
@@ -14,6 +16,7 @@ class GetMeUseCase(
     private val progression: ProgressionPolicy,
     private val codes: UserCodeAssigner,
     private val coins: CoinsService? = null,
+    private val settings: Settings = Settings.Defaults,
 ) {
     suspend operator fun invoke(userId: String): Me {
         val found = users.findById(userId)
@@ -35,6 +38,7 @@ class GetMeUseCase(
             avatarId = user.avatarId,
             gamesPlayed = stats.played,
             gamesWon = stats.won,
+            maxGroupMembers = settings[GameSettings.GROUP_MAX_MEMBERS],
         )
     }
 }

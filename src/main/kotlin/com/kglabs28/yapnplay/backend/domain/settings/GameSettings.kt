@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.domain.settings
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
+
 import com.kglabs28.yapnplay.backend.domain.economy.EmojiGifts
 
 /** The admin "Game settings" sub-tab a setting shows on, in tab order. */
@@ -13,6 +15,7 @@ enum class SettingGroup(val label: String) {
     ECONOMY("Coins & ads"),
     XP("XP and level"),
     MATCH("All matches"),
+    ROOMS("Groups"),
 }
 
 /** A value the operator can change from the admin dashboard without a deploy. */
@@ -62,6 +65,8 @@ object GameSettings {
 
     // ── Coins ─────────────────────────────────────────────────────────────
     val DAILY_BONUS = IntSetting("coins.daily_bonus", SettingGroup.ECONOMY, "Daily bonus (coins)", 100, 0, MAX_COINS)
+    val GROUP_MAX_MEMBERS = IntSetting("rooms.max_members", SettingGroup.ROOMS, "Most members in a group (Game Room); groups already bigger keep their members", BackendConstants.MAX_MEMBERS_PER_ROOM, 2, 50)
+    val REFERRAL_BONUS = IntSetting("coins.referral_bonus", SettingGroup.ECONOMY, "Invite bonus: a new player who joins through a friend's link, and that friend, each get (coins)", 1_000, 0, MAX_COINS)
     val AD_REWARDS = IntListSetting(
         "coins.ad_rewards", SettingGroup.ECONOMY, "Coins for the 1st, 2nd, 3rd… rewarded ad of the day",
         listOf(200, 300, 400, 500, 700), "One amount per ad; ads past the end pay the last one",
@@ -288,7 +293,7 @@ object GameSettings {
     val BLAST_BOT_PLANNED_BOMB_PCT = IntSetting("blast.bot_planned_bomb_pct", SettingGroup.CYBER_BLAST, "Bots: a spot is worth this % of the bomb they could drop there", 70, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        DAILY_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,

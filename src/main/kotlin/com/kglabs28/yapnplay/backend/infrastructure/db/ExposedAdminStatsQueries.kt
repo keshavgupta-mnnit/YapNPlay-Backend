@@ -15,8 +15,6 @@ import org.jetbrains.exposed.sql.IntegerColumnType
 import org.jetbrains.exposed.sql.LongColumnType
 import org.jetbrains.exposed.sql.TextColumnType
 import org.jetbrains.exposed.sql.Transaction
-import org.jetbrains.exposed.sql.statements.StatementType
-import java.sql.ResultSet
 
 /**
  * [AdminStatsQueries] as plain aggregate SQL (GROUP BY and FILTER read
@@ -83,23 +81,6 @@ class ExposedAdminStatsQueries(private val db: DbQuery) : AdminStatsQueries {
         """,
         listOf(TextColumnType() to zone, LongColumnType() to sinceMillis, LongColumnType() to untilMillis),
     ) { DayCount(it.getString(1), it.getInt(2)) }
-
-    /** The two `?`s of a `created_at >= ? AND created_at < ?` filter: from (included), to (left out). */
-    private fun StatsRange.args(): List<Pair<IColumnType<*>, Any?>> = listOf(LongColumnType() to fromMillis, LongColumnType() to toMillis)
-
-    private fun <T> Transaction.rows(
-        sql: String,
-        args: List<Pair<IColumnType<*>, Any?>> = emptyList(),
-        map: (ResultSet) -> T,
-    ): List<T> = exec(sql.trimIndent(), args, StatementType.SELECT) { rs ->
-        buildList { while (rs.next()) add(map(rs)) }
-    }.orEmpty()
-
-    private fun <T> Transaction.single(
-        sql: String,
-        args: List<Pair<IColumnType<*>, Any?>> = emptyList(),
-        map: (ResultSet) -> T,
-    ): T = rows(sql, args, map).first()
 
     private companion object {
         const val USERS_TABLE = "users"

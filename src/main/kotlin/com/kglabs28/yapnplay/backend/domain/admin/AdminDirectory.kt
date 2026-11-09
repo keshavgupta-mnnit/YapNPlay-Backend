@@ -19,6 +19,9 @@ data class AdminUser(
     /** Time connected to the app in all (millis), and when they last left (0: not yet). */
     val onlineMs: Long = 0,
     val lastSeenAt: Long = 0,
+    /** Where the account was made (`android`, `web`; null: unknown) and the web device's system. */
+    val platform: String? = null,
+    val deviceOs: String? = null,
 )
 
 /** A voice-chat report as the admin dashboard shows it. */

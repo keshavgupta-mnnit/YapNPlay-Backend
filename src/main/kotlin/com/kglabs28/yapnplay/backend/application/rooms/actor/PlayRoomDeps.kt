@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.domain.economy.CoinStore
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
@@ -36,6 +37,8 @@ class PlayRoomDeps(
     val coins: CoinStore? = null,
     /** The leagues a room can pick (coins). */
     val leagueFees: () -> List<Int> = { DEFAULT_LEAGUE_FEES },
+    /** The most members a group may have (admin setting `rooms.max_members`). */
+    val maxMembers: () -> Int = { BackendConstants.MAX_MEMBERS_PER_ROOM },
 )
 
 private val DEFAULT_LEAGUE_FEES = listOf(0, 100, 500, 1_000, 5_000)

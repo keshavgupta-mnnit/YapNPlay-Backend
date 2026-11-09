@@ -1,7 +1,7 @@
 package com.kglabs28.yapnplay.backend.domain.economy
 
 /** Why coins moved (stored in the ledger). */
-enum class CoinReason { DAILY, AD, ENTRY, WIN, COMPLETION, ADMIN, EMOJI_GIFT }
+enum class CoinReason { DAILY, AD, ENTRY, WIN, COMPLETION, ADMIN, EMOJI_GIFT, REFERRAL }
 
 /** An ad reward claim: [granted] is 0 when this ad id was already paid. */
 data class AdClaim(val granted: Int, val adsLeftToday: Int, val lastAdAt: Long)
@@ -49,6 +49,13 @@ interface CoinStore {
         dailyCap: Int,
         at: Long,
     ): Map<String, Int>
+
+    /**
+     * The invite bonus: [amount] to the new player [newUserId] and to [inviterId],
+     * in one transaction. A player is paid as the newcomer at most once ever:
+     * false (nothing paid) when [newUserId] already had it.
+     */
+    suspend fun payReferral(newUserId: String, inviterId: String, amount: Int, at: Long): Boolean
 
     /** Entry fees paid for [matchId]: user id to coins paid. */
     suspend fun entriesFor(matchId: String): Map<String, Int>

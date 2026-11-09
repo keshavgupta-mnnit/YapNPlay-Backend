@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.di
 
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminAnalyticsQueries
+import com.kglabs28.yapnplay.backend.application.admin.GetAdminAnalyticsUseCase
+import com.kglabs28.yapnplay.backend.application.admin.AdminAnalyticsQueries
 import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
@@ -24,6 +27,8 @@ import org.koin.dsl.module
 fun adminModule(config: BackendConfig) = module {
     single<AdminStatsQueries> { ExposedAdminStatsQueries(get()) }
     single { GetAdminStatsUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
+    single<AdminAnalyticsQueries> { ExposedAdminAnalyticsQueries(get()) }
+    single { GetAdminAnalyticsUseCase(get(), get(), get(), get()) }
     single { AdminTokenCheck(config.adminToken) }
     single<AdminDirectory> { ExposedAdminDirectory(get()) }
     single { AdminFeedbackUseCase(get(), get(), get()) }

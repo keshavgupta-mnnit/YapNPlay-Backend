@@ -30,6 +30,12 @@ class InMemoryUserRepository : UserRepository {
 
     override suspend fun findByDeviceId(deviceId: String): User? = null
 
+    override suspend fun deviceIdOf(id: String): String? = null
+
+    override suspend fun countByDeviceId(deviceId: String): Int = 0
+
+    override suspend fun recordClient(id: String, platform: String, os: String?) = Unit
+
     override suspend fun setDeviceId(id: String, deviceId: String) = Unit
 
     override suspend fun updateProfile(id: String, displayName: String?, avatarId: String?) {

@@ -11,5 +11,6 @@
     "gamesWon": 5,
     "levelXp": 1000,
     "nextLevelXp": 2000,
-    "dailyBonus": 100
+    "dailyBonus": 100,
+    "maxGroupMembers": 16
 }

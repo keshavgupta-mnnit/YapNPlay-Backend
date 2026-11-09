@@ -68,6 +68,7 @@ fun roomsModule(config: BackendConfig) = module {
             countdownSeconds = config.countdownSeconds,
             coins = get(),
             leagueFees = { get<Settings>()[GameSettings.LEAGUE_FEES] },
+            maxMembers = { get<Settings>()[GameSettings.GROUP_MAX_MEMBERS] },
         )
     }
     single { PlayRoomActors(get(), get(ROOMS_SCOPE)) }
@@ -77,7 +78,7 @@ fun roomsModule(config: BackendConfig) = module {
     single { PlayRoomInserter(get(), get(), get(), get()) }
     single { CreatePlayRoomUseCase(get(), get(), get(), get(), config.maxRoomsPerUser, get(), get(), get()) }
     single { SaveTempRoomUseCase(get(), get(), get(), get(), config.maxRoomsPerUser) }
-    single { RoomInvitesUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get()) }
+    single { RoomInvitesUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), config.maxRoomsPerUser, get(), maxMembers = { get<Settings>()[GameSettings.GROUP_MAX_MEMBERS] }) }
     single { JoinPlayRoomUseCase(get(), get(), get(), get(), get()) }
     single { SendRoomActionUseCase(get(), get()) }
     single { GetMyRoomsUseCase(get(), get()) }

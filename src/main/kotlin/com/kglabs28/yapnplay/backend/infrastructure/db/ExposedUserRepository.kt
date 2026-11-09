@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNull
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import com.kglabs28.yapnplay.backend.domain.identity.User
@@ -59,6 +60,24 @@ class ExposedUserRepository(private val db: DbQuery) : UserRepository {
     override suspend fun findByDeviceId(deviceId: String): User? = db.run {
         UsersTable.selectAll().where { UsersTable.deviceId eq deviceId }
             .orderBy(UsersTable.createdAt, SortOrder.DESC).limit(1).singleOrNull()?.toUser()
+    }
+
+    override suspend fun deviceIdOf(id: String): String? {
+        val uuid = id.toUuidOrNull() ?: return null
+        return db.run { UsersTable.selectAll().where { UsersTable.id eq uuid }.singleOrNull()?.get(UsersTable.deviceId) }
+    }
+
+    override suspend fun countByDeviceId(deviceId: String): Int =
+        db.run { UsersTable.selectAll().where { UsersTable.deviceId eq deviceId }.count().toInt() }
+
+    override suspend fun recordClient(id: String, platform: String, os: String?) {
+        val uuid = id.toUuidOrNull() ?: return
+        db.run {
+            UsersTable.update({ (UsersTable.id eq uuid) and UsersTable.platform.isNull() }) {
+                it[UsersTable.platform] = platform
+                it[deviceOs] = os
+            }
+        }
     }
 
     override suspend fun setDeviceId(id: String, deviceId: String) {

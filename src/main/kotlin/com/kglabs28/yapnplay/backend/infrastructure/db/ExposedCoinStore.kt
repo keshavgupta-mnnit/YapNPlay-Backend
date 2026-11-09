@@ -121,6 +121,27 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
         }.toMap()
     }
 
+    override suspend fun payReferral(newUserId: String, inviterId: String, amount: Int, at: Long): Boolean {
+        val newcomer = newUserId.toUuidOrNull() ?: return false
+        val inviter = inviterId.toUuidOrNull() ?: return false
+        return db.run {
+            // Both rows locked, always in the same order, so two claims can't pay twice or deadlock.
+            val locked = listOf(newcomer, inviter).sorted().all { id ->
+                UsersTable.selectAll().where { UsersTable.id eq id }.forUpdate().singleOrNull() != null
+            }
+            if (!locked) return@run false
+            val already = CoinLedgerTable.selectAll().where { (CoinLedgerTable.userId eq newcomer) and (CoinLedgerTable.ref eq REFERRAL_JOINED_REF) }.any()
+            if (already) return@run false
+            listOf(newcomer, inviter).forEach { id ->
+                val balance = UsersTable.selectAll().where { UsersTable.id eq id }.single()[UsersTable.coins]
+                UsersTable.update({ UsersTable.id eq id }) { it[coins] = balance + amount }
+            }
+            log(newUserId, amount, CoinReason.REFERRAL, null, at, REFERRAL_JOINED_REF)
+            log(inviterId, amount, CoinReason.REFERRAL, null, at, REFERRAL_INVITED_REF_PREFIX + newUserId)
+            true
+        }
+    }
+
     override suspend fun entriesFor(matchId: String): Map<String, Int> {
         val uuid = matchId.toUuidOrNull() ?: return emptyMap()
         return db.run {
@@ -139,5 +160,12 @@ class ExposedCoinStore(private val db: DbQuery) : CoinStore {
             it[createdAt] = at
             it[CoinLedgerTable.ref] = ref
         }
+    }
+
+    private companion object {
+        /** The newcomer's ledger row (unique per user, so the bonus is paid once). */
+        const val REFERRAL_JOINED_REF = "referral:joined"
+        /** The inviter's row, one per newcomer they brought. */
+        const val REFERRAL_INVITED_REF_PREFIX = "referral:"
     }
 }

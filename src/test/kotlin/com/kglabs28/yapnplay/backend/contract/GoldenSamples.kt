@@ -47,6 +47,8 @@ import com.kglabs28.yapnplay.backend.contract.MatchPot
 import com.kglabs28.yapnplay.backend.contract.League
 import com.kglabs28.yapnplay.backend.contract.Leagues
 import com.kglabs28.yapnplay.backend.contract.CoinsReward
+import com.kglabs28.yapnplay.backend.contract.ClaimReferralBody
+import com.kglabs28.yapnplay.backend.contract.ReferralClaimed
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.api.http.HealthResponse
 import com.kglabs28.yapnplay.backend.contract.GoldenFixtures.FRIEND
@@ -83,6 +85,8 @@ object GoldenSamples {
         GoldenCase("GuestCreated", GuestCreated.serializer(), GuestCreated(USER, "s3cr3t-example-not-real")),
         GoldenCase("Me", Me.serializer(), Me(USER, "Keshav", xp = 1_400, level = 2, coins = 1_600, userCode = "K7Q2M9", avatarId = "a03", gamesPlayed = 12, gamesWon = 5, levelXp = 1_000, nextLevelXp = 2_000, dailyBonus = 100)),
         GoldenCase("CoinsReward", CoinsReward.serializer(), CoinsReward(coins = 1_800, granted = 200, adsLeftToday = 4, dailyLimit = 5, nextAdAt = 1_760_007_200_000, adRewards = listOf(200, 300, 400, 500, 700))),
+        GoldenCase("ClaimReferralBody", ClaimReferralBody.serializer(), ClaimReferralBody("K7Q2M9")),
+        GoldenCase("ReferralClaimed", ReferralClaimed.serializer(), ReferralClaimed(credited = true, bonus = 1_000, coins = 2_100)),
         GoldenCase("AdRewardStatus", AdRewardStatus.serializer(), AdRewardStatus(coinsPerAd = 300, dailyLimit = 5, adsLeftToday = 4, nextAdAt = 1_760_007_200_000, serverTime = 1_760_000_000_000, adRewards = listOf(200, 300, 400, 500, 700))),
         GoldenCase("Leagues", Leagues.serializer(), Leagues(coins = 600, leagues = listOf(League(0, "Starter", true), League(100, "Bronze", true), League(500, "Silver", true), League(1_000, "Gold", false)))),
         GoldenCase("UpdateProfileBody", UpdateProfileBody.serializer(), UpdateProfileBody(displayName = "Keshav", avatarId = "a03")),

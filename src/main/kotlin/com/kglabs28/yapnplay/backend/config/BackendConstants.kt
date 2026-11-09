@@ -38,6 +38,29 @@ object BackendConstants {
     const val PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=$APP_PACKAGE"
     val LINK_KINDS = setOf("friend", "join")
     const val LINK_CODE_MAX_LENGTH = 12
+    /** Invite links may name who shared them (`?ref=<userCode>`), for the invite bonus. */
+    const val LINK_REF_PARAM = "ref"
+    /** Where a shared link sends people who aren't on Android: the web app, which reads `?open=<kind>/<code>&ref=`. */
+    const val WEB_APP_URL = "https://www.yapnplay.in/"
+    const val WEB_OPEN_PARAM = "open"
+    /** The Play Store install referrer the app reads after install: `open=<kind>/<code>&ref=<userCode>`. */
+    const val STORE_REFERRER_PARAM = "referrer"
+    /** The invite bonus is for new players only: an account at most this old (24 h) when it claims. */
+    const val REFERRAL_WINDOW_MS = 24 * 60 * 60 * 1000L
+    /**
+     * `/.well-known/assetlinks.json`: SHA-256 fingerprints of the keys that sign
+     * the app (public). Android opens invite links in the app only when the
+     * installed app is signed by one of these.
+     */
+    val ANDROID_CERT_SHA256S = listOf(
+        // Debug key (laptop builds).
+        "7C:9E:BF:37:FA:FD:C7:2F:91:11:EE:09:DF:B2:10:BE:15:F0:F3:C6:57:BC:6E:A1:C2:14:B0:01:61:D2:F9:00",
+        // Play Console > App signing: the key Google signs Play Store builds with, and the upload / release keys.
+        "37:57:A8:4F:1F:DE:25:7D:D4:06:E8:2E:67:E6:DB:B3:53:4F:B0:8F:AB:E8:C6:89:59:88:2F:6C:4B:CC:BB:37",
+        "AE:5D:C9:A8:C3:35:59:0D:B9:9F:77:3D:82:49:75:10:E1:1D:7E:11:0F:74:AB:1A:2A:F3:C3:FB:B9:9B:67:B6",
+        "93:AC:D8:9C:6D:FC:5F:E4:EF:8D:B0:34:1D:99:7A:04:4F:EA:18:73:37:C3:21:14:11:FC:43:B2:D3:24:72:56",
+        "EF:DE:B6:68:F2:3D:4E:0A:90:C2:98:61:AE:FC:78:71:7B:00:96:F9:3E:9F:19:0B:29:88:68:A8:BE:22:88:58",
+    )
 
     /** `/app-ads.txt`: Google may sell this publisher's ads directly (the app's AdMob publisher id). */
     const val APP_ADS_TXT = "google.com, pub-9904831041173979, DIRECT, f08c47fec0942fa0\n"
@@ -49,7 +72,8 @@ object BackendConstants {
     const val ROOM_NAME_MAX_LENGTH = 30
     /** A Quick Play party nobody is in any more waits this long (a dropped connection coming back) before it is deleted. */
     const val TEMP_ROOM_GRACE_MS = 30_000L
-    const val MAX_MEMBERS_PER_ROOM = 10
+    /** The default most members in a group; the admin changes it with `rooms.max_members`. */
+    const val MAX_MEMBERS_PER_ROOM = 16
     const val MIN_HUMANS_TO_START = 2
     const val DEFAULT_ROOM_ICON = "group"
     /** The game server OAuth client from Play Console (public; its secret comes from the environment). */

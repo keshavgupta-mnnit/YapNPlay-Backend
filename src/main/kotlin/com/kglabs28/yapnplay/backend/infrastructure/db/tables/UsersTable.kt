@@ -31,11 +31,15 @@ object UsersTable : Table("users") {
     val deviceId = varchar("device_id", DEVICE_ID_MAX_LENGTH).nullable()
     /** V25: the linked Google account's subject id (web sign-in, unique), or null. */
     val googleSubject = varchar("google_subject", GOOGLE_SUBJECT_MAX_LENGTH).nullable()
+    /** V26: where the account was made (`android` app or `web`), and the web device's system; null: not known. */
+    val platform = varchar("platform", PLATFORM_MAX_LENGTH).nullable()
+    val deviceOs = varchar("device_os", PLATFORM_MAX_LENGTH).nullable()
 
     override val primaryKey = PrimaryKey(id)
 
     private const val SHA256_HEX_LENGTH = 64
     private const val DEVICE_ID_MAX_LENGTH = 64
+    private const val PLATFORM_MAX_LENGTH = 10
     private const val USER_CODE_LENGTH = 6
     private const val AVATAR_ID_MAX_LENGTH = 8
     private const val PLAY_GAMES_ID_MAX_LENGTH = 128

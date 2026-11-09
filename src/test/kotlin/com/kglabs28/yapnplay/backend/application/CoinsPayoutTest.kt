@@ -24,6 +24,7 @@ class CoinsPayoutTest {
             AdClaimResult.Refused(AdRefusal.DAILY_LIMIT, AdUsage(0, 0))
         override suspend fun adUsage(userId: String, day: Int) = AdUsage(0, 0)
         override suspend fun entriesFor(matchId: String) = emptyMap<String, Int>()
+        override suspend fun payReferral(newUserId: String, inviterId: String, amount: Int, at: Long) = false
         override suspend fun settle(
             matchId: String, wins: Map<String, Int>, finishers: List<String>, completionCoins: Int, day: Int, dailyCap: Int, at: Long,
         ): Map<String, Int> {

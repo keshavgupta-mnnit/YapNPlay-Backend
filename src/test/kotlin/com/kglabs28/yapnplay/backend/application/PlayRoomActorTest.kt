@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.games.base.GameRegistry
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoEngine
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_ID
@@ -204,7 +205,7 @@ class PlayRoomActorTest {
 
     @Test
     fun `a stranger with a full room gets ROOM_FULL`() = runTest {
-        val room = newRoom("lead", *Array(9) { "m$it" })
+        val room = newRoom("lead", *Array(BackendConstants.MAX_MEMBERS_PER_ROOM - 1) { "m$it" })
         val result = room.ask("late", RoomAction.Join("late"))
         assertEquals(ErrorCode.ROOM_FULL, assertIs<RoomResult.Failed>(result).code)
     }

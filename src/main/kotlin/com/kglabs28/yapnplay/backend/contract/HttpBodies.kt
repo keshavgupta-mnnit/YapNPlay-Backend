@@ -93,6 +93,8 @@ data class Me(
     val nextLevelXp: Int = 1_000,
     /** 0.4.5: coins the daily bonus just added on this call (0 if already given today): show a "+100" toast. */
     val dailyBonus: Int = 0,
+    /** 0.14.1: the most members a group may have now (admin setting `rooms.max_members`). */
+    val maxGroupMembers: Int = 16,
 )
 
 /** Provisional (post-POC friends): the user's friends, online first. */
@@ -397,6 +399,24 @@ data class League(
     val entryCoins: Int,
     val name: String,
     val canEnter: Boolean,
+)
+
+/** 0.14.0 `POST /referrals/claim` body: the user code of the friend whose invite link brought this new player. */
+@Serializable
+data class ClaimReferralBody(
+    val referrerCode: String,
+)
+
+/**
+ * 0.14.0 `POST /referrals/claim`: [credited] when the invite bonus was paid
+ * ([bonus] coins to this player and to the friend); false for an account that
+ * isn't new, a second claim, its own code or an unknown one. [coins] is the balance.
+ */
+@Serializable
+data class ReferralClaimed(
+    val credited: Boolean,
+    val bonus: Int,
+    val coins: Int,
 )
 
 /** 0.5.0 `POST /coins/ad-reward` body: a unique id per ad view (a random UUID, or AdMob's transaction id). */

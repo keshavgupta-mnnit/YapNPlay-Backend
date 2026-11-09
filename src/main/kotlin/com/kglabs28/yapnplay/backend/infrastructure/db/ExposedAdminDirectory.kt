@@ -1,5 +1,8 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import org.jetbrains.exposed.sql.wrapAsExpression
+import org.jetbrains.exposed.sql.count
+import org.jetbrains.exposed.sql.Expression
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserSort
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserDate
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserFilter
@@ -51,15 +54,24 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
         var inPeriod = where
         filter.fromMillis?.let { from -> inPeriod = inPeriod and (date greaterEq from) }
         filter.toMillis?.let { to -> inPeriod = inPeriod and (date less to) }
-        val (column, order) = when (filter.sort) {
-            AdminUserSort.NEWEST -> UsersTable.createdAt to SortOrder.DESC
-            AdminUserSort.OLDEST -> UsersTable.createdAt to SortOrder.ASC
-            AdminUserSort.COINS -> UsersTable.coins to SortOrder.DESC
-            AdminUserSort.XP -> UsersTable.xp to SortOrder.DESC
-            AdminUserSort.TIME_IN_APP -> UsersTable.onlineMs to SortOrder.DESC
-            AdminUserSort.LAST_SEEN -> UsersTable.lastSeenAt to SortOrder.DESC
+        val order = if (filter.ascending) SortOrder.ASC else SortOrder.DESC
+        val gamesCount = MatchResultSeatsTable.userId.count()
+        val gamesOf = wrapAsExpression<Long>(
+            MatchResultSeatsTable.select(gamesCount).where { MatchResultSeatsTable.userId eq UsersTable.id },
+        )
+        val column: Expression<*> = when (filter.sort) {
+            AdminUserSort.JOINED -> UsersTable.createdAt
+            AdminUserSort.NAME -> UsersTable.displayName.lowerCase()
+            AdminUserSort.COINS -> UsersTable.coins
+            AdminUserSort.XP -> UsersTable.xp
+            AdminUserSort.GAMES -> gamesOf
+            AdminUserSort.TIME_IN_APP -> UsersTable.onlineMs
+            AdminUserSort.LAST_SEEN -> UsersTable.lastSeenAt
         }
-        val users = UsersTable.selectAll().where(inPeriod).orderBy(column, order).limit(limit).toList()
+        // Ties always newest first, so the same list comes back in the same order.
+        val users = UsersTable.selectAll().where(inPeriod)
+            .orderBy(column to order, UsersTable.createdAt to SortOrder.DESC, UsersTable.id to SortOrder.ASC)
+            .limit(limit).toList()
         val ids = users.map { it[UsersTable.id] }
         val blocks = if (ids.isEmpty()) emptyMap() else PenaltiesTable.selectAll()
             .where { (PenaltiesTable.userId inList ids) and (PenaltiesTable.blockedUntil greater now) and PenaltiesTable.clearedAt.isNull() }
@@ -87,6 +99,8 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
                 gamesPlayed = games[it[UsersTable.id]] ?: 0,
                 onlineMs = it[UsersTable.onlineMs],
                 lastSeenAt = it[UsersTable.lastSeenAt],
+                platform = it[UsersTable.platform],
+                deviceOs = it[UsersTable.deviceOs],
             )
         }
     }

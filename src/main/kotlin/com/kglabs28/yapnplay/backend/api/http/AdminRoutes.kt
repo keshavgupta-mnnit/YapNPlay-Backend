@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.api.http
 
+import com.kglabs28.yapnplay.backend.application.admin.GetAdminAnalyticsUseCase
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserSort
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserDate
 import com.kglabs28.yapnplay.backend.domain.admin.AdminUserFilter
@@ -63,6 +64,7 @@ fun Route.adminRoutes(
     audit: AdminAuditRepository,
     feedback: AdminFeedbackUseCase,
     restart: AdminRestartUseCase,
+    getAnalytics: GetAdminAnalyticsUseCase,
 ) {
     val page by lazy {
         AdminTokenCheck::class.java.getResource(DASHBOARD_RESOURCE)?.readText() ?: error(DASHBOARD_RESOURCE)
@@ -111,6 +113,12 @@ fun Route.adminRoutes(
             call.respond(getStats(StatsRange.of(params[FROM_PARAM]?.toLongOrNull(), params[TO_PARAM]?.toLongOrNull())))
         }
     }
+    get(HttpPaths.ADMIN_ANALYTICS) {
+        guard.run(call, AdminPermission.VIEW) {
+            val params = call.request.queryParameters
+            call.respond(getAnalytics(StatsRange.of(params[FROM_PARAM]?.toLongOrNull(), params[TO_PARAM]?.toLongOrNull())))
+        }
+    }
     // Sends one test error to Sentry so the setup can be checked.
     post(HttpPaths.ADMIN_TEST_ERROR) {
         guard.run(call, AdminPermission.VIEW) {
@@ -142,7 +150,8 @@ fun Route.adminRoutes(
                 fromMillis = params[FROM_PARAM]?.toLongOrNull(),
                 toMillis = params[TO_PARAM]?.toLongOrNull(),
                 by = AdminUserDate.entries.firstOrNull { it.name.equals(params[DATE_BY_PARAM], ignoreCase = true) } ?: AdminUserDate.JOINED,
-                sort = AdminUserSort.entries.firstOrNull { it.name.equals(params[SORT_PARAM], ignoreCase = true) } ?: AdminUserSort.NEWEST,
+                sort = AdminUserSort.entries.firstOrNull { it.name.equals(params[SORT_PARAM], ignoreCase = true) } ?: AdminUserSort.JOINED,
+                ascending = params[DIRECTION_PARAM].equals(ASCENDING, ignoreCase = true),
             )
             call.respond(actions.users(params[HttpPaths.QUERY_PARAM].orEmpty(), filter))
         }
@@ -297,5 +306,7 @@ private const val FROM_PARAM = "from"
 private const val TO_PARAM = "to"
 private const val DATE_BY_PARAM = "by"
 private const val SORT_PARAM = "sort"
+private const val DIRECTION_PARAM = "dir"
+private const val ASCENDING = "asc"
 private const val TEST_ERROR_LOGGER = "AdminTestError"
 private const val TEST_ERROR_MESSAGE = "Test error from the YapNPlay admin: Sentry is working"
