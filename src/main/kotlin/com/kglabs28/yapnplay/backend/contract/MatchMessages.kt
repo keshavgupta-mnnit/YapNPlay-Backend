@@ -213,6 +213,9 @@ enum class Colour {
     BLUE,
     PURPLE,
     ORANGE,
+    /** 0.15.0: the octagon Ludo board's two extra colours. */
+    PINK,
+    TEAL,
 }
 
 /** At the table, away (the server plays their turns at once) or handed to the bot. */

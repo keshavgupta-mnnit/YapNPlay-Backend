@@ -57,7 +57,8 @@ fun Route.userRoutes(
         roomInvites.decline(call.userId, call.parameters[HttpPaths.INVITE_ID_PARAM].orEmpty())
         call.respond(HttpStatusCode.NoContent)
     }
-    get(HttpPaths.MATCH_HISTORY) { call.respond(history(call.userId)) }
+    // ?page=0, 1, … (20 a page, newest first).
+    get(HttpPaths.MATCH_HISTORY) { call.respond(history(call.userId, call.request.queryParameters["page"]?.toIntOrNull() ?: 0)) }
     get(HttpPaths.ACTIVE_MATCH) {
         val match = activeMatch(call.userId)
         if (match == null) call.respond(HttpStatusCode.NoContent) else call.respond(match)

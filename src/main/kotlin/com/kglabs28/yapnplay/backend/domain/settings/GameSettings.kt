@@ -79,6 +79,9 @@ object GameSettings {
     }
     val AD_DAILY_LIMIT = IntSetting("coins.ad_daily_limit", SettingGroup.ECONOMY, "Rewarded ads per day", 5, 0, 50)
     val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 60, 0, 1_440)
+    /** The ad shown when the app opens or comes back to the front (Android, AdMob App Open): on or off for everyone, and how often. */
+    val LAUNCH_AD_ON = IntSetting("ads.launch_ad_on", SettingGroup.ECONOMY, "Open ad: an ad when the app opens or comes back (never on a player's first launch)", 1, 0, 1)
+    val LAUNCH_AD_GAP_MINUTES = IntSetting("ads.launch_ad_gap_minutes", SettingGroup.ECONOMY, "Open ad: minutes at least between two for one player (0: every open)", 10, 0, 1_440)
     val LEAGUE_FEES = IntListSetting(
         "coins.league_fees", SettingGroup.ECONOMY, "Quick Play league fees (Starter, Bronze, Silver, Gold, Diamond)",
         listOf(0, 100, 500, 1_000, 5_000), "5 rising numbers, the first 0",
@@ -198,6 +201,7 @@ object GameSettings {
 
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
+    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play players (5-6: hexagon board, 7-8: octagon; CPUs fill the rest)", 4, 2, 8)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
     val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)
@@ -231,7 +235,7 @@ object GameSettings {
     val DK_PASS_PENALTY = IntSetting("dk.pass_penalty", SettingGroup.DOODLE_KING, "Points lost for passing or drawing nothing", 50, 0, 500)
     val DK_HINT_START_PCT = IntSetting("dk.hint_start_pct", SettingGroup.DOODLE_KING, "Letter hints start after this % of the drawing time", 40, 0, 95)
     // TODO before the live release: back to 0 (or set 0 on the admin board). On while Doodle King is being tested.
-    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "TESTING ONLY: 1 lets CPU players fill Doodle King tables (set 0 live)", 1, 0, 1)
+    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "CPU players fill Doodle King tables (testing; turn off so only real players play)", 1, 0, 1)
 
     // ── Cyber Blast ───────────────────────────────────────────────────────
     val BLAST_FRAME_MS = IntSetting("blast.frame_ms", SettingGroup.CYBER_BLAST, "Board updates sent every (ms; lower is smoother but more data)", 50, 30, 200)
@@ -264,19 +268,6 @@ object GameSettings {
     val BLAST_CLOSE_STEP_MS = IntSetting("blast.close_step_ms", SettingGroup.CYBER_BLAST, "Closing arena: one tile every (ms)", 1_500, 100, 5_000)
     val BLAST_CLOSE_WHEN_CLEARED_PCT = IntSetting("blast.close_when_cleared_pct", SettingGroup.CYBER_BLAST, "Early closing in: when only this many of the starting blockers are left (%; 0 only the timer)", 25, 0, 90)
     val BLAST_CLOSE_WHEN_PLAYERS_LEFT = IntSetting("blast.close_when_players_left", SettingGroup.CYBER_BLAST, "Early closing in: …and only this many players (or fewer) are still in", 2, 2, 8)
-    val BLAST_APP_RENDER_DELAY_MS = IntSetting("blast.app_render_delay_ms", SettingGroup.CYBER_BLAST, "App: other players drawn this far behind the newest frame, so they glide (ms)", 100, 0, 400)
-    val BLAST_APP_PAD_DEAD_ZONE_PCT = IntSetting("blast.app_pad_dead_zone_pct", SettingGroup.CYBER_BLAST, "App: pad ignores a thumb this near its middle (% of its size)", 10, 0, 40)
-    val BLAST_APP_PAD_KEEP_PCT = IntSetting("blast.app_pad_keep_pct", SettingGroup.CYBER_BLAST, "App: pad keeps the direction until another is this much stronger (%)", 115, 100, 300)
-    val BLAST_APP_PAD_SIDE_PCT = IntSetting("blast.app_pad_side_pct", SettingGroup.CYBER_BLAST, "App: a push this far off straight also counts the side way, used when blocked (%)", 25, 0, 100)
-    val BLAST_APP_SNAP_MILLI = IntSetting("blast.app_snap_milli", SettingGroup.CYBER_BLAST, "App: own character jumps to the server past this (thousandths of a tile)", 1_400, 300, 5_000)
-    val BLAST_APP_DRIFT_MILLI = IntSetting("blast.app_drift_milli", SettingGroup.CYBER_BLAST, "App: own character eases back past this while walking (thousandths of a tile)", 700, 100, 3_000)
-    val BLAST_APP_EASE_PCT = IntSetting("blast.app_ease_pct", SettingGroup.CYBER_BLAST, "App: easing back, % per screen frame", 15, 1, 100)
-    val BLAST_APP_STEP_SOUND_MS = IntSetting("blast.app_step_sound_ms", SettingGroup.CYBER_BLAST, "App: a footstep sound every (ms)", 270, 80, 1_000)
-    val BLAST_APP_BOOSTED_STEP_SOUND_MS = IntSetting("blast.app_boosted_step_sound_ms", SettingGroup.CYBER_BLAST, "App: footstep with speed boots every (ms)", 190, 60, 1_000)
-    val BLAST_APP_SIDE_WIDTH_DP = IntSetting("blast.app_side_width_dp", SettingGroup.CYBER_BLAST, "App: side panels width (dp)", 168, 100, 260)
-    val BLAST_APP_PAD_SIZE_DP = IntSetting("blast.app_pad_size_dp", SettingGroup.CYBER_BLAST, "App: D-pad size (dp)", 104, 60, 200)
-    val BLAST_APP_BOMB_BUTTON_DP = IntSetting("blast.app_bomb_button_dp", SettingGroup.CYBER_BLAST, "App: bomb button size (dp)", 60, 40, 160)
-    val BLAST_APP_MINI_MAP_HEIGHT_DP = IntSetting("blast.app_mini_map_height_dp", SettingGroup.CYBER_BLAST, "App: mini-map height (dp)", 72, 40, 200)
     val BLAST_APP_VIEW_COLS = IntSetting("blast.app_view_cols", SettingGroup.CYBER_BLAST, "App: Big Arena window, least columns shown", 15, 7, 29)
     val BLAST_APP_VIEW_ROWS = IntSetting("blast.app_view_rows", SettingGroup.CYBER_BLAST, "App: Big Arena window, rows shown", 11, 5, 21)
     val BLAST_BOT_REACT_MS = IntSetting("blast.bot_react_ms", SettingGroup.CYBER_BLAST, "Bots: reaction time, at least (ms)", 180, 50, 2_000)
@@ -293,7 +284,7 @@ object GameSettings {
     val BLAST_BOT_PLANNED_BOMB_PCT = IntSetting("blast.bot_planned_bomb_pct", SettingGroup.CYBER_BLAST, "Bots: a spot is worth this % of the bomb they could drop there", 70, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LAUNCH_AD_ON, LAUNCH_AD_GAP_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
@@ -305,7 +296,7 @@ object GameSettings {
         MONO_TURN_SECONDS, MONO_CPU_THINK_MS, MONO_CPU_THINK_JITTER_MS, MONO_CPU_DECISION_EXTRA_MS,
         CHAOS_CPU_THINK_MS, CHAOS_CPU_THINK_JITTER_MS, CHAOS_CPU_DECISION_EXTRA_MS, MONO_PENALTY_CARDS, CHAOS_PENALTY_CARDS,
         CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST, MONO_BOT_CATCH_REACTION_MS,
-        RL_TURN_SECONDS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
+        RL_TURN_SECONDS, RL_QUICK_PLAY_SEATS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
         DK_ROUNDS, DK_DRAW_SECONDS, DK_INTRO_SECONDS, DK_PICK_SECONDS, DK_REVEAL_SECONDS, DK_GUESS_POINTS, DK_LEVEL_POINTS_PCT, DK_DRAWER_PER_GUESS,
         DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS, DK_TEST_BOTS,
@@ -313,8 +304,7 @@ object GameSettings {
         BLAST_SPEED, BLAST_BOOST_SPEED, BLAST_BOOST_SECONDS, BLAST_SHIELD_MS, BLAST_HIT_POINTS, BLAST_HIT_PENALTY, BLAST_SELF_PENALTY,
         BLAST_CRATE_POINTS, BLAST_CRATE_DENSITY_PCT, BLAST_DENSITY_FEW_PCT, BLAST_DENSITY_MANY_PCT, BLAST_DENSITY_PER_PLAYER_PCT, BLAST_BIG_CLOSE_AFTER_SECONDS, BLAST_ITEM_EVERY_SECONDS, BLAST_ITEM_JITTER_SECONDS, BLAST_ITEM_LIFE_SECONDS, BLAST_MAX_ITEMS,
         BLAST_COUNTDOWN_SECONDS, BLAST_CLOSE_AFTER_SECONDS, BLAST_CLOSE_STEP_MS, BLAST_CLOSE_WHEN_CLEARED_PCT, BLAST_CLOSE_WHEN_PLAYERS_LEFT,
-        BLAST_APP_RENDER_DELAY_MS, BLAST_APP_PAD_DEAD_ZONE_PCT, BLAST_APP_PAD_KEEP_PCT, BLAST_APP_PAD_SIDE_PCT, BLAST_APP_SNAP_MILLI, BLAST_APP_DRIFT_MILLI, BLAST_APP_EASE_PCT,
-        BLAST_APP_STEP_SOUND_MS, BLAST_APP_BOOSTED_STEP_SOUND_MS, BLAST_APP_SIDE_WIDTH_DP, BLAST_APP_PAD_SIZE_DP, BLAST_APP_BOMB_BUTTON_DP, BLAST_APP_MINI_MAP_HEIGHT_DP, BLAST_APP_VIEW_COLS, BLAST_APP_VIEW_ROWS,
+        BLAST_APP_VIEW_COLS, BLAST_APP_VIEW_ROWS,
         BLAST_BOT_REACT_MS, BLAST_BOT_REACT_JITTER_MS, BLAST_BOT_BOMB_GAP_MS, BLAST_BOT_BOMB_GAP_JITTER_MS, BLAST_BOT_LIFE_VALUE, BLAST_BOT_STEP_COST,
         BLAST_BOT_HIT_CHANCE_PCT, BLAST_BOT_CORNER_BONUS_PCT, BLAST_BOT_BOOST_VALUE, BLAST_BOT_HUNT_VALUE, BLAST_BOT_THREAT_PCT, BLAST_BOT_PLANNED_BOMB_PCT,
     )

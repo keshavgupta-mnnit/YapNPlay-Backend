@@ -54,7 +54,9 @@ data class AdminRoom(
 /** Admin-only reads and the one report write the dashboard needs. */
 interface AdminDirectory {
     /** By name, user code, Play Games id or id (any part), within [filter]'s period and in its order. */
-    suspend fun searchUsers(query: String, now: Long, limit: Int, filter: AdminUserFilter = AdminUserFilter()): List<AdminUser>
+    suspend fun searchUsers(query: String, now: Long, limit: Int, filter: AdminUserFilter = AdminUserFilter(), offset: Long = 0): List<AdminUser>
+    /** How many players [searchUsers] finds for [query] and [filter] in all (for the dashboard's count and pages). */
+    suspend fun countUsers(query: String, filter: AdminUserFilter = AdminUserFilter()): Long
     /** By name, code, description, game or id (any part); newest first when [query] is blank. */
     suspend fun searchRooms(query: String, limit: Int): List<AdminRoom>
     /**

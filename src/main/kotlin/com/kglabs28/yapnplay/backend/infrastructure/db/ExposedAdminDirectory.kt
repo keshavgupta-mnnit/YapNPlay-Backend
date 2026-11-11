@@ -43,7 +43,8 @@ import org.jetbrains.exposed.sql.update
 /** [AdminDirectory] on PostgreSQL. */
 class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
 
-    override suspend fun searchUsers(query: String, now: Long, limit: Int, filter: AdminUserFilter): List<AdminUser> = db.run {
+    /** The players matching [query] (any part of name, code, Play Games id or id) within [filter]'s period. */
+    private fun usersWhere(query: String, filter: AdminUserFilter): Op<Boolean> {
         val q = query.trim()
         val part = "%${q.lowercase()}%"
         val where: Op<Boolean> = if (q.isEmpty()) Op.TRUE else
@@ -54,6 +55,15 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
         var inPeriod = where
         filter.fromMillis?.let { from -> inPeriod = inPeriod and (date greaterEq from) }
         filter.toMillis?.let { to -> inPeriod = inPeriod and (date less to) }
+        return inPeriod
+    }
+
+    override suspend fun countUsers(query: String, filter: AdminUserFilter): Long = db.run {
+        UsersTable.selectAll().where(usersWhere(query, filter)).count()
+    }
+
+    override suspend fun searchUsers(query: String, now: Long, limit: Int, filter: AdminUserFilter, offset: Long): List<AdminUser> = db.run {
+        val inPeriod = usersWhere(query, filter)
         val order = if (filter.ascending) SortOrder.ASC else SortOrder.DESC
         val gamesCount = MatchResultSeatsTable.userId.count()
         val gamesOf = wrapAsExpression<Long>(
@@ -71,7 +81,7 @@ class ExposedAdminDirectory(private val db: DbQuery) : AdminDirectory {
         // Ties always newest first, so the same list comes back in the same order.
         val users = UsersTable.selectAll().where(inPeriod)
             .orderBy(column to order, UsersTable.createdAt to SortOrder.DESC, UsersTable.id to SortOrder.ASC)
-            .limit(limit).toList()
+            .limit(limit).offset(offset).toList()
         val ids = users.map { it[UsersTable.id] }
         val blocks = if (ids.isEmpty()) emptyMap() else PenaltiesTable.selectAll()
             .where { (PenaltiesTable.userId inList ids) and (PenaltiesTable.blockedUntil greater now) and PenaltiesTable.clearedAt.isNull() }

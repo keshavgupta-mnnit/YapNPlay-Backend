@@ -19,4 +19,6 @@ data class RoyalLudoPublicState(
     val finishedSeats: List<Int> = emptyList(),
     /** Seats from first to last once the match is over. */
     val ranking: List<Int> = emptyList(),
+    /** 0.15.0: the board's arms: 4 (square), 6 (hexagon) or 8 (octagon); see RoyalLudoArmColours. */
+    val arms: Int = 4,
 )

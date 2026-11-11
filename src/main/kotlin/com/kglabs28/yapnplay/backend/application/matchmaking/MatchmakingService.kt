@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.application.matchmaking
 
+import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_ID
+import com.kglabs28.yapnplay.backend.games.base.rules.GameDescriptor
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.domain.settings.Settings
 import com.kglabs28.yapnplay.backend.application.economy.EntryFees
@@ -58,6 +60,10 @@ class MatchmakingService(
         if (entryCoins !in settings[GameSettings.LEAGUE_FEES]) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SUCH_LEAGUE)
         if (!fees.canEnter(userId, entryCoins)) throw ServiceException(ErrorCode.NOT_ENOUGH_COINS, BackendStrings.NOT_ENOUGH_COINS)
         if (matches.isPlaying(userId)) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
+        // A table that needs a newer app (Royal Ludo's 6- and 8-player boards): an older one can't join it.
+        game.featureNeeded(seatsOf(game))?.let { feature ->
+            if (!notifier.supports(userId, feature)) throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.UPDATE_FOR_BIG_BOARD)
+        }
         lock.withLock {
             if (forming.values.any { userId in it.players }) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
             val table = forming.getOrPut(keyOf(gameId, entryCoins)) {
@@ -66,7 +72,7 @@ class MatchmakingService(
             }
             table.players += userId
             joinsByGame.getOrPut(gameId) { AtomicInteger() }.incrementAndGet()
-            if (table.players.size >= game.matchmaking.seats) start(table, cpuCount = 0) else sendStatus(table)
+            if (table.players.size >= seatsOf(game)) start(table, cpuCount = 0) else sendStatus(table)
         }
     }
 
@@ -109,7 +115,7 @@ class MatchmakingService(
         }
         val humans = table.players.size
         when {
-            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = game.matchmaking.seats - humans)
+            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = (seatsOf(game) - humans).coerceAtLeast(0))
             humans >= game.minPlayers -> start(table, cpuCount = 0)
             else -> cancel(table, QueueCancelReason.NOT_ENOUGH_PLAYERS)
         }
@@ -133,11 +139,15 @@ class MatchmakingService(
     }
 
     private fun sendStatus(table: FormingTable) {
-        val seats = games.findEnabled(table.gameId)?.matchmaking?.seats ?: return
+        val seats = games.findEnabled(table.gameId)?.let(::seatsOf) ?: return
         val status = QueueStatus(table.gameId, table.players.size, seats, table.deadline, clock.nowMillis(), table.entryCoins)
         val message = codec.push(Channel.MATCHMAKING, MessageType.QUEUE_STATUS, QueueStatus.serializer(), status)
         table.players.forEach { notifier.send(it, message) }
     }
+
+    /** A Quick Play table's size: Royal Ludo's comes from the admin setting (4, or 6 / 8 to try the big boards). */
+    private fun seatsOf(game: GameDescriptor): Int =
+        if (game.id.value == ROYAL_LUDO_ID) settings[GameSettings.RL_QUICK_PLAY_SEATS].coerceIn(game.minPlayers, game.maxPlayers) else game.matchmaking.seats
 
     private fun keyOf(gameId: String, entryCoins: Int) = "$gameId:$entryCoins"
 

@@ -141,6 +141,30 @@ class SeatHandover(
         offerTo(seat, target.displayName, pick, round = 2)
     }
 
+    /**
+     * The room's leader or admin takes a seat the bot plays (a CPU, or someone who left) out of the
+     * game, as a Quick Play leaver's: its pieces, cards or cities leave with it. Never below two
+     * players still in the game; not while that seat is being offered.
+     */
+    fun removeBotSeat(byUserId: String, seat: Int) {
+        val roomId = state.roomId ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.SEAT_NOT_BOT)
+        if (byUserId != deps.rooms.leaderOf(roomId) && byUserId != deps.rooms.adminOf(roomId)) {
+            throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.ONLY_LEADER_REMOVES_SEAT)
+        }
+        val target = state.seats.firstOrNull { it.seat == seat }
+        if (target == null || target.removed || !(target.cpu || target.presence == SeatPresence.BOT)) {
+            throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.SEAT_NOT_BOT)
+        }
+        if (state.offer?.seat == seat) throw ServiceException(ErrorCode.SEAT_TAKEN, BackendStrings.SEAT_OFFER_BUSY)
+        val stillIn = state.session.stillIn.ifEmpty { state.seats.filter { !it.removed }.map { it.seat }.toSet() }
+        if (seat in stillIn && stillIn.size <= MIN_PLAYERS_LEFT) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.TOO_FEW_TO_REMOVE)
+        state.idleTurns.remove(seat)
+        state.session.removeSeat(seat)
+        state.update(seat) { copy(removed = true) }
+        endHold()
+        publish()
+    }
+
     /** The named spectator answers. */
     fun answerOffer(userId: String, accept: Boolean) {
         val offer = state.offer
@@ -279,3 +303,6 @@ class SeatHandover(
         publish()
     }
 }
+
+/** A game needs at least this many players still in it. */
+private const val MIN_PLAYERS_LEFT = 2

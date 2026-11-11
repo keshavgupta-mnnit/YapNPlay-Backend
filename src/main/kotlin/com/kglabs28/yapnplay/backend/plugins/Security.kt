@@ -15,6 +15,8 @@ import kotlin.time.Duration.Companion.seconds
 /** Name of the per-address limit on guest creation. */
 val GUEST_RATE_LIMIT = RateLimitName("guest-creation")
 val PLAYER_RATE_LIMIT = RateLimitName("player-calls")
+/** Web load reports, per address (a page sends a handful; this only stops floods). */
+val WEB_LOG_RATE_LIMIT = RateLimitName("web-logs")
 
 /** Bearer sign-in for every protected route, and the guest-creation rate limit. */
 fun Application.configureSecurity(authenticate: AuthenticateUseCase, tickets: WsTicketIssuer, devMode: Boolean, guestCreationsPerHour: Int) {
@@ -26,6 +28,10 @@ fun Application.configureSecurity(authenticate: AuthenticateUseCase, tickets: Ws
             rateLimiter(limit = guestCreationsPerHour, refillPeriod = BackendConstants.SECONDS_PER_HOUR.seconds)
             requestKey { call -> call.request.origin.remoteHost }
         }
+        register(WEB_LOG_RATE_LIMIT) {
+            rateLimiter(limit = WEB_LOGS_PER_HOUR, refillPeriod = BackendConstants.SECONDS_PER_HOUR.seconds)
+            requestKey { call -> call.request.origin.remoteHost }
+        }
         // Every signed-in HTTP call, per address: stops scripts hammering the server.
         register(PLAYER_RATE_LIMIT) {
             rateLimiter(limit = BackendConstants.HTTP_CALLS_PER_MINUTE, refillPeriod = BackendConstants.SECONDS_PER_MINUTE.seconds)
@@ -33,3 +39,5 @@ fun Application.configureSecurity(authenticate: AuthenticateUseCase, tickets: Ws
         }
     }
 }
+
+private const val WEB_LOGS_PER_HOUR = 60

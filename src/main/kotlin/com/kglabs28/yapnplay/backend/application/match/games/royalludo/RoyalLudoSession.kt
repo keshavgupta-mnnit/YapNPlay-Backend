@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.royalludo
 
+import com.kglabs28.yapnplay.backend.contract.royalludo.RoyalLudoArmColours
 import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTraceEntry
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
@@ -67,7 +68,7 @@ class RoyalLudoSession(
     /** A bot's think time: longer when more than one piece can move. */
     override val thinkMillis: Long get() = think.millis(state.phase == Phase.AWAITING_MOVE && state.legalPieces.size > 1)
 
-    override fun colourOf(seat: Int): Colour = Colour.entries[state.colourForSeat(seat)]
+    override fun colourOf(seat: Int): Colour = RoyalLudoArmColours.of(state.arms)[state.colourForSeat(seat)]
 
     override fun decode(type: String, payload: JsonObject): Action? = when (type) {
         MessageType.ROLL_DICE -> RollDice
@@ -123,6 +124,7 @@ class RoyalLudoSession(
             legalPieces = if (isMyMove(viewerSeat)) state.legalPieces else emptyList(),
             finishedSeats = state.finishingOrder,
             ranking = ranking,
+            arms = state.arms,
         ),
     ).jsonObject
 

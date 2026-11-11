@@ -109,21 +109,8 @@ class CyberBlastSessionFactory(
         standingMaxPct = settings[GameSettings.BOT_STANDING_MAX_PCT],
     )
 
-    /** How the app shows and controls the game, from the admin settings. */
+    /** How much of a Big Arena everyone sees, from the admin settings. */
     private fun tuning() = CyberClientTuning(
-        renderDelayMs = settings[GameSettings.BLAST_APP_RENDER_DELAY_MS],
-        padDeadZonePct = settings[GameSettings.BLAST_APP_PAD_DEAD_ZONE_PCT],
-        padKeepPct = settings[GameSettings.BLAST_APP_PAD_KEEP_PCT],
-        padSidePct = settings[GameSettings.BLAST_APP_PAD_SIDE_PCT],
-        snapMilli = settings[GameSettings.BLAST_APP_SNAP_MILLI],
-        driftMilli = settings[GameSettings.BLAST_APP_DRIFT_MILLI],
-        easePct = settings[GameSettings.BLAST_APP_EASE_PCT],
-        stepSoundMs = settings[GameSettings.BLAST_APP_STEP_SOUND_MS],
-        boostedStepSoundMs = settings[GameSettings.BLAST_APP_BOOSTED_STEP_SOUND_MS],
-        sideWidthDp = settings[GameSettings.BLAST_APP_SIDE_WIDTH_DP],
-        padSizeDp = settings[GameSettings.BLAST_APP_PAD_SIZE_DP],
-        bombButtonDp = settings[GameSettings.BLAST_APP_BOMB_BUTTON_DP],
-        miniMapHeightDp = settings[GameSettings.BLAST_APP_MINI_MAP_HEIGHT_DP],
         viewCols = settings[GameSettings.BLAST_APP_VIEW_COLS],
         viewRows = settings[GameSettings.BLAST_APP_VIEW_ROWS],
     )

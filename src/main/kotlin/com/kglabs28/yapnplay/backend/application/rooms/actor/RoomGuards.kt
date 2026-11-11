@@ -13,6 +13,12 @@ class RoomGuards(private val state: PlayRoomState, private val deps: PlayRoomDep
         if (state.room.leaderId != userId) throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.NOT_LEADER)
     }
 
+    /** The leader, or the admin (who may hand the leader role to someone else). */
+    fun requireLeaderOrAdmin(userId: String) {
+        state.member(userId)
+        if (state.room.leaderId != userId && state.room.adminId != userId) throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.NOT_LEADER)
+    }
+
     fun requireAdmin(userId: String) {
         state.member(userId)
         if (state.room.adminId != userId) throw ServiceException(ErrorCode.NOT_ADMIN, BackendStrings.NOT_ADMIN)

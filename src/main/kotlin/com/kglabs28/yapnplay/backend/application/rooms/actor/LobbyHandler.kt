@@ -94,16 +94,22 @@ class LobbyHandler(
         state.update(userId) { copy(talkingMuted = talking) }
     }
 
-    /** Only someone online can take over picking the game. */
+    /**
+     * Only someone online can take over picking the game. The leader or the admin may hand it over;
+     * the old and new leader both start not ready (the leader counted as ready).
+     */
     suspend fun transferLeader(userId: String, targetId: String) {
-        guards.requireLeader(userId)
+        guards.requireLeaderOrAdmin(userId)
         guards.requireTarget(targetId)
         if (!state.members.getValue(targetId).online) {
             throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.TARGET_OFFLINE)
         }
         // A temporary room has one leader only: the admin role goes along.
         val admin = if (state.room.temporary) targetId else state.room.adminId
+        val previous = state.room.leaderId
         state.room = state.room.copy(leaderId = targetId, adminId = admin)
+        // The leader counted as ready: the one stepping down is now not ready, and the new one starts fresh.
+        listOf(previous, targetId).filter { it in state.members }.forEach { state.update(it) { copy(ready = false, readyAt = null) } }
         deps.repository.updateRoles(state.room.id, targetId, admin)
         countdown.revalidate(CountdownStopReason.SETTINGS_CHANGED, userId)
     }

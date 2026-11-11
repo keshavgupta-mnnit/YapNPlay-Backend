@@ -12,5 +12,7 @@
     "levelXp": 1000,
     "nextLevelXp": 2000,
     "dailyBonus": 100,
-    "maxGroupMembers": 16
+    "maxGroupMembers": 16,
+    "launchAd": false,
+    "launchAdGapMinutes": 10
 }

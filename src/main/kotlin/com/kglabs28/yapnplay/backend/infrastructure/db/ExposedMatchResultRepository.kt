@@ -5,6 +5,7 @@ import com.kglabs28.yapnplay.backend.domain.match.RoomTotals
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.PlayRoomsTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inSubQuery
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.SortOrder
 import com.kglabs28.yapnplay.backend.domain.match.PlayedMatch
@@ -51,13 +52,15 @@ class ExposedMatchResultRepository(private val db: DbQuery) : MatchResultReposit
         }
     }
 
-    override suspend fun history(userId: String, limit: Int): List<PlayedMatch> = db.run {
+    override suspend fun history(userId: String, limit: Int, offset: Long): List<PlayedMatch> = db.run {
         val user = userId.toUuidOrNull() ?: return@run emptyList()
-        val matches = (MatchResultsTable innerJoin MatchResultSeatsTable)
-            .selectAll()
-            .where { MatchResultSeatsTable.userId eq user }
-            .orderBy(MatchResultsTable.endedAt, SortOrder.DESC)
+        // The matches they had a seat in (one row each, however many seats they held), newest first.
+        val theirs = MatchResultSeatsTable.select(MatchResultSeatsTable.matchId).where { MatchResultSeatsTable.userId eq user }
+        val matches = MatchResultsTable.selectAll()
+            .where { MatchResultsTable.id inSubQuery theirs }
+            .orderBy(MatchResultsTable.endedAt to SortOrder.DESC, MatchResultsTable.id to SortOrder.ASC)
             .limit(limit)
+            .offset(offset)
             .toList()
         val ids = matches.map { it[MatchResultsTable.id] }
         val seats = MatchResultSeatsTable.selectAll()

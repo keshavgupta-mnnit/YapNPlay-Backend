@@ -1,73 +1,72 @@
 package com.kglabs28.yapnplay.backend.games.royalludo.engine
 
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.*
+import com.kglabs28.yapnplay.backend.games.royalludo.utils.RoyalLudoTrack
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/** The track for 4, 6 and 8 arms, and which board a number of players gets. */
 class RoyalLudoGeometryTest {
+    private val square = RoyalLudoTrack(4)
 
     @Test
-    fun `track has 52 distinct squares`() {
-        assertEquals(52, (0 until TRACK_SIZE).toList().toSet().size)
+    fun `the square board is the classic 52-square track`() {
+        assertEquals(52, square.size)
+        assertEquals(50, square.enterHome)
+        assertEquals(56, square.finish)
+        assertEquals(listOf(0, 13, 26, 39), (0 until 4).map { square.start(it) })
     }
 
     @Test
-    fun `colour start squares are correct`() {
-        assertEquals(0, RoyalLudoBoardUtils.startSquareFor(0))
-        assertEquals(13, RoyalLudoBoardUtils.startSquareFor(1))
-        assertEquals(26, RoyalLudoBoardUtils.startSquareFor(2))
-        assertEquals(39, RoyalLudoBoardUtils.startSquareFor(3))
+    fun `squares wrap round the track`() {
+        assertEquals(0, square.square(0, 0))
+        assertEquals(50, square.square(0, 50))
+        assertEquals(4, square.square(26, 30))
     }
 
     @Test
-    fun `progress 0 maps to start square`() {
-        assertEquals(RED_START, RoyalLudoBoardUtils.absoluteSquare(RED_START, 0))
-        assertEquals(GREEN_START, RoyalLudoBoardUtils.absoluteSquare(GREEN_START, 0))
-        assertEquals(YELLOW_START, RoyalLudoBoardUtils.absoluteSquare(YELLOW_START, 0))
-        assertEquals(BLUE_START, RoyalLudoBoardUtils.absoluteSquare(BLUE_START, 0))
+    fun `start and star squares are safe, others are not`() {
+        listOf(0, 8, 13, 21, 26, 34, 39, 47).forEach { assertTrue(square.isSafe(it), "square $it") }
+        listOf(1, 7, 9, 12, 14, 51).forEach { assertFalse(square.isSafe(it), "square $it") }
     }
 
     @Test
-    fun `progress wraps around track`() {
-        assertEquals(50, RoyalLudoBoardUtils.absoluteSquare(RED_START, 50))
-        assertEquals(4, RoyalLudoBoardUtils.absoluteSquare(YELLOW_START, 30))
+    fun `the hexagon and octagon keep 13 squares an arm and a 5-square home column`() {
+        val hexagon = RoyalLudoTrack(6)
+        assertEquals(78, hexagon.size)
+        assertEquals(82, hexagon.finish)
+        assertEquals(65, hexagon.start(5))
+        assertTrue(hexagon.isSafe(73))
+        val octagon = RoyalLudoTrack(8)
+        assertEquals(104, octagon.size)
+        assertEquals(108, octagon.finish)
+        assertTrue(octagon.isInHomeColumn(103))
+        assertFalse(octagon.isOnSharedTrack(103))
     }
 
     @Test
-    fun `star squares are safe`() {
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(8))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(21))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(34))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(47))
+    fun `how many play picks the board`() {
+        assertEquals(listOf(4, 4, 4, 6, 6, 8, 8), (2..8).map { RoyalLudoTrack.forPlayers(it).arms })
     }
 
     @Test
-    fun `start squares are safe`() {
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(RED_START))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(GREEN_START))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(YELLOW_START))
-        assertTrue(RoyalLudoBoardUtils.isSafeSquare(BLUE_START))
+    fun `seven players get the octagon with their colours round it, three pieces with the house rule`() {
+        val rules = RoyalLudoRules(house = RoyalLudoHouseRules(threePieces = true))
+        val s = RoyalLudoEngine().start(rules, 7, SeededRandom(3L)) as RoyalLudoState
+        assertEquals(8, s.arms)
+        assertEquals(7, s.seatColours.values.toSet().size)
+        assertTrue(s.pieces.values.all { it.size == 3 })
+        // Four players keep four pieces even with the rule on.
+        val four = RoyalLudoEngine().start(rules, 4, SeededRandom(3L)) as RoyalLudoState
+        assertTrue(four.pieces.values.all { it.size == 4 })
     }
 
     @Test
-    fun `other squares are not safe`() {
-        assertFalse(RoyalLudoBoardUtils.isSafeSquare(1))
-        assertFalse(RoyalLudoBoardUtils.isSafeSquare(5))
-        assertFalse(RoyalLudoBoardUtils.isSafeSquare(10))
-    }
-
-    @Test
-    fun `home column length is 5`() {
-        assertEquals(5, HOME_COLUMN_LENGTH)
-    }
-
-    @Test
-    fun `progress 51-55 is in home column`() {
-        assertTrue(RoyalLudoBoardUtils.isInHomeColumn(51))
-        assertTrue(RoyalLudoBoardUtils.isInHomeColumn(55))
-        assertFalse(RoyalLudoBoardUtils.isInHomeColumn(50))
-        assertFalse(RoyalLudoBoardUtils.isInHomeColumn(56))
+    fun `room CPU fill tops up to the board's size`() {
+        val engine = RoyalLudoEngine()
+        assertEquals(listOf(4, 4, 4, 6, 6, 8, 8), (2..8).map { engine.roomTableSize(it) })
+        assertEquals(null, engine.featureNeeded(4))
+        assertEquals("royal-ludo-8", engine.featureNeeded(6))
     }
 }

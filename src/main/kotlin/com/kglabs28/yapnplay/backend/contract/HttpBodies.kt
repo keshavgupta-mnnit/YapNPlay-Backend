@@ -95,6 +95,10 @@ data class Me(
     val dailyBonus: Int = 0,
     /** 0.14.1: the most members a group may have now (admin setting `rooms.max_members`). */
     val maxGroupMembers: Int = 16,
+    /** 0.15.0: show an ad when the app opens or comes back to the front (admin switch `ads.launch_ad_on`)… */
+    val launchAd: Boolean = false,
+    /** …at most once in this many minutes for this player (`ads.launch_ad_gap_minutes`; 0: every open). */
+    val launchAdGapMinutes: Int = 10,
 )
 
 /** Provisional (post-POC friends): the user's friends, online first. */
@@ -431,7 +435,8 @@ data class AdRewardBody(
  * can list them and open each one's leaderboard again.
  */
 @Serializable
-data class MatchHistoryResponse(val matches: List<MatchHistoryItem>)
+/** One page of the history (GET /matches/history?page=); 0.15.0: [hasMore] when another page follows. */
+data class MatchHistoryResponse(val matches: List<MatchHistoryItem>, val hasMore: Boolean = false)
 
 @Serializable
 data class MatchHistoryItem(
