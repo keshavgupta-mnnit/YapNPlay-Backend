@@ -265,19 +265,6 @@ object GameSettings {
     val BLAST_CLOSE_STEP_MS = IntSetting("blast.close_step_ms", SettingGroup.CYBER_BLAST, "Closing arena: one tile every (ms)", 1_500, 100, 5_000)
     val BLAST_CLOSE_WHEN_CLEARED_PCT = IntSetting("blast.close_when_cleared_pct", SettingGroup.CYBER_BLAST, "Early closing in: when only this many of the starting blockers are left (%; 0 only the timer)", 25, 0, 90)
     val BLAST_CLOSE_WHEN_PLAYERS_LEFT = IntSetting("blast.close_when_players_left", SettingGroup.CYBER_BLAST, "Early closing in: …and only this many players (or fewer) are still in", 2, 2, 8)
-    val BLAST_APP_RENDER_DELAY_MS = IntSetting("blast.app_render_delay_ms", SettingGroup.CYBER_BLAST, "App: other players drawn this far behind the newest frame, so they glide (ms)", 100, 0, 400)
-    val BLAST_APP_PAD_DEAD_ZONE_PCT = IntSetting("blast.app_pad_dead_zone_pct", SettingGroup.CYBER_BLAST, "App: pad ignores a thumb this near its middle (% of its size)", 10, 0, 40)
-    val BLAST_APP_PAD_KEEP_PCT = IntSetting("blast.app_pad_keep_pct", SettingGroup.CYBER_BLAST, "App: pad keeps the direction until another is this much stronger (%)", 115, 100, 300)
-    val BLAST_APP_PAD_SIDE_PCT = IntSetting("blast.app_pad_side_pct", SettingGroup.CYBER_BLAST, "App: a push this far off straight also counts the side way, used when blocked (%)", 25, 0, 100)
-    val BLAST_APP_SNAP_MILLI = IntSetting("blast.app_snap_milli", SettingGroup.CYBER_BLAST, "App: own character jumps to the server past this (thousandths of a tile)", 1_400, 300, 5_000)
-    val BLAST_APP_DRIFT_MILLI = IntSetting("blast.app_drift_milli", SettingGroup.CYBER_BLAST, "App: own character eases back past this while walking (thousandths of a tile)", 700, 100, 3_000)
-    val BLAST_APP_EASE_PCT = IntSetting("blast.app_ease_pct", SettingGroup.CYBER_BLAST, "App: easing back, % per screen frame", 15, 1, 100)
-    val BLAST_APP_STEP_SOUND_MS = IntSetting("blast.app_step_sound_ms", SettingGroup.CYBER_BLAST, "App: a footstep sound every (ms)", 270, 80, 1_000)
-    val BLAST_APP_BOOSTED_STEP_SOUND_MS = IntSetting("blast.app_boosted_step_sound_ms", SettingGroup.CYBER_BLAST, "App: footstep with speed boots every (ms)", 190, 60, 1_000)
-    val BLAST_APP_SIDE_WIDTH_DP = IntSetting("blast.app_side_width_dp", SettingGroup.CYBER_BLAST, "App: side panels width (dp)", 168, 100, 260)
-    val BLAST_APP_PAD_SIZE_DP = IntSetting("blast.app_pad_size_dp", SettingGroup.CYBER_BLAST, "App: D-pad size (dp)", 130, 60, 200)
-    val BLAST_APP_BOMB_BUTTON_DP = IntSetting("blast.app_bomb_button_dp", SettingGroup.CYBER_BLAST, "App: bomb button size (dp)", 60, 40, 160)
-    val BLAST_APP_MINI_MAP_HEIGHT_DP = IntSetting("blast.app_mini_map_height_dp", SettingGroup.CYBER_BLAST, "App: mini-map height (dp)", 72, 40, 200)
     val BLAST_APP_VIEW_COLS = IntSetting("blast.app_view_cols", SettingGroup.CYBER_BLAST, "App: Big Arena window, least columns shown", 15, 7, 29)
     val BLAST_APP_VIEW_ROWS = IntSetting("blast.app_view_rows", SettingGroup.CYBER_BLAST, "App: Big Arena window, rows shown", 11, 5, 21)
     val BLAST_BOT_REACT_MS = IntSetting("blast.bot_react_ms", SettingGroup.CYBER_BLAST, "Bots: reaction time, at least (ms)", 180, 50, 2_000)
@@ -314,8 +301,7 @@ object GameSettings {
         BLAST_SPEED, BLAST_BOOST_SPEED, BLAST_BOOST_SECONDS, BLAST_SHIELD_MS, BLAST_HIT_POINTS, BLAST_HIT_PENALTY, BLAST_SELF_PENALTY,
         BLAST_CRATE_POINTS, BLAST_CRATE_DENSITY_PCT, BLAST_DENSITY_FEW_PCT, BLAST_DENSITY_MANY_PCT, BLAST_DENSITY_PER_PLAYER_PCT, BLAST_BIG_CLOSE_AFTER_SECONDS, BLAST_ITEM_EVERY_SECONDS, BLAST_ITEM_JITTER_SECONDS, BLAST_ITEM_LIFE_SECONDS, BLAST_MAX_ITEMS,
         BLAST_COUNTDOWN_SECONDS, BLAST_CLOSE_AFTER_SECONDS, BLAST_CLOSE_STEP_MS, BLAST_CLOSE_WHEN_CLEARED_PCT, BLAST_CLOSE_WHEN_PLAYERS_LEFT,
-        BLAST_APP_RENDER_DELAY_MS, BLAST_APP_PAD_DEAD_ZONE_PCT, BLAST_APP_PAD_KEEP_PCT, BLAST_APP_PAD_SIDE_PCT, BLAST_APP_SNAP_MILLI, BLAST_APP_DRIFT_MILLI, BLAST_APP_EASE_PCT,
-        BLAST_APP_STEP_SOUND_MS, BLAST_APP_BOOSTED_STEP_SOUND_MS, BLAST_APP_SIDE_WIDTH_DP, BLAST_APP_PAD_SIZE_DP, BLAST_APP_BOMB_BUTTON_DP, BLAST_APP_MINI_MAP_HEIGHT_DP, BLAST_APP_VIEW_COLS, BLAST_APP_VIEW_ROWS,
+        BLAST_APP_VIEW_COLS, BLAST_APP_VIEW_ROWS,
         BLAST_BOT_REACT_MS, BLAST_BOT_REACT_JITTER_MS, BLAST_BOT_BOMB_GAP_MS, BLAST_BOT_BOMB_GAP_JITTER_MS, BLAST_BOT_LIFE_VALUE, BLAST_BOT_STEP_COST,
         BLAST_BOT_HIT_CHANCE_PCT, BLAST_BOT_CORNER_BONUS_PCT, BLAST_BOT_BOOST_VALUE, BLAST_BOT_HUNT_VALUE, BLAST_BOT_THREAT_PCT, BLAST_BOT_PLANNED_BOMB_PCT,
     )
