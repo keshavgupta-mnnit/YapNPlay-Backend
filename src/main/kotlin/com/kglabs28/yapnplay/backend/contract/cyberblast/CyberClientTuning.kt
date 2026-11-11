@@ -26,7 +26,7 @@ data class CyberClientTuning(
     val stepSoundMs: Int = 270,
     val boostedStepSoundMs: Int = 190,
     val sideWidthDp: Int = 168,
-    val padSizeDp: Int = 104,
+    val padSizeDp: Int = 130,
     val bombButtonDp: Int = 60,
     val miniMapHeightDp: Int = 72,
     /** A Big Arena's window: this many rows top to bottom, at least this many columns. */

@@ -12,12 +12,7 @@ import com.kglabs28.yapnplay.backend.games.elements.dice.mechanics.RollDice
 import com.kglabs28.yapnplay.backend.games.elements.pieces.mechanics.MovePiece
 import com.kglabs28.yapnplay.backend.games.elements.pieces.mechanics.PieceId
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.DICE_FACES
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.PIECES_PER_COLOUR
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_ENTER_HOME
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_FINISH
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_IN_BASE
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.RoyalLudoBoardUtils
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.TRACK_SIZE
 
 /**
  * Royal Ludo's computer player. It rolls when it must roll; to move, it
@@ -58,6 +53,7 @@ class RoyalLudoBot(
         private val house = s.ludoRules.house
         private val pairs = house.pairProtection
         private val mine = s.piecesForSeat(seat)
+        private val track = s.track
 
         override val name = "move with $roll"
         override fun options(): List<Int> = s.legalPieces
@@ -73,19 +69,19 @@ class RoyalLudoBot(
             val from = mine[option]
             val to = if (from == PROGRESS_IN_BASE) 0 else from + roll
             val toSquare = squareOrNull(colour, to)
-            val victims = toSquare?.takeUnless { RoyalLudoBoardUtils.isSafeSquare(it) }?.let { capturable(it) }.orEmpty()
+            val victims = toSquare?.takeUnless { track.isSafe(it) }?.let { capturable(it) }.orEmpty()
             val after = mine.toMutableList().also { it[option] = to }
             val gone = victims.map { it.colour to it.progress }.toSet()
 
             // Inside the home lane a piece is already safe: moving it only matters to finish.
-            var gain = if (from > PROGRESS_ENTER_HOME && to != PROGRESS_FINISH) 0.0 else (to - from.coerceAtLeast(0)).toDouble()
+            var gain = if (from > track.enterHome && to != track.finish) 0.0 else (to - from.coerceAtLeast(0)).toDouble()
             var why = ""
             if (victims.isNotEmpty()) {
                 gain += victims.sumOf { v -> worth(v.progress) * if (v.leader) tuning.endgameCapturePct / PERCENT else 1.0 } * tuning.captureWeightPct / PERCENT
                 if (house.extraTurnOnCapture) gain += tuning.extraTurnBonus
                 why += "capture "
             }
-            if (to == PROGRESS_FINISH) {
+            if (to == track.finish) {
                 gain += tuning.finishBonus
                 if (house.extraTurnOnHome) gain += tuning.extraTurnBonus
                 why += "finish "
@@ -93,7 +89,7 @@ class RoyalLudoBot(
             if (from == PROGRESS_IN_BASE) {
                 if (hitChance(toSquare, to, after, gone) == 0.0) gain += tuning.leaveBaseBonus
                 // Another piece out = more choices on later rolls, worth most early on.
-                gain += tuning.flexBonus * (1 - mine.sumOf { it.coerceAtLeast(0) } / (PIECES_PER_COLOUR * PROGRESS_FINISH.toDouble()))
+                gain += tuning.flexBonus * (1 - mine.sumOf { it.coerceAtLeast(0) } / (mine.size * track.finish.toDouble()))
                 why += "out "
             }
             if (toSquare != null) gain += tuning.chaseBonus.toDouble() * targetsAhead(toSquare, to, gone)
@@ -101,11 +97,11 @@ class RoyalLudoBot(
             val before = hitChance(squareOrNull(colour, from), from, mine, emptySet()) * worth(from)
             val then = hitChance(toSquare, to, after, gone) * worth(to)
             var partner = 0.0
-            if (pairs && from in 0..PROGRESS_ENTER_HOME) {
+            if (pairs && from in 0..track.enterHome) {
                 // Leaving a protected pair exposes the piece left behind.
                 val fromSquare = squareOf(colour, from)
-                val left = mine.withIndex().filter { (i, p) -> i != option && p in 0..PROGRESS_ENTER_HOME && squareOf(colour, p) == fromSquare }
-                if (left.size == 1 && !RoyalLudoBoardUtils.isSafeSquare(fromSquare)) {
+                val left = mine.withIndex().filter { (i, p) -> i != option && p in 0..track.enterHome && squareOf(colour, p) == fromSquare }
+                if (left.size == 1 && !track.isSafe(fromSquare)) {
                     val p = left.single().value
                     partner = hitChance(fromSquare, p, after, gone) * worth(p)
                 }
@@ -118,7 +114,7 @@ class RoyalLudoBot(
             hitChance(squareOrNull(colour, mine[it]), mine[it], mine, emptySet()) > 0
         }.thenBy { mine[it] }.thenBy { it }
 
-        /** A seat's race score: total progress of its pieces (finished = 56). */
+        /** A seat's race score: total progress of its pieces (finished = the track's finish). */
         private fun total(other: Int): Double = s.piecesForSeat(other).sumOf { it.coerceAtLeast(0) }.toDouble()
 
         /** A piece's value in play: its progress plus what getting out of base costs. */
@@ -132,12 +128,12 @@ class RoyalLudoBot(
          * rule), and a piece in base 1–6 past its start (a six out, then that number).
          */
         private fun hitChance(square: Int?, progress: Int, ours: List<Int>, gone: Set<Pair<Int, Int>>): Double {
-            if (square == null || progress !in 0..PROGRESS_ENTER_HOME || RoyalLudoBoardUtils.isSafeSquare(square)) return 0.0
-            if (pairs && ours.count { it in 0..PROGRESS_ENTER_HOME && squareOf(colour, it) == square } >= 2) return 0.0
+            if (square == null || progress !in 0..track.enterHome || track.isSafe(square)) return 0.0
+            if (pairs && ours.count { it in 0..track.enterHome && squareOf(colour, it) == square } >= 2) return 0.0
             var miss = 1.0
             opponents().filter { (it.colour to it.progress) !in gone }.forEach { o ->
-                val d = (square - squareOf(o.colour, o.progress) + TRACK_SIZE) % TRACK_SIZE
-                if (o.progress + d > PROGRESS_ENTER_HOME) return@forEach
+                val d = (square - squareOf(o.colour, o.progress) + track.size) % track.size
+                if (o.progress + d > track.enterHome) return@forEach
                 val chance = when (d) {
                     in 1..DICE_FACES -> ONE_ROLL
                     in DICE_FACES + 1..2 * DICE_FACES -> if (house.extraTurnOnSix) SIX_THEN_REST else 0.0
@@ -147,7 +143,7 @@ class RoyalLudoBot(
             }
             if (house.extraTurnOnSix) {
                 waitingInBase().forEach { c ->
-                    val d = (square - RoyalLudoBoardUtils.startSquareFor(c) + TRACK_SIZE) % TRACK_SIZE
+                    val d = (square - track.start(c) + track.size) % track.size
                     if (d in 1..DICE_FACES) miss *= 1 - SIX_THEN_REST
                 }
             }
@@ -164,9 +160,9 @@ class RoyalLudoBot(
             val there = opponents().filter { (it.colour to it.progress) !in gone }
             return there.count { o ->
                 val sq = squareOf(o.colour, o.progress)
-                val d = (sq - square + TRACK_SIZE) % TRACK_SIZE
+                val d = (sq - square + track.size) % track.size
                 val pairOnIt = pairs && there.count { it.colour == o.colour && squareOf(it.colour, it.progress) == sq } >= 2
-                d in 1..DICE_FACES && progress + d <= PROGRESS_ENTER_HOME && !RoyalLudoBoardUtils.isSafeSquare(sq) && !pairOnIt
+                d in 1..DICE_FACES && progress + d <= track.enterHome && !track.isSafe(sq) && !pairOnIt
             }
         }
 
@@ -176,9 +172,13 @@ class RoyalLudoBot(
             val leader = rivals.maxByOrNull { total(it) }?.takeIf { total(it) >= total(seat) }
             return rivals.flatMap { other ->
                 val c = s.colourForSeat(other)
-                s.piecesForSeat(other).filter { it in 0..PROGRESS_ENTER_HOME }.map { Opponent(c, it, other == leader) }
+                s.piecesForSeat(other).filter { it in 0..track.enterHome }.map { Opponent(c, it, other == leader) }
             }
         }
+
+        private fun squareOf(colour: Int, progress: Int) = track.square(track.start(colour), progress)
+
+        private fun squareOrNull(colour: Int, progress: Int): Int? = if (progress in 0..track.enterHome) squareOf(colour, progress) else null
 
         /** Colours with a piece still in base (they can come out with a six). */
         private fun waitingInBase(): List<Int> =
@@ -189,10 +189,6 @@ class RoyalLudoBot(
 
     private data class Opponent(val colour: Int, val progress: Int, val leader: Boolean)
 
-    private fun squareOf(colour: Int, progress: Int) =
-        RoyalLudoBoardUtils.absoluteSquare(RoyalLudoBoardUtils.startSquareFor(colour), progress)
-
-    private fun squareOrNull(colour: Int, progress: Int): Int? = if (progress in 0..PROGRESS_ENTER_HOME) squareOf(colour, progress) else null
 
     private companion object {
         const val PERCENT = 100.0

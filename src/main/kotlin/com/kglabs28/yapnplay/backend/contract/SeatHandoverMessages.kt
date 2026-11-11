@@ -30,6 +30,10 @@ data class ChooseSeatTaker(val matchId: String, val giveToUserId: String?)
 @Serializable
 data class OfferBotSeat(val matchId: String, val seat: Int, val toUserId: String)
 
+/** The room's leader or admin takes a seat the bot is playing out of the game (as if its player left a Quick Play match). */
+@Serializable
+data class RemoveBotSeat(val matchId: String, val seat: Int)
+
 /** A spectator takes a seat open to all (its owner went away). */
 @Serializable
 data class TakeSeat(val matchId: String, val seat: Int)

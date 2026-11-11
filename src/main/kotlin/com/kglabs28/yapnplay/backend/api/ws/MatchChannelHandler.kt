@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.api.ws
 
 import com.kglabs28.yapnplay.backend.contract.SetMatchTalkingMuted
 import com.kglabs28.yapnplay.backend.contract.OfferBotSeat
+import com.kglabs28.yapnplay.backend.contract.RemoveBotSeat
 import com.kglabs28.yapnplay.backend.contract.CastEndVote
 import com.kglabs28.yapnplay.backend.contract.ProposeEndMatch
 import com.kglabs28.yapnplay.backend.contract.VoteExtension
@@ -46,7 +47,7 @@ class MatchChannelHandler(
         MessageType.MATCH_REQUEST_SNAPSHOT -> {
             val body = codec.payload(request, MatchRequestSnapshot.serializer())
             val user = users.findById(userId)
-            val action = MatchAction.RequestSnapshot(user?.displayName.orEmpty(), user?.avatarId.orEmpty())
+            val action = MatchAction.RequestSnapshot(user?.displayName.orEmpty(), user?.avatarId.orEmpty(), user?.xp ?: 0)
             val result = send(userId, body.matchId, action) as MatchResult.Snapshot
             codec.reply(request, MessageType.MATCH_SNAPSHOT, MatchSnapshot.serializer(), result.snapshot)
         }
@@ -84,6 +85,7 @@ class MatchChannelHandler(
         MessageType.LEAVE_SEAT -> codec.payload(request, LeaveSeat.serializer()).let { it.matchId to MatchAction.Leave(it.giveToUserId) }
         MessageType.ANSWER_SEAT_OFFER -> codec.payload(request, AnswerSeatOffer.serializer()).let { it.matchId to MatchAction.AnswerOffer(it.accept) }
         MessageType.OFFER_BOT_SEAT -> codec.payload(request, OfferBotSeat.serializer()).let { it.matchId to MatchAction.OfferBotSeat(it.seat, it.toUserId) }
+        MessageType.REMOVE_BOT_SEAT -> codec.payload(request, RemoveBotSeat.serializer()).let { it.matchId to MatchAction.RemoveBotSeat(it.seat) }
         MessageType.CHOOSE_SEAT_TAKER -> codec.payload(request, ChooseSeatTaker.serializer()).let { it.matchId to MatchAction.ChooseTaker(it.giveToUserId) }
         MessageType.TAKE_SEAT -> codec.payload(request, TakeSeat.serializer()).let { it.matchId to MatchAction.TakeSeat(it.seat) }
         MessageType.VOTE_EXTENSION -> codec.payload(request, VoteExtension.serializer()).let { it.matchId to MatchAction.VoteExtension(it.keepPlaying) }

@@ -194,7 +194,7 @@ class MatchActor(
             is MatchAction.Relay -> return relay(userId, action)
             // An emoji: no turn or timer changes either.
             is MatchAction.SendEmoji -> return sendEmoji(userId, action)
-            is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId))
+            is MatchAction.RequestSnapshot -> return MatchResult.Snapshot(snapshotFor(userId, action.displayName, action.avatarId, action.xp))
             is MatchAction.SetAutoplay -> setAutoplay(userId, action.enabled)
             is MatchAction.SetMic -> setMic(userId, action.on)
             is MatchAction.SetTalkingMuted -> setTalkingMuted(userId, action.talking)
@@ -204,6 +204,7 @@ class MatchActor(
             is MatchAction.AnswerOffer -> handover.answerOffer(userId, action.accept)
             is MatchAction.ChooseTaker -> handover.leaderChoice(userId, action.giveToUserId)
             is MatchAction.OfferBotSeat -> handover.offerBotSeat(userId, action.seat, action.toUserId)
+            is MatchAction.RemoveBotSeat -> handover.removeBotSeat(userId, action.seat)
             is MatchAction.TakeSeat -> handover.takeSeat(userId, action.seat)
             is MatchAction.VoteExtension -> voteExtension(userId, action.keepPlaying)
             is MatchAction.ProposeEnd -> proposeEnd(userId)
@@ -268,7 +269,7 @@ class MatchActor(
     }
 
     /** A player's snapshot; a room member without a seat becomes a spectator. */
-    private fun snapshotFor(userId: String, displayName: String, avatarId: String = ""): MatchSnapshot {
+    private fun snapshotFor(userId: String, displayName: String, avatarId: String = "", xp: Int = 0): MatchSnapshot {
         val seat = state.seatOf(userId)
         if (seat != null) {
             if (!seat.connected) {
@@ -283,7 +284,7 @@ class MatchActor(
             if (state.ended || roomId == null || !deps.rooms.isPresent(userId, roomId) || !deps.notifier.supports(userId, state.setup.gameId)) {
                 throw ServiceException(ErrorCode.NOT_MEMBER, BackendStrings.NOT_IN_MATCH)
             }
-            state.spectators[userId] = MatchSpectator(userId, displayName, deps.clock.nowMillis(), avatarId = avatarId)
+            state.spectators[userId] = MatchSpectator(userId, displayName, deps.clock.nowMillis(), level = deps.progression.levelFor(xp), avatarId = avatarId)
             publish(emptyList())
         }
         return snapshots.build(userId, deps.clock.nowMillis(), emptyList())

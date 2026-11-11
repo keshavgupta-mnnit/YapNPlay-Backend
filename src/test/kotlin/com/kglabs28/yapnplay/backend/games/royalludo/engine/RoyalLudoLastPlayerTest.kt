@@ -5,7 +5,6 @@ import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
 import com.kglabs28.yapnplay.backend.games.base.play.ApplyResult
 import com.kglabs28.yapnplay.backend.games.elements.pieces.mechanics.MovePiece
 import com.kglabs28.yapnplay.backend.games.elements.pieces.mechanics.PieceId
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_FINISHED
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_IN_BASE
 import kotlin.test.Test
 import kotlin.test.assertEquals

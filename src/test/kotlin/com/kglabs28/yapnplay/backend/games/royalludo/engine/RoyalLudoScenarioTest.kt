@@ -2,7 +2,6 @@ package com.kglabs28.yapnplay.backend.games.royalludo.engine
 
 import com.kglabs28.yapnplay.backend.games.base.identity.GameId
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
-import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_FINISH
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.PROGRESS_IN_BASE
 import kotlin.test.Test
 import kotlin.test.assertEquals

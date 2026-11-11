@@ -146,6 +146,7 @@
     <button type="button" data-tab="audit">Audit</button>
     <button type="button" data-tab="players">Players</button>
     <button type="button" data-tab="rooms">Rooms</button>
+    <button type="button" data-tab="weblogs">Web Logs</button>
     <button type="button" data-tab="settings">Game Settings</button>
     <button type="button" data-tab="bots">Bots</button>
     <button type="button" data-tab="admins" data-needs="createAdmins">Create Admin</button>
@@ -224,7 +225,24 @@
       <label>by <select id="userBy"><option value="joined">Joined</option><option value="last_seen">Last seen</option></select></label>
       <span class="note" style="margin:0">Click a column to sort; click again to reverse.</span>
     </div>
+    <div class="row" style="margin-top:8px;justify-content:space-between">
+      <b id="userTotal"></b>
+      <span class="row" style="gap:6px">
+        <button type="button" id="userPrev" class="ghost">‹ Prev</button>
+        <span id="userPageText" class="note" style="margin:0"></span>
+        <button type="button" id="userNext" class="ghost">Next ›</button>
+      </span>
+    </div>
     <div class="panel" style="margin-top:8px"><table id="usersTable"></table></div>
+  </section>
+
+  <section id="tab-weblogs" hidden>
+    <h2>Web logs</h2>
+    <div class="note">What browsers report while the web app loads and runs, newest first (kept 14 days). Failed: it broke before the first screen. Slow: still loading after 20 s / 60 s, with how far it got. Started: the first screen showed, with the load time and the device. Crash: an error inside the running app. Performance: frames a second (60 is smooth; under 30 feels slow) at 1 and 3 minutes in.</div>
+    <div class="row" style="margin-top:8px"><label>Show <select id="webLogKind">
+      <option value="">Everything</option><option value="FAILED">Failed</option><option value="SLOW">Slow</option><option value="STARTED">Started</option><option value="CRASH">Crash</option><option value="PERF">Performance</option>
+    </select></label></div>
+    <div class="panel" style="margin-top:8px"><table id="webLogsTable"></table></div>
   </section>
 
   <section id="tab-rooms" hidden>
@@ -596,6 +614,16 @@
       return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || ("HTTP " + r.status)); return j; });
     });
   }
+  /** A paged list: the rows (the body) and how many there are in all (the X-Total-Count header). */
+  function apiPage(path) {
+    return fetch(path, { method: "GET", cache: "no-store", headers: { "Authorization": "Bearer " + (storedToken() || "") } }).then(function (r) {
+      if (r.status === 401) { clearToken(); showSignIn("Your sign-in ended. Sign in again."); throw new Error("signed out"); }
+      return r.json().then(function (j) {
+        if (!r.ok) throw new Error(j.message || ("HTTP " + r.status));
+        return { rows: j, total: parseInt(r.headers.get("X-Total-Count") || String(j.length), 10) };
+      });
+    });
+  }
   function btn(text, onClick, cls) {
     var b = el("button", text, cls || ""); b.type = "button"; b.addEventListener("click", onClick); return b;
   }
@@ -823,6 +851,9 @@
 
   // ── Players ──
   var userSort = { key: "joined", asc: false };
+  /** Players a page, and the page shown (from 0); a new search, sort or period starts at the first. */
+  var USERS_PER_PAGE = 25;
+  var userPage = 0;
   /** The players columns the server can sort by (the others can't). */
   var USER_SORT_KEYS = { "Name": "name", "Coins": "coins", "XP": "xp", "Games": "games", "Time in app": "time_in_app", "Last seen": "last_seen", "Joined": "joined" };
   function source(u) {
@@ -838,6 +869,7 @@
       if (key === userSort.key) th.appendChild(el("span", userSort.asc ? "▲" : "▼", "arrow"));
       th.addEventListener("click", function () {
         if (userSort.key === key) userSort.asc = !userSort.asc; else { userSort.key = key; userSort.asc = key === "name"; }
+        userPage = 0;
         loadUsers();
       });
     });
@@ -846,10 +878,20 @@
     var r = periodRange({ key: $("userPeriod").value || "all" });
     var path = "/admin/users?q=" + encodeURIComponent($("userQuery").value.trim()) +
       "&by=" + $("userBy").value + "&sort=" + userSort.key + "&dir=" + (userSort.asc ? "asc" : "desc") +
-      (r ? "&from=" + r.from + (r.to ? "&to=" + r.to : "") : "");
-    api("GET", path).then(function (users) {
-      table("usersTable", [["Name"], ["Code"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Joined"], ["Source"], ["Play Games"], ["Blocked until"], ["ID"], [""]],
-        users.map(function (u) {
+      (r ? "&from=" + r.from + (r.to ? "&to=" + r.to : "") : "") +
+      "&page=" + userPage + "&size=" + USERS_PER_PAGE;
+    apiPage(path).then(function (result) {
+      var users = result.rows, total = result.total;
+      var pages = Math.max(1, Math.ceil(total / USERS_PER_PAGE));
+      // Deleted or filtered past the end: back to the last page that has players.
+      if (userPage > 0 && userPage >= pages) { userPage = pages - 1; loadUsers(); return; }
+      var first = userPage * USERS_PER_PAGE;
+      $("userTotal").textContent = fmt(total) + (total === 1 ? " player" : " players");
+      $("userPageText").textContent = total ? "Showing " + fmt(first + 1) + "–" + fmt(first + users.length) + " · page " + (userPage + 1) + " of " + pages : "";
+      $("userPrev").disabled = userPage === 0;
+      $("userNext").disabled = userPage >= pages - 1;
+      table("usersTable", [["#", true], ["Name"], ["Code"], ["Coins", true], ["XP", true], ["Games", true], ["Friends", true], ["Groups"], ["Time in app"], ["Last seen"], ["Joined"], ["Source"], ["Play Games"], ["Blocked until"], ["ID"], [""]],
+        users.map(function (u, i) {
           var block = null, coins = null, del = null;
           if (can("moderate")) {
             block = u.blockedUntil
@@ -881,13 +923,24 @@
             }, "danger");
           }
           var groups = (u.groups || []);
-          return [u.displayName, u.userCode || "—", u.coins, u.xp, u.gamesPlayed || 0, u.friends || 0,
+          return [first + i + 1, u.displayName, u.userCode || "—", u.coins, u.xp, u.gamesPlayed || 0, u.friends || 0,
                   groups.length ? groups.length + ": " + groups.join(", ") : "—", minutes(u.appMinutes || 0),
                   u.lastSeenAt ? when(u.lastSeenAt) : "—", when(u.createdAt), source(u), u.playGamesLinked ? "Linked" : "—",
                   when(u.blockedUntil), u.userId, group(block, coins, del)];
         }), "No players found");
       sortableUserHeaders();
     }).catch(function (e) { say("Players: " + e.message, true); });
+  }
+
+  // ── Web logs ──
+  function loadWebLogs() {
+    var kind = $("webLogKind").value;
+    api("GET", "/admin/web-logs" + (kind ? "?kind=" + kind : "")).then(function (logs) {
+      table("webLogsTable", [["#", true], ["When"], ["Kind"], ["Stage"], ["Message"], ["Seconds", true], ["Device"], ["Browser"], ["Build"]],
+        logs.map(function (l, i) {
+          return [i + 1, when(l.createdAt), l.kind, l.stage, l.message, Math.round(l.elapsedMs / 100) / 10, l.device, l.userAgent, l.version];
+        }), "Nothing reported");
+    }).catch(function (e) { say("Web logs: " + e.message, true); });
   }
 
   // ── Rooms ──
@@ -942,16 +995,26 @@
     var editable = can("editSettings");
     $("saveSettings").hidden = !editable;
     var rows = settingsList.filter(function (s) { return s.group === settingGroup; }).map(function (s) {
-      var input = el("input"); input.value = s.key in dirty ? dirty[s.key] : s.value; input.setAttribute("aria-label", s.label);
+      // A 0–1 setting is a switch: on (1) or off (0), shown as a checkbox; it still saves as 1 or 0.
+      var onOff = s.hint === "0 – 1";
+      var shown = s.key in dirty ? dirty[s.key] : s.value;
+      var input = el("input"); input.setAttribute("aria-label", s.label);
+      if (onOff) { input.type = "checkbox"; input.checked = shown === "1"; } else input.value = shown;
+      var valueOf = function () { return onOff ? (input.checked ? "1" : "0") : input.value; };
       input.disabled = !editable;
       if (s.key in dirty) input.classList.add("dirty");
-      input.addEventListener("input", function () {
-        if (input.value === s.value) delete dirty[s.key]; else dirty[s.key] = input.value;
+      input.addEventListener(onOff ? "change" : "input", function () {
+        var v = valueOf();
+        if (v === s.value) delete dirty[s.key]; else dirty[s.key] = v;
         input.classList.toggle("dirty", s.key in dirty);
         showSettingsState();
       });
-      var reset = editable ? btn("Default", function () { input.value = s["default"]; input.dispatchEvent(new Event("input")); }, "ghost") : null;
-      return [s.label, input, s["default"], s.hint, group(reset)];
+      var reset = editable ? btn("Default", function () {
+        if (onOff) { input.checked = s["default"] === "1"; input.dispatchEvent(new Event("change")); }
+        else { input.value = s["default"]; input.dispatchEvent(new Event("input")); }
+      }, "ghost") : null;
+      var cell = onOff ? (function () { var l = el("label", "", "check"); l.appendChild(input); l.appendChild(document.createTextNode(input.checked ? "On" : "Off")); input.addEventListener("change", function () { l.lastChild.textContent = input.checked ? "On" : "Off"; }); return l; })() : input;
+      return [s.label, cell, onOff ? (s["default"] === "1" ? "On" : "Off") : s["default"], onOff ? "On / Off" : s.hint, group(reset)];
     });
     table("settingsTable", [["Setting"], ["Value"], ["Default"], ["Allowed"], [""]], rows, "No settings");
     showSettingsState();
@@ -1043,7 +1106,7 @@
   });
 
   // ── Tabs ──
-  var LOADERS = { overview: loadOverview, reports: loadReports, feedback: loadFeedback, audit: loadAudit, players: loadUsers, rooms: loadRooms,
+  var LOADERS = { overview: loadOverview, reports: loadReports, feedback: loadFeedback, audit: loadAudit, players: loadUsers, rooms: loadRooms, weblogs: loadWebLogs,
                   settings: loadSettings, bots: loadMatches, admins: loadAdmins };
   function showTab(tab) {
     currentTab = tab;
@@ -1063,11 +1126,14 @@
     });
   });
   window.addEventListener("beforeunload", function (e) { if (hasDirty()) { e.preventDefault(); e.returnValue = ""; } });
-  $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); loadUsers(); });
+  $("webLogKind").addEventListener("change", loadWebLogs);
+  $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); userPage = 0; loadUsers(); });
+  $("userPrev").addEventListener("click", function () { if (userPage > 0) { userPage--; loadUsers(); } });
+  $("userNext").addEventListener("click", function () { userPage++; loadUsers(); });
   // The players list's own period (no custom range) and order, from the same list as Overview.
   PERIODS.filter(function (p) { return p[0] !== "custom"; }).forEach(function (p) { $("userPeriod").appendChild(new Option(p[1], p[0])); });
   $("userPeriod").value = "all";
-  ["userPeriod", "userBy"].forEach(function (id) { $(id).addEventListener("change", loadUsers); });
+  ["userPeriod", "userBy"].forEach(function (id) { $(id).addEventListener("change", function () { userPage = 0; loadUsers(); }); });
   $("roomSearch").addEventListener("submit", function (e) { e.preventDefault(); loadRooms(); });
   resume();
 })();

@@ -8,11 +8,15 @@ const val ROYAL_LUDO_DISPLAY_NAME = "Royal Ludo"
 val ROYAL_LUDO_TAGLINES = listOf("Roll", "Race", "Rule")
 
 /**
- * Every Royal Ludo table has exactly 4 players (min = max). Rooms with
- * fewer friends use the leader's bot fill. The engine itself still runs
- * 2–4 seats, so this is a product rule, not an engine limit.
+ * Royal Ludo plays 4 to 8: a room's players pick the board (up to 4 the square board, 5–6 the
+ * hexagon, 7–8 the octagon; see RoyalLudoTrack) and CPU fill tops up to that board's size. Below
+ * 4 a room needs CPU fill. Quick Play always makes a 4-player square board.
  */
 const val ROYAL_LUDO_PLAYERS = 4
+const val ROYAL_LUDO_MAX_PLAYERS = 8
+
+/** What an app reports (with its games) when it can draw the 6- and 8-player boards. */
+const val ROYAL_LUDO_BIG_BOARDS_FEATURE = "royal-ludo-8"
 
 /** A random (Quick Play) Royal Ludo match fills all four seats. */
 const val ROYAL_LUDO_QUICK_PLAY_SEATS = ROYAL_LUDO_PLAYERS
@@ -23,19 +27,11 @@ const val ROYAL_LUDO_SEARCH_SECONDS = 15L
 /** Seconds per turn before the bot plays it. */
 const val ROYAL_LUDO_TURN_SECONDS = 10L
 
-const val TRACK_SIZE = 52
 const val PROGRESS_IN_BASE = -1
-const val PROGRESS_FINISHED = 56
-const val PROGRESS_FINISH = 56
 const val HOME_COLUMN_LENGTH = 5
-const val PROGRESS_ENTER_HOME = 50
-const val RED_START = 0
-const val GREEN_START = 13
-const val YELLOW_START = 26
-const val BLUE_START = 39
-val STAR_SQUARES = setOf(8, 21, 34, 47)
 const val PIECES_PER_COLOUR = 4
-const val COLOUR_COUNT = 4
+/** Pieces each on the 6- and 8-player boards with the "3 Pieces" house rule. */
+const val PIECES_ON_BIG_BOARDS = 3
 const val MAX_CONSECUTIVE_SIXES = 3
 const val DICE_FACES = 6
 
@@ -48,10 +44,11 @@ val ROYAL_LUDO_HOUSE_RULES = listOf(
     HouseRuleOption("three_sixes_forfeit", "Three Sixes Forfeit", "A third six in a row undoes the whole turn", true),
     HouseRuleOption("pair_protection", "Pair Protection", "Two pieces together can't be captured", true),
     HouseRuleOption("auto_move_single_option", "Auto Move", "Move automatically when only one move exists", true),
+    HouseRuleOption("three_pieces", "3 Pieces (5–8 players)", "On the 6- and 8-player boards each player has 3 pieces instead of 4", false),
 )
 
 val ROYAL_LUDO_FIXED_RULES = listOf(
-    "4 players, 4 pieces each",
+    "4 to 8 players: square board up to 4, hexagon for 5–6, octagon for 7–8; 4 pieces each",
     "A piece leaves base only on a 6",
     "Exact roll needed to reach home",
     "Landing on a lone opponent sends it back to base",

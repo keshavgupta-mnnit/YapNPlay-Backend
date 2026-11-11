@@ -28,7 +28,8 @@ class StartPolicy {
         entryCoins: Int = 0,
     ): SeatPlan {
         val players = readyHumans(members, leaderId).take(game.maxPlayers).map { it.userId }
-        val bots = if (botFill && game.cpuFillAllowed && players.size < game.minPlayers) game.minPlayers - players.size else 0
+        // CPU fill: a full table (the game decides its size), not just the bare minimum.
+        val bots = if (botFill && game.cpuFillAllowed) (game.roomTableSize(players.size) - players.size).coerceAtLeast(0) else 0
         val spectators = members.filter { it.online && it.userId !in players }.map { it.userId }
         return SeatPlan(game.id.value, players, bots, spectators, houseRules, entryCoins)
     }

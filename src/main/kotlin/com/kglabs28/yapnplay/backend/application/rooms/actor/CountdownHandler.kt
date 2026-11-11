@@ -94,6 +94,14 @@ class CountdownHandler(
         val plan = deps.startPolicy.plan(
             state.members.values, state.room.leaderId, game, state.room.botFill, state.houseRules, state.room.entryCoins,
         )
+        // A table that needs a newer app (Royal Ludo's 6- and 8-player boards): everyone playing must have it.
+        game.featureNeeded(plan.players.size + plan.botCount)?.let { feature ->
+            val missing = plan.players.filter { !deps.notifier.supports(it, feature) }.mapNotNull { state.members[it]?.displayName }
+            if (missing.isNotEmpty()) {
+                state.countdownStop = CountdownStop(CountdownStopReason.UPDATE_NEEDED, byName = missing.joinToString(), at = deps.clock.nowMillis())
+                return false
+            }
+        }
         val matchId = try {
             deps.matchStarter.start(state.room.id, plan)
         } catch (e: ServiceException) {

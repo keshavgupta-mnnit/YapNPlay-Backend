@@ -38,6 +38,19 @@ interface GameDescriptor {
     /** CPU players may fill empty seats (a room's bot fill, Quick Play's CPU fill). Doodle King: only while testing. */
     val cpuFillAllowed: Boolean get() = true
 
+    /**
+     * How many seats a room match has for [players] humans when the room's CPU fill is on (CPUs take
+     * the rest): a full table, as big as Quick Play's, never fewer than the game needs nor more
+     * than it allows. Royal Ludo: its board's size (4, 6 or 8).
+     */
+    fun roomTableSize(players: Int): Int = maxOf(players, minPlayers, matchmaking.seats).coerceAtMost(maxPlayers)
+
+    /**
+     * A table of [seats] that needs an app newer than the game itself (Royal Ludo's 6- and 8-player
+     * boards): the feature every player's app must report, or null.
+     */
+    fun featureNeeded(seats: Int): String? = null
+
     /** Toggles a room leader may change (shown in the lobby's house rules). */
     val houseRuleOptions: List<HouseRuleOption>
 

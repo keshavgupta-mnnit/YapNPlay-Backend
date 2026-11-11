@@ -431,7 +431,8 @@ data class AdRewardBody(
  * can list them and open each one's leaderboard again.
  */
 @Serializable
-data class MatchHistoryResponse(val matches: List<MatchHistoryItem>)
+/** One page of the history (GET /matches/history?page=); 0.15.0: [hasMore] when another page follows. */
+data class MatchHistoryResponse(val matches: List<MatchHistoryItem>, val hasMore: Boolean = false)
 
 @Serializable
 data class MatchHistoryItem(

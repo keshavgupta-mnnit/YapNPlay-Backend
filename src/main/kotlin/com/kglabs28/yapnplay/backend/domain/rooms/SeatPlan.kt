@@ -5,7 +5,7 @@ data class SeatPlan(
     val gameId: String,
     /** Humans who get a seat, in seat order. */
     val players: List<String>,
-    /** CPU seats added by bot fill (never beyond the game's minimum). */
+    /** CPU seats added by bot fill: up to the game's full room table (GameDescriptor.roomTableSize). */
     val botCount: Int,
     /** Present members without a seat. */
     val spectators: List<String>,

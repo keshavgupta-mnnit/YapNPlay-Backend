@@ -30,9 +30,11 @@ class AdminActionsUseCase(
     private val ids: IdGenerator,
     private val clock: Clock,
 ) {
-    suspend fun users(query: String, filter: AdminUserFilter = AdminUserFilter()): List<AdminUserView> {
+    /** One page of players ([page] from 0, [pageSize] each, at most [USER_LIMIT]). */
+    suspend fun users(query: String, filter: AdminUserFilter = AdminUserFilter(), page: Int = 0, pageSize: Int = USER_LIMIT): List<AdminUserView> {
         val now = clock.nowMillis()
-        return directory.searchUsers(query, now, USER_LIMIT, filter).map {
+        val size = pageSize.coerceIn(1, USER_LIMIT)
+        return directory.searchUsers(query, now, size, filter, offset = page.coerceAtLeast(0).toLong() * size).map {
             AdminUserView(
                 it.userId, it.displayName, it.userCode, it.coins, it.xp, it.createdAt, it.playGamesLinked, it.blockedUntil,
                 friends = it.friends, groups = it.groups, gamesPlayed = it.gamesPlayed,
@@ -41,6 +43,9 @@ class AdminActionsUseCase(
             )
         }
     }
+
+    /** How many players match [query] and [filter] in all. */
+    suspend fun userCount(query: String, filter: AdminUserFilter = AdminUserFilter()): Long = directory.countUsers(query, filter)
 
     suspend fun reports(): List<AdminReportView> = directory.recentReports(REPORT_LIMIT).map {
         AdminReportView(it.reportId, it.reporterName, it.reportedId, it.reportedName, it.reason, it.createdAt, it.upheld, it.revertedAt)
@@ -109,18 +114,19 @@ class AdminActionsUseCase(
         }
     }
 
-    private companion object {
+    companion object {
+        /** The most players one page may hold. */
         const val USER_LIMIT = 50
-        const val REPORT_LIMIT = 50
-        const val AUDIT_LIMIT = 100
-        const val MAX_BLOCK_DAYS = 365
-        const val MAX_ADJUST = 1_000_000
-        const val MILLIS_PER_DAY = 86_400_000L
-        const val BLOCK = "BLOCK"
-        const val UNBLOCK = "UNBLOCK"
-        const val COINS = "COINS"
-        const val REPORT = "REPORT"
-        const val REPORT_REVERT = "REPORT_REVERT"
+        private const val REPORT_LIMIT = 50
+        private const val AUDIT_LIMIT = 100
+        private const val MAX_BLOCK_DAYS = 365
+        private const val MAX_ADJUST = 1_000_000
+        private const val MILLIS_PER_DAY = 86_400_000L
+        private const val BLOCK = "BLOCK"
+        private const val UNBLOCK = "UNBLOCK"
+        private const val COINS = "COINS"
+        private const val REPORT = "REPORT"
+        private const val REPORT_REVERT = "REPORT_REVERT"
     }
 }
 

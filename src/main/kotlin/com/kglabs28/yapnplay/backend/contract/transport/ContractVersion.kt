@@ -4,6 +4,8 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.15.0 — Royal Ludo for 4 to 8: RoyalLudoPublicState.arms (4 square, 6 hexagon, 8 octagon board), Colour PINK / TEAL, arm colours in RoyalLudoArmColours; house rule three_pieces; an app that draws the big boards reports the feature "royal-ludo-8" with its games, or it can't be seated at a 5+ player table. Room CPU fill now fills a full table (GameDescriptor.roomTableSize), not just the minimum. GET /matches/history?page= (20 a page, each match once) with MatchHistoryResponse.hasMore. POST /web/log (WebLogBody, plain text) for the web app's load reports.
+ * 0.14.2 — RemoveBotSeat (MATCH channel): the room's leader or admin takes a seat the bot plays out of the game (never below two players).
  * 0.14.1 — group size is an admin setting (rooms.max_members, default 16): Me.maxGroupMembers tells the app.
  * 0.14.0 — invite bonus: POST /referrals/claim (ClaimReferralBody -> ReferralClaimed), once per new player (account under 24 h old, the only one on its phone), admin setting coins.referral_bonus (1000) to both; invite links take `?ref=<userCode>`, and /open/... carries the invite to the Play Store (install referrer `open=<kind>/<code>&ref=`) and to the web app (`?open=...&ref=`); GET /.well-known/assetlinks.json.
  * 0.13.4 — Cyber Blast: CyberInput.alt (side way of a diagonal push); CyberBlastPublicState.tuning (CyberClientTuning, admin settings for the app's feel and layout).
@@ -54,4 +56,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.14.1"
+const val CONTRACT_VERSION: String = "0.15.0"

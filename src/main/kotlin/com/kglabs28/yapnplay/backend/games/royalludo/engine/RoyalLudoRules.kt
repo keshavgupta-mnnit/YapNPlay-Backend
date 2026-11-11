@@ -29,6 +29,8 @@ data class RoyalLudoHouseRules(
     val threeSixesForfeit: Boolean = true,
     val pairProtection: Boolean = true,
     val autoMoveWhenSingleOption: Boolean = true,
+    /** On the 6- and 8-player boards, 3 pieces each instead of 4 (off by default). */
+    val threePieces: Boolean = false,
 ) : HouseRules
 
 /**

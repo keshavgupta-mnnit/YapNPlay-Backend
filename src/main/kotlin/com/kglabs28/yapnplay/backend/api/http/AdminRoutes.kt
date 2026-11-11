@@ -10,6 +10,7 @@ import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
 import com.kglabs28.yapnplay.backend.api.auth.AdminTokenCheck
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminAuthUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminRemovalUseCase
@@ -65,6 +66,7 @@ fun Route.adminRoutes(
     feedback: AdminFeedbackUseCase,
     restart: AdminRestartUseCase,
     getAnalytics: GetAdminAnalyticsUseCase,
+    webLogs: WebLogUseCase,
 ) {
     val page by lazy {
         AdminTokenCheck::class.java.getResource(DASHBOARD_RESOURCE)?.readText() ?: error(DASHBOARD_RESOURCE)
@@ -153,7 +155,12 @@ fun Route.adminRoutes(
                 sort = AdminUserSort.entries.firstOrNull { it.name.equals(params[SORT_PARAM], ignoreCase = true) } ?: AdminUserSort.JOINED,
                 ascending = params[DIRECTION_PARAM].equals(ASCENDING, ignoreCase = true),
             )
-            call.respond(actions.users(params[HttpPaths.QUERY_PARAM].orEmpty(), filter))
+            val query = params[HttpPaths.QUERY_PARAM].orEmpty()
+            // One page of players; the count of all of them rides along in a header (the body stays a list).
+            val page = params[PAGE_PARAM]?.toIntOrNull() ?: 0
+            val size = params[PAGE_SIZE_PARAM]?.toIntOrNull() ?: AdminActionsUseCase.USER_LIMIT
+            call.response.header(TOTAL_COUNT_HEADER, actions.userCount(query, filter).toString())
+            call.respond(actions.users(query, filter, page, size))
         }
     }
     post(HttpPaths.ADMIN_USER_BLOCK) {
@@ -183,6 +190,8 @@ fun Route.adminRoutes(
             call.respond(HttpStatusCode.NoContent)
         }
     }
+    // What browsers reported while loading and running the web app (newest first; ?kind=FAILED…).
+    get(HttpPaths.ADMIN_WEB_LOGS) { guard.run(call, AdminPermission.VIEW) { call.respond(webLogs.recent(call.request.queryParameters[KIND_PARAM])) } }
     get(HttpPaths.ADMIN_ROOMS) { guard.run(call, AdminPermission.VIEW) { call.respond(removal.rooms(call.request.queryParameters[HttpPaths.QUERY_PARAM].orEmpty())) } }
     delete(HttpPaths.ADMIN_ROOM) {
         guard.run(call, AdminPermission.REMOVE_PLAYERS) { admin ->
@@ -308,5 +317,9 @@ private const val DATE_BY_PARAM = "by"
 private const val SORT_PARAM = "sort"
 private const val DIRECTION_PARAM = "dir"
 private const val ASCENDING = "asc"
+private const val PAGE_PARAM = "page"
+private const val KIND_PARAM = "kind"
+private const val PAGE_SIZE_PARAM = "size"
+private const val TOTAL_COUNT_HEADER = "X-Total-Count"
 private const val TEST_ERROR_LOGGER = "AdminTestError"
 private const val TEST_ERROR_MESSAGE = "Test error from the YapNPlay admin: Sentry is working"

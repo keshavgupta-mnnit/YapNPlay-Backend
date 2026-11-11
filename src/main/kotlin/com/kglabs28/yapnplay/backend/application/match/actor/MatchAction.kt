@@ -14,7 +14,8 @@ sealed interface MatchAction {
     data class SendEmoji(val emojiId: String, val toSeat: Int) : MatchAction
 
     /** Snapshot for a player, or start watching (room members only). */
-    data class RequestSnapshot(val displayName: String, val avatarId: String = "") : MatchAction
+    /** [xp]: the viewer's XP, for the level they show if they watch (and take a seat). */
+    data class RequestSnapshot(val displayName: String, val avatarId: String = "", val xp: Int = 0) : MatchAction
 
     data class SetAutoplay(val enabled: Boolean) : MatchAction
     data class SetMic(val on: Boolean) : MatchAction
@@ -25,6 +26,7 @@ sealed interface MatchAction {
     data class AnswerOffer(val accept: Boolean) : MatchAction
     data class ChooseTaker(val giveToUserId: String?) : MatchAction
     data class OfferBotSeat(val seat: Int, val toUserId: String) : MatchAction
+    data class RemoveBotSeat(val seat: Int) : MatchAction
     data class TakeSeat(val seat: Int) : MatchAction
     /** The keep-playing vote at the game's limit. */
     data class VoteExtension(val keepPlaying: Boolean) : MatchAction

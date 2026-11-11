@@ -5,11 +5,17 @@ import com.kglabs28.yapnplay.backend.contract.MatchHistoryResponse
 import com.kglabs28.yapnplay.backend.contract.MatchHistorySeat
 import com.kglabs28.yapnplay.backend.domain.match.MatchResultRepository
 
-/** The caller's latest finished matches, newest first, with every seat's place, coins and XP. */
+/**
+ * The caller's finished matches, newest first, a page of [PAGE_SIZE] at a time ([page] from 0),
+ * with every seat's place, coins and XP; [MatchHistoryResponse.hasMore] says another page follows.
+ */
 class GetMatchHistoryUseCase(private val results: MatchResultRepository) {
-    suspend operator fun invoke(userId: String): MatchHistoryResponse =
-        MatchHistoryResponse(
-            results.history(userId, HISTORY_LIMIT).map { match ->
+    suspend operator fun invoke(userId: String, page: Int = 0): MatchHistoryResponse {
+        // One more than a page, to know whether there is a next one.
+        val found = results.history(userId, PAGE_SIZE + 1, page.coerceAtLeast(0).toLong() * PAGE_SIZE)
+        return MatchHistoryResponse(
+            hasMore = found.size > PAGE_SIZE,
+            matches = found.take(PAGE_SIZE).map { match ->
                 MatchHistoryItem(
                     matchId = match.matchId,
                     gameId = match.gameId,
@@ -17,16 +23,18 @@ class GetMatchHistoryUseCase(private val results: MatchResultRepository) {
                     roomName = match.roomName,
                     startedAt = match.startedAt,
                     endedAt = match.endedAt,
-                    mySeat = match.seats.firstOrNull { it.userId == userId }?.seat ?: 0,
+                    // Two seats in one match (left, then sat down again): the one they finished in.
+                    mySeat = match.seats.filter { it.userId == userId }.minByOrNull { if (it.left) 1 else 0 }?.seat ?: 0,
                     seats = match.seats.map {
                         MatchHistorySeat(it.seat, it.userId, it.displayName, it.avatarId, it.place, it.coinsWon, it.completionCoins, it.stake, it.xp, left = it.left)
                     },
                 )
             },
         )
+    }
 
     private companion object {
-        /** How many past matches the history holds. */
-        const val HISTORY_LIMIT = 50
+        /** Matches a page. */
+        const val PAGE_SIZE = 20
     }
 }

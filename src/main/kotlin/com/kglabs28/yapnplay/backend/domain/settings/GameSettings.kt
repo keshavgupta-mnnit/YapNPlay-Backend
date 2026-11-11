@@ -198,6 +198,7 @@ object GameSettings {
 
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
+    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play players (5-6: hexagon board, 7-8: octagon; CPUs fill the rest)", 4, 2, 8)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
     val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)
@@ -231,7 +232,7 @@ object GameSettings {
     val DK_PASS_PENALTY = IntSetting("dk.pass_penalty", SettingGroup.DOODLE_KING, "Points lost for passing or drawing nothing", 50, 0, 500)
     val DK_HINT_START_PCT = IntSetting("dk.hint_start_pct", SettingGroup.DOODLE_KING, "Letter hints start after this % of the drawing time", 40, 0, 95)
     // TODO before the live release: back to 0 (or set 0 on the admin board). On while Doodle King is being tested.
-    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "TESTING ONLY: 1 lets CPU players fill Doodle King tables (set 0 live)", 1, 0, 1)
+    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "CPU players fill Doodle King tables (testing; turn off so only real players play)", 1, 0, 1)
 
     // ── Cyber Blast ───────────────────────────────────────────────────────
     val BLAST_FRAME_MS = IntSetting("blast.frame_ms", SettingGroup.CYBER_BLAST, "Board updates sent every (ms; lower is smoother but more data)", 50, 30, 200)
@@ -274,7 +275,7 @@ object GameSettings {
     val BLAST_APP_STEP_SOUND_MS = IntSetting("blast.app_step_sound_ms", SettingGroup.CYBER_BLAST, "App: a footstep sound every (ms)", 270, 80, 1_000)
     val BLAST_APP_BOOSTED_STEP_SOUND_MS = IntSetting("blast.app_boosted_step_sound_ms", SettingGroup.CYBER_BLAST, "App: footstep with speed boots every (ms)", 190, 60, 1_000)
     val BLAST_APP_SIDE_WIDTH_DP = IntSetting("blast.app_side_width_dp", SettingGroup.CYBER_BLAST, "App: side panels width (dp)", 168, 100, 260)
-    val BLAST_APP_PAD_SIZE_DP = IntSetting("blast.app_pad_size_dp", SettingGroup.CYBER_BLAST, "App: D-pad size (dp)", 104, 60, 200)
+    val BLAST_APP_PAD_SIZE_DP = IntSetting("blast.app_pad_size_dp", SettingGroup.CYBER_BLAST, "App: D-pad size (dp)", 130, 60, 200)
     val BLAST_APP_BOMB_BUTTON_DP = IntSetting("blast.app_bomb_button_dp", SettingGroup.CYBER_BLAST, "App: bomb button size (dp)", 60, 40, 160)
     val BLAST_APP_MINI_MAP_HEIGHT_DP = IntSetting("blast.app_mini_map_height_dp", SettingGroup.CYBER_BLAST, "App: mini-map height (dp)", 72, 40, 200)
     val BLAST_APP_VIEW_COLS = IntSetting("blast.app_view_cols", SettingGroup.CYBER_BLAST, "App: Big Arena window, least columns shown", 15, 7, 29)
@@ -305,7 +306,7 @@ object GameSettings {
         MONO_TURN_SECONDS, MONO_CPU_THINK_MS, MONO_CPU_THINK_JITTER_MS, MONO_CPU_DECISION_EXTRA_MS,
         CHAOS_CPU_THINK_MS, CHAOS_CPU_THINK_JITTER_MS, CHAOS_CPU_DECISION_EXTRA_MS, MONO_PENALTY_CARDS, CHAOS_PENALTY_CARDS,
         CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST, MONO_BOT_CATCH_REACTION_MS,
-        RL_TURN_SECONDS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
+        RL_TURN_SECONDS, RL_QUICK_PLAY_SEATS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
         DK_ROUNDS, DK_DRAW_SECONDS, DK_INTRO_SECONDS, DK_PICK_SECONDS, DK_REVEAL_SECONDS, DK_GUESS_POINTS, DK_LEVEL_POINTS_PCT, DK_DRAWER_PER_GUESS,
         DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS, DK_TEST_BOTS,

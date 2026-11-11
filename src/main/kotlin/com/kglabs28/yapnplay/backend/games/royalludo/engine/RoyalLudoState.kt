@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.games.royalludo.engine
 
+import com.kglabs28.yapnplay.backend.games.royalludo.utils.RoyalLudoTrack
 import com.kglabs28.yapnplay.backend.games.base.identity.GameId
 import com.kglabs28.yapnplay.backend.games.base.identity.SeatNumber
 import com.kglabs28.yapnplay.backend.games.base.match.GameState
@@ -43,12 +44,15 @@ class RoyalLudoState(
      */
     val sixBoostPerMissPct: Int = 0,
     val sixChanceCapPct: Int = 0,
+    /** The board's arms (4 square, 6 hexagon, 8 octagon); older saved matches were all square. */
+    val arms: Int = RoyalLudoTrack.SQUARE_ARMS,
 ) : GameState {
     override val gameId: GameId get() = _gameId
     override val rules: GameRules get() = _rules
     override val seats: List<SeatNumber> get() = _seats
     override val turn: TurnState get() = _turn
     val ludoRules: RoyalLudoRules get() = _rules
+    val track: RoyalLudoTrack get() = RoyalLudoTrack(arms)
 
     fun colourForSeat(seat: Int): Int = seatColours[seat] ?: error("No colour for seat $seat")
     fun piecesForSeat(seat: Int): List<Int> = pieces[seat] ?: error("No pieces for seat $seat")
@@ -72,10 +76,11 @@ class RoyalLudoState(
         baseMisses: Map<Int, Int> = this.baseMisses,
         sixBoostPerMissPct: Int = this.sixBoostPerMissPct,
         sixChanceCapPct: Int = this.sixChanceCapPct,
+        arms: Int = this.arms,
     ): RoyalLudoState = RoyalLudoState(
         _gameId, _rules, _seats, _turn, seatColours, pieces,
         currentSeat, phase, lastRoll, legalPieces, consecutiveSixes,
         finishingOrder, removalOrder, turnCounter, turnStartPieces,
-        baseMisses, sixBoostPerMissPct, sixChanceCapPct,
+        baseMisses, sixBoostPerMissPct, sixChanceCapPct, arms,
     )
 }

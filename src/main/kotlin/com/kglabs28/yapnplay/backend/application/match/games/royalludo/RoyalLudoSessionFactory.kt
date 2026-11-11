@@ -74,6 +74,7 @@ class RoyalLudoSessionFactory(
                 threeSixesForfeit = on(THREE_SIXES_FORFEIT, defaults.threeSixesForfeit),
                 pairProtection = on(PAIR_PROTECTION, defaults.pairProtection),
                 autoMoveWhenSingleOption = on(AUTO_MOVE, defaults.autoMoveWhenSingleOption),
+                threePieces = on(THREE_PIECES, defaults.threePieces),
             ),
         )
     }
@@ -86,5 +87,6 @@ class RoyalLudoSessionFactory(
         const val THREE_SIXES_FORFEIT = "three_sixes_forfeit"
         const val PAIR_PROTECTION = "pair_protection"
         const val AUTO_MOVE = "auto_move_single_option"
+        const val THREE_PIECES = "three_pieces"
     }
 }

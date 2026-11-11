@@ -41,11 +41,27 @@ class StartPolicyTest {
     }
 
     @Test
-    fun `with six ready the first four by ready time play and the rest watch`() {
+    fun `with six ready all six play Ludo (the hexagon), the leader first then by ready time`() {
         val members = listOf(idle("lead"), ready("e", 5), ready("a", 1), ready("c", 3), ready("b", 2), ready("d", 4), idle("x"))
         val plan = policy.plan(members, "lead", ludo, botFill = false, houseRules = emptyMap())
-        assertEquals(listOf("lead", "a", "b", "c"), plan.players)
+        assertEquals(listOf("lead", "a", "b", "c", "d", "e"), plan.players)
         assertEquals(0, plan.botCount)
-        assertEquals(setOf("d", "e", "x"), plan.spectators.toSet())
+        assertEquals(setOf("x"), plan.spectators.toSet())
+    }
+
+    @Test
+    fun `with ten ready the first eight play Ludo (the octagon) and the rest watch`() {
+        val members = listOf(idle("lead")) + (1..9).map { ready("p$it", it.toLong()) }
+        val plan = policy.plan(members, "lead", ludo, botFill = false, houseRules = emptyMap())
+        assertEquals(listOf("lead") + (1..7).map { "p$it" }, plan.players)
+        assertEquals(setOf("p8", "p9"), plan.spectators.toSet())
+    }
+
+    @Test
+    fun `CPU fill tops Ludo up to its board, five play on the hexagon with one CPU, two get the square board`() {
+        val five = listOf(idle("lead")) + (1..4).map { ready("p$it", it.toLong()) }
+        assertEquals(1, policy.plan(five, "lead", ludo, botFill = true, houseRules = emptyMap()).botCount)
+        val two = listOf(idle("lead"), ready("a", 1))
+        assertEquals(2, policy.plan(two, "lead", ludo, botFill = true, houseRules = emptyMap()).botCount)
     }
 }

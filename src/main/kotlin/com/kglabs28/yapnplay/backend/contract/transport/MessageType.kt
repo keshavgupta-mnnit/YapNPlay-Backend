@@ -58,6 +58,7 @@ object MessageType {
     const val ANSWER_SEAT_OFFER = "AnswerSeatOffer"
     const val CHOOSE_SEAT_TAKER = "ChooseSeatTaker"
     const val OFFER_BOT_SEAT = "OfferBotSeat"
+    const val REMOVE_BOT_SEAT = "RemoveBotSeat"
     const val TAKE_SEAT = "TakeSeat"
     /** 0.4.4: keep playing at the limit, or end. */
     const val VOTE_EXTENSION = "VoteExtension"

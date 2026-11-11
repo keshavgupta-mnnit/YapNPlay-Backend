@@ -28,7 +28,7 @@ class RoyalLudoAutoplayTest {
         val result = engine.autoplay(state, SeatNumber(1), SeededRandom(1L))
         assertIs<ApplyResult.Success>(result)
         val s = result.state as RoyalLudoState
-        assertEquals(PROGRESS_FINISHED, s.piecesForSeat(1)[0])
+        assertEquals(s.track.finish, s.piecesForSeat(1)[0])
     }
 
     @Test
