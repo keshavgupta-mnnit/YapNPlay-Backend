@@ -95,6 +95,10 @@ data class Me(
     val dailyBonus: Int = 0,
     /** 0.14.1: the most members a group may have now (admin setting `rooms.max_members`). */
     val maxGroupMembers: Int = 16,
+    /** 0.15.0: show an ad when the app opens or comes back to the front (admin switch `ads.launch_ad_on`)… */
+    val launchAd: Boolean = false,
+    /** …at most once in this many minutes for this player (`ads.launch_ad_gap_minutes`; 0: every open). */
+    val launchAdGapMinutes: Int = 10,
 )
 
 /** Provisional (post-POC friends): the user's friends, online first. */

@@ -39,6 +39,8 @@ class GetMeUseCase(
             gamesPlayed = stats.played,
             gamesWon = stats.won,
             maxGroupMembers = settings[GameSettings.GROUP_MAX_MEMBERS],
+            launchAd = settings[GameSettings.LAUNCH_AD_ON] == 1,
+            launchAdGapMinutes = settings[GameSettings.LAUNCH_AD_GAP_MINUTES],
         )
     }
 }

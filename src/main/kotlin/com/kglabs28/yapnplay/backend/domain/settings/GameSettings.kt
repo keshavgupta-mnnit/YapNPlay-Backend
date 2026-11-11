@@ -79,6 +79,9 @@ object GameSettings {
     }
     val AD_DAILY_LIMIT = IntSetting("coins.ad_daily_limit", SettingGroup.ECONOMY, "Rewarded ads per day", 5, 0, 50)
     val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 60, 0, 1_440)
+    /** The ad shown when the app opens or comes back to the front (Android, AdMob App Open): on or off for everyone, and how often. */
+    val LAUNCH_AD_ON = IntSetting("ads.launch_ad_on", SettingGroup.ECONOMY, "Open ad: an ad when the app opens or comes back (never on a player's first launch)", 1, 0, 1)
+    val LAUNCH_AD_GAP_MINUTES = IntSetting("ads.launch_ad_gap_minutes", SettingGroup.ECONOMY, "Open ad: minutes at least between two for one player (0: every open)", 10, 0, 1_440)
     val LEAGUE_FEES = IntListSetting(
         "coins.league_fees", SettingGroup.ECONOMY, "Quick Play league fees (Starter, Bronze, Silver, Gold, Diamond)",
         listOf(0, 100, 500, 1_000, 5_000), "5 rising numbers, the first 0",
@@ -281,7 +284,7 @@ object GameSettings {
     val BLAST_BOT_PLANNED_BOMB_PCT = IntSetting("blast.bot_planned_bomb_pct", SettingGroup.CYBER_BLAST, "Bots: a spot is worth this % of the bomb they could drop there", 70, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LAUNCH_AD_ON, LAUNCH_AD_GAP_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
