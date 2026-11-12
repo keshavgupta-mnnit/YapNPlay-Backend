@@ -57,6 +57,7 @@
         "countdownStop": null,
         "temporary": false,
         "savedRoomId": null,
-        "savedRoomMissing": 0
+        "savedRoomMissing": 0,
+        "leaderRequest": null
     }
 }

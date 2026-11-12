@@ -43,7 +43,8 @@ data class RoyalLudoRules(
 ) : GameRules {
     override fun isAllowed(mode: PlayMode): Boolean = when (mode) {
         PlayMode.PRIVATE_ROOM -> true
-        PlayMode.PUBLIC_MATCH -> this == TRADITIONAL
+        // The big boards' piece count is the admin's choice (ludo.big_board_pieces), not a house rule a player picked.
+        PlayMode.PUBLIC_MATCH -> copy(house = house.copy(threePieces = false)) == TRADITIONAL
     }
 
     companion object {

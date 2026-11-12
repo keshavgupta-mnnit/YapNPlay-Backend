@@ -13,6 +13,9 @@ sealed interface RoomCommand {
     /** The countdown that ends at [deadline] reached zero. Ignored if it was cancelled or replaced. */
     data class CountdownElapsed(val deadline: Long) : RoomCommand
 
+    /** The request to lead that ends at [endsAt] ran out unrefused. Ignored if it was refused or replaced. */
+    data class LeaderRequestElapsed(val endsAt: Long) : RoomCommand
+
     /** A temporary room's grace after its lobby emptied is over: delete it if still nobody is in. */
     data object DesertedCheck : RoomCommand
 }

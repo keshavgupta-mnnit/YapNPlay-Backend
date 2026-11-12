@@ -33,6 +33,13 @@ class RolePolicyTest {
     }
 
     @Test
+    fun `the admin arriving leads even over an online leader`() {
+        val members = mapOf("lead" to member("lead", 0, 5), "boss" to member("boss", 1, 9))
+        assertEquals("boss", policy.leaderAfterArrival(members, "lead", arriving = "boss", adminId = "boss"))
+        assertEquals("lead", policy.leaderAfterArrival(members, "lead", arriving = "other", adminId = "boss"))
+    }
+
+    @Test
     fun `next admin is the longest-standing member`() {
         val members = listOf(member("admin", 0), member("late", 9), member("early", 3))
         assertEquals("early", policy.nextAdmin(members, outgoing = "admin"))

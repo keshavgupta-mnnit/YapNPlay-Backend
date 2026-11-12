@@ -26,7 +26,7 @@ class RoyalLudoSessionFactory(
 ) : GameSessionFactory {
 
     override fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession {
-        val rules = houseRules?.let(::rulesFrom) ?: RoyalLudoRules.TRADITIONAL
+        val rules = houseRules?.let(::rulesFrom) ?: RoyalLudoRules.TRADITIONAL.let { it.copy(house = it.house.copy(threePieces = adminThreePieces())) }
         val state = (game.start(rules, seatCount, random) as RoyalLudoState).copy(
             sixBoostPerMissPct = settings[GameSettings.RL_SIX_BOOST_PER_MISS_PCT],
             sixChanceCapPct = settings[GameSettings.RL_SIX_CHANCE_CAP_PCT],
@@ -63,6 +63,9 @@ class RoyalLudoSessionFactory(
         trace,
     )
 
+    /** The admin's piece count for the 5-8 player boards (Quick Play, and rooms that don't set it). */
+    private fun adminThreePieces(): Boolean = settings[GameSettings.RL_BIG_BOARD_PIECES] == BIG_BOARD_THREE
+
     private fun rulesFrom(toggles: Map<String, Boolean>): RoyalLudoRules {
         val defaults = RoyalLudoHouseRules()
         fun on(key: String, default: Boolean) = toggles[key] ?: default
@@ -74,7 +77,7 @@ class RoyalLudoSessionFactory(
                 threeSixesForfeit = on(THREE_SIXES_FORFEIT, defaults.threeSixesForfeit),
                 pairProtection = on(PAIR_PROTECTION, defaults.pairProtection),
                 autoMoveWhenSingleOption = on(AUTO_MOVE, defaults.autoMoveWhenSingleOption),
-                threePieces = on(THREE_PIECES, defaults.threePieces),
+                threePieces = on(THREE_PIECES, adminThreePieces()),
             ),
         )
     }
@@ -88,5 +91,6 @@ class RoyalLudoSessionFactory(
         const val PAIR_PROTECTION = "pair_protection"
         const val AUTO_MOVE = "auto_move_single_option"
         const val THREE_PIECES = "three_pieces"
+        const val BIG_BOARD_THREE = 3
     }
 }

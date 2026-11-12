@@ -24,6 +24,10 @@ object MessageType {
     const val SET_VOICE_STATE = "SetVoiceState"
     const val TRANSFER_LEADER = "TransferLeader"
     const val TRANSFER_ADMIN = "TransferAdmin"
+    /** 0.15.0: ask to lead (no payload; only while the admin is away). */
+    const val REQUEST_LEADER = "RequestLeader"
+    /** 0.15.0: the leader refuses the request (no payload). */
+    const val DENY_LEADER_REQUEST = "DenyLeaderRequest"
     const val REMOVE_MEMBER = "RemoveMember"
     const val RENAME_ROOM = "RenameRoom"
     const val APPROVE_JOIN = "ApproveJoin"

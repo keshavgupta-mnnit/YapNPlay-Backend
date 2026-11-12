@@ -225,6 +225,19 @@ data class RoomInfo(
     val savedRoomId: String? = null,
     /** 0.12.4: people in the party who aren't in the saved room yet (Update adds them). */
     val savedRoomMissing: Int = 0,
+    /** 0.15.0: someone asking to lead (RequestLeader) while the admin is away; null when nobody is. */
+    val leaderRequest: LeaderRequestInfo? = null,
+)
+
+/**
+ * A member asking to lead: the leader may refuse (DenyLeaderRequest) until [endsAt] (server epoch
+ * millis); after that the asker leads, and the old and new leader are both not ready.
+ */
+@Serializable
+data class LeaderRequestInfo(
+    val userId: String,
+    val displayName: String,
+    val endsAt: Long,
 )
 
 /**

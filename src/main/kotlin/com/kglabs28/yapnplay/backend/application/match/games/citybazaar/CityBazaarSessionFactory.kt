@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.match.games.citybazaar
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_MAX_PLAYERS
 import com.kglabs28.yapnplay.backend.application.match.games.BotThinkTime
 import com.kglabs28.yapnplay.backend.games.base.play.BotTrace
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarBotTuning
@@ -36,9 +37,15 @@ class CityBazaarSessionFactory(
         val rules = CityBazaarRules.STANDARD.copy(
             // A bigger table starts poorer, so the board still runs short of cities.
             mandatory = CityBazaarRules.STANDARD.mandatory.copy(
-                startingCash = settings[if (seatCount > SMALL_TABLE_SEATS) GameSettings.CB_START_CASH_LARGE else GameSettings.CB_START_CASH],
+                startingCash = settings[
+                    when {
+                        seatCount > CITY_BAZAAR_MAX_PLAYERS -> GameSettings.CB_START_CASH_EIGHT
+                        seatCount > SMALL_TABLE_SEATS -> GameSettings.CB_START_CASH_LARGE
+                        else -> GameSettings.CB_START_CASH
+                    }
+                ],
             ),
-            house = houseRulesFrom(houseRules.orEmpty()),
+            house = houseRulesFrom(houseRules.orEmpty(), seatCount),
         )
         val state = game.start(rules, seatCount, random) as CityBazaarState
         val trace = BotTrace()
@@ -94,7 +101,7 @@ class CityBazaarSessionFactory(
     }
 
     /** A room's toggles (none for Quick Play: every rule on) plus the server's settings. */
-    private fun houseRulesFrom(toggles: Map<String, Boolean>): CityBazaarHouseRules {
+    private fun houseRulesFrom(toggles: Map<String, Boolean>, seatCount: Int): CityBazaarHouseRules {
         fun on(key: String) = toggles[key] ?: true
         return CityBazaarHouseRules(
             setDoubleRent = on(SET_DOUBLE_RENT),
@@ -102,7 +109,8 @@ class CityBazaarSessionFactory(
             clubFee = on(CLUB_FEE),
             debtAuction = on(DEBT_AUCTION),
             moneyPopups = on(MONEY_POPUPS),
-            roundLimit = if (on(ROUND_LIMIT_KEY)) settings[GameSettings.CB_ROUND_LIMIT] else null,
+            // 7 and 8 players: fewer rounds (each round has more turns), so the game lasts about as long as with 6.
+            roundLimit = if (on(ROUND_LIMIT_KEY)) scaledRounds(settings[GameSettings.CB_ROUND_LIMIT], seatCount) else null,
             timeLimitMinutes = if (on(TIME_LIMIT_KEY)) settings[GameSettings.CB_TIME_LIMIT_MINUTES] else null,
             extensionRounds = settings[GameSettings.CB_EXTENSION_ROUNDS],
             extensionMinutes = settings[GameSettings.CB_EXTENSION_MINUTES],
@@ -110,6 +118,9 @@ class CityBazaarSessionFactory(
             clubRestEach = settings[GameSettings.CB_CLUB_REST_EACH],
         )
     }
+
+    private fun scaledRounds(limit: Int, seatCount: Int): Int =
+        if (seatCount > CITY_BAZAAR_MAX_PLAYERS) (limit * CITY_BAZAAR_MAX_PLAYERS / seatCount).coerceAtLeast(1) else limit
 
     private companion object {
         // Keys of CITY_BAZAAR_HOUSE_RULES.
@@ -124,5 +135,5 @@ class CityBazaarSessionFactory(
 }
 
 private const val SECONDS_PER_MINUTE = 60L
-/** Up to this many players start with [GameSettings.CB_START_CASH]; more with [GameSettings.CB_START_CASH_LARGE]. */
+/** Up to this many players start with [GameSettings.CB_START_CASH]; 5 or 6 with [GameSettings.CB_START_CASH_LARGE]; 7 or 8 with [GameSettings.CB_START_CASH_EIGHT]. */
 private const val SMALL_TABLE_SEATS = 4

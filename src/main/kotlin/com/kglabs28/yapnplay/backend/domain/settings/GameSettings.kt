@@ -156,7 +156,10 @@ object GameSettings {
     val CB_EXTENSION_ROUNDS = IntSetting("cb.extension_rounds", SettingGroup.CITY_BAZAAR, "Rounds added by a keep-playing vote", 30, 1, 500)
     val CB_EXTENSION_MINUTES = IntSetting("cb.extension_minutes", SettingGroup.CITY_BAZAAR, "Minutes added by a keep-playing vote", 15, 1, 240)
     val CB_START_CASH = IntSetting("cb.start_cash", SettingGroup.CITY_BAZAAR, "Each player's starting money, up to 4 players (₹)", 20_000, 1_000, 1_000_000)
-    val CB_START_CASH_LARGE = IntSetting("cb.start_cash_large", SettingGroup.CITY_BAZAAR, "Each player's starting money, 5 or more players (₹)", 15_000, 1_000, 1_000_000)
+    val CB_START_CASH_LARGE = IntSetting("cb.start_cash_large", SettingGroup.CITY_BAZAAR, "Each player's starting money, 5 or 6 players (₹)", 15_000, 1_000, 1_000_000)
+    val CB_START_CASH_EIGHT = IntSetting("cb.start_cash_eight", SettingGroup.CITY_BAZAAR, "Each player's starting money, 7 or 8 players (₹)", 13_000, 1_000, 10_000_000)
+    /** Rooms may seat 7 and 8 (the app must be new enough): off until the bigger table is tested. */
+    val CB_EIGHT_PLAYERS = IntSetting("cb.eight_players", SettingGroup.CITY_BAZAAR, "Allow 7 and 8 players in rooms (round limit scales down to keep games as long)", 0, 0, 1)
     val CB_BANK_START = IntSetting("cb.bank_start", SettingGroup.CITY_BAZAAR, "Bank's starting money (₹)", 300_000, 0, 100_000_000)
     val CB_CLUB_REST_EACH = IntSetting("cb.club_rest_each", SettingGroup.CITY_BAZAAR, "Club / Rest House amount per player (₹)", 50, 0, 100_000)
     val CB_MESSAGE_PAUSE_MS = IntSetting("cb.message_pause_ms", SettingGroup.CITY_BAZAAR, "Reading time per table message (ms)", 2_500, 0, 10_000)
@@ -201,6 +204,7 @@ object GameSettings {
 
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
+    val RL_BIG_BOARD_PIECES = IntSetting("ludo.big_board_pieces", SettingGroup.ROYAL_LUDO, "Pieces each on the 5-8 player boards (3 or 4); a room's 3 Pieces rule still wins", 4, 3, 4)
     val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play players (5-6: hexagon board, 7-8: octagon; CPUs fill the rest)", 4, 2, 8)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
@@ -289,14 +293,14 @@ object GameSettings {
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
-        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_TIME_LIMIT_MINUTES, CB_VOTE_GAP_MINUTES, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_START_CASH, CB_START_CASH_LARGE, CB_BANK_START,
+        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_TIME_LIMIT_MINUTES, CB_VOTE_GAP_MINUTES, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_START_CASH, CB_START_CASH_LARGE, CB_START_CASH_EIGHT, CB_EIGHT_PLAYERS, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,
         MONO_TURN_SECONDS, MONO_CPU_THINK_MS, MONO_CPU_THINK_JITTER_MS, MONO_CPU_DECISION_EXTRA_MS,
         CHAOS_CPU_THINK_MS, CHAOS_CPU_THINK_JITTER_MS, CHAOS_CPU_DECISION_EXTRA_MS, MONO_PENALTY_CARDS, CHAOS_PENALTY_CARDS,
         CHAOS_KNOCKOUT_CARDS, MONO_BOT_CARD_COST, MONO_BOT_SHED_PCT, MONO_BOT_ATTACK_VALUE, MONO_BOT_HOLD_VALUE, MONO_BOT_COLOUR_VALUE, MONO_BOT_KNOCKOUT_COST, MONO_BOT_CATCH_REACTION_MS,
-        RL_TURN_SECONDS, RL_QUICK_PLAY_SEATS, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
+        RL_TURN_SECONDS, RL_QUICK_PLAY_SEATS, RL_BIG_BOARD_PIECES, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
         DK_ROUNDS, DK_DRAW_SECONDS, DK_INTRO_SECONDS, DK_PICK_SECONDS, DK_REVEAL_SECONDS, DK_GUESS_POINTS, DK_LEVEL_POINTS_PCT, DK_DRAWER_PER_GUESS,
         DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS, DK_TEST_BOTS,

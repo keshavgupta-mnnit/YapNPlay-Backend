@@ -22,6 +22,7 @@ class MembershipHandler(
     private val deps: PlayRoomDeps,
     private val guards: RoomGuards,
     private val countdown: CountdownHandler,
+    private val leaderChange: LeaderChange,
 ) {
     /**
      * A member enters the room. Anyone else asks to join: the request goes
@@ -97,8 +98,13 @@ class MembershipHandler(
             val absent = state.members.values.filter { !it.online }.map { it.userId }
             deps.activity.memberCameOnline(state.room.id, state.room.name, member.displayName, state.onlineIds().size, absent)
         }
-        val leader = deps.rolePolicy.leaderAfterArrival(state.members, state.room.leaderId, userId)
-        if (leader != state.room.leaderId) setRoles(leader, state.room.adminId)
+        val leader = deps.rolePolicy.leaderAfterArrival(state.members, state.room.leaderId, userId, state.room.adminId)
+        // The room's admin coming in leads (the one stepping down is not ready); anyone else takes over an absent leader.
+        when {
+            leader == state.room.leaderId -> Unit
+            leader == state.room.adminId -> leaderChange.to(leader, userId)
+            else -> setRoles(leader, state.room.adminId)
+        }
     }
 
     suspend fun exit(userId: String, force: Boolean) {

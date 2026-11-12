@@ -49,7 +49,7 @@ class RoyalLudoEngine : Game {
 
     override fun start(rules: GameRules, seatCount: Int, random: GameRandom): GameState {
         require(seatCount in 2..ROYAL_LUDO_MAX_PLAYERS) { "Royal Ludo requires 2-$ROYAL_LUDO_MAX_PLAYERS players" }
-        val ludoRules = rules as? RoyalLudoRules ?: RoyalLudoRules.TRADITIONAL
+        val royalLudoRules = rules as? RoyalLudoRules ?: RoyalLudoRules.TRADITIONAL
         // How many play picks the board: up to 4 the square board, 5-6 the hexagon, 7-8 the octagon.
         val track = RoyalLudoTrack.forPlayers(seatCount)
         // Seats take colours (arms) in board order, clockwise from a random one, so turns go round
@@ -57,11 +57,11 @@ class RoyalLudoEngine : Game {
         val first = random.nextInt(track.arms)
         val step = if (seatCount == 2) track.arms / 2 else 1
         val seatColours = (1..seatCount).associateWith { (first + (it - 1) * step) % track.arms }
-        val perSeat = if (ludoRules.house.threePieces && track.arms > RoyalLudoTrack.SQUARE_ARMS) PIECES_ON_BIG_BOARDS else ludoRules.mandatory.piecesPerColour
+        val perSeat = if (royalLudoRules.house.threePieces && track.arms > RoyalLudoTrack.SQUARE_ARMS) PIECES_ON_BIG_BOARDS else royalLudoRules.mandatory.piecesPerColour
         val pieces = (1..seatCount).associateWith { List(perSeat) { PROGRESS_IN_BASE } }
         val seats = (1..seatCount).map { SeatNumber(it) }
         return RoyalLudoState(
-            _gameId = id, _rules = ludoRules, _seats = seats,
+            _gameId = id, _rules = royalLudoRules, _seats = seats,
             _turn = RoyalLudoTurnState(SeatNumber(1), Phase.AWAITING_ROLL.name),
             seatColours = seatColours, pieces = pieces, currentSeat = 1, phase = Phase.AWAITING_ROLL, arms = track.arms,
         )
@@ -165,7 +165,7 @@ class RoyalLudoEngine : Game {
         val roll = if (stuck && misses > 0 && rolling.sixBoostPerMissPct > 0) boostedRoll(misses, rolling, random) else random.nextInt(6) + 1
         val state = rolling.copy(baseMisses = rolling.baseMisses + (rolling.currentSeat to if (stuck && roll != SIX) misses + 1 else 0))
         val events = mutableListOf<GameEvent>()
-        if (state.ludoRules.house.threeSixesForfeit && roll == 6 && state.consecutiveSixes >= MAX_CONSECUTIVE_SIXES - 1) {
+        if (state.royalLudoRules.house.threeSixesForfeit && roll == 6 && state.consecutiveSixes >= MAX_CONSECUTIVE_SIXES - 1) {
             // Third six: the whole turn is void, every piece goes back to
             // where it stood when this turn began.
             events.add(DiceRolled(state.currentSeat, roll))
@@ -182,7 +182,7 @@ class RoyalLudoEngine : Game {
             events.add(TurnPassed(state.currentSeat, "NO_LEGAL_MOVE"))
             return ApplyResult.Success(advanceTurn(newState, events), events)
         }
-        if (state.ludoRules.house.autoMoveWhenSingleOption && legalPieces.size == 1) {
+        if (state.royalLudoRules.house.autoMoveWhenSingleOption && legalPieces.size == 1) {
             // Keep the roll in front of the automatic move, so every client shows the dice first.
             val moved = handleMove(newState, legalPieces.first())
             return if (moved is ApplyResult.Success) ApplyResult.Success(moved.state, events + moved.events) else moved
@@ -214,11 +214,11 @@ class RoyalLudoEngine : Game {
         val squaresPassed: Int
         when {
             currentProgress == PROGRESS_IN_BASE -> {
-                if (roll !in s.ludoRules.house.baseExitRolls) return ApplyResult.Rejected(TypedRejection("ILLEGAL_MOVE", "Need ${s.ludoRules.house.baseExitRolls} to leave base"))
+                if (roll !in s.royalLudoRules.house.baseExitRolls) return ApplyResult.Rejected(TypedRejection("ILLEGAL_MOVE", "Need ${s.royalLudoRules.house.baseExitRolls} to leave base"))
                 newProgress = 0; squaresPassed = 0
             }
             currentProgress + roll == finish -> { newProgress = finish; squaresPassed = roll }
-            s.ludoRules.mandatory.exactFinish && currentProgress + roll > finish -> return ApplyResult.Rejected(TypedRejection("ILLEGAL_MOVE", "Need exact roll"))
+            s.royalLudoRules.mandatory.exactFinish && currentProgress + roll > finish -> return ApplyResult.Rejected(TypedRejection("ILLEGAL_MOVE", "Need exact roll"))
             currentProgress + roll <= finish -> { newProgress = currentProgress + roll; squaresPassed = roll }
             else -> return ApplyResult.Rejected(TypedRejection("ILLEGAL_MOVE", "Exceeds finish"))
         }
@@ -231,7 +231,7 @@ class RoyalLudoEngine : Game {
         events.add(PieceMoved(s.currentSeat, piece, currentProgress, newProgress, squaresPassed))
 
         var captured = false
-        if (s.ludoRules.mandatory.capturesSendToBase && newProgress in 0..track.enterHome) {
+        if (s.royalLudoRules.mandatory.capturesSendToBase && newProgress in 0..track.enterHome) {
             val absSquare = track.square(startSquare, newProgress)
             if (!track.isSafe(absSquare)) {
                 val opposingSeat = findOpposingPiece(s, absSquare, colour)
@@ -240,7 +240,7 @@ class RoyalLudoEngine : Game {
                     val opposingCount = countPiecesOnSquare(s, absSquare, opposingColour)
                     // Protected pair (2+) is never captured; with pair
                     // protection off, one piece of the group is captured.
-                    val canCapture = if (s.ludoRules.house.pairProtection) opposingCount == 1 else opposingCount >= 1
+                    val canCapture = if (s.royalLudoRules.house.pairProtection) opposingCount == 1 else opposingCount >= 1
                     if (canCapture) {
                         val victimPiece = findPieceOnSquare(s, absSquare, opposingSeat)
                         val victimPieces = newPieces[opposingSeat]!!.toMutableList()
@@ -260,9 +260,9 @@ class RoyalLudoEngine : Game {
         val extraTurn = when {
             // All pieces home: this seat is done, no extra turn.
             allFinished -> false
-            captured && s.ludoRules.house.extraTurnOnCapture -> true
-            finished && s.ludoRules.house.extraTurnOnHome -> true
-            roll == 6 && s.ludoRules.house.extraTurnOnSix -> true
+            captured && s.royalLudoRules.house.extraTurnOnCapture -> true
+            finished && s.royalLudoRules.house.extraTurnOnHome -> true
+            roll == 6 && s.royalLudoRules.house.extraTurnOnSix -> true
             else -> false
         }
         if (extraTurn) events.add(ExtraTurn(s.currentSeat, when { captured -> "CAPTURE"; finished -> "HOME"; else -> "SIX" }))
@@ -298,10 +298,10 @@ class RoyalLudoEngine : Game {
         for (piece in state.piecesForSeat(state.currentSeat).indices) {
             val progress = state.pieceProgress(state.currentSeat, piece)
             when {
-                progress == PROGRESS_IN_BASE -> if (roll in state.ludoRules.house.baseExitRolls) legal.add(piece)
+                progress == PROGRESS_IN_BASE -> if (roll in state.royalLudoRules.house.baseExitRolls) legal.add(piece)
                 progress == finish -> {}
                 progress + roll == finish -> legal.add(piece)
-                state.ludoRules.mandatory.exactFinish && progress + roll > finish -> {}
+                state.royalLudoRules.mandatory.exactFinish && progress + roll > finish -> {}
                 progress + roll < finish -> legal.add(piece)
             }
         }

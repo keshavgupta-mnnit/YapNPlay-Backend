@@ -123,12 +123,12 @@ class SeatHandover(
     }
 
     /**
-     * The room's leader or admin offers a seat the bot is playing (a leaver's,
+     * The room's leader offers a seat the bot is playing (a leaver's,
      * an away player's, or a CPU's) to a spectator, who still has to accept.
      */
     fun offerBotSeat(byUserId: String, seat: Int, toUserId: String) {
         val roomId = state.roomId ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SEAT_OFFER)
-        if (byUserId != deps.rooms.leaderOf(roomId) && byUserId != deps.rooms.adminOf(roomId)) {
+        if (byUserId != deps.rooms.leaderOf(roomId)) {
             throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.ONLY_LEADER_OFFERS_SEAT)
         }
         val target = state.seats.firstOrNull { it.seat == seat }
@@ -142,13 +142,13 @@ class SeatHandover(
     }
 
     /**
-     * The room's leader or admin takes a seat the bot plays (a CPU, or someone who left) out of the
+     * The room's leader takes a seat the bot plays (a CPU, or someone who left) out of the
      * game, as a Quick Play leaver's: its pieces, cards or cities leave with it. Never below two
      * players still in the game; not while that seat is being offered.
      */
     fun removeBotSeat(byUserId: String, seat: Int) {
         val roomId = state.roomId ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.SEAT_NOT_BOT)
-        if (byUserId != deps.rooms.leaderOf(roomId) && byUserId != deps.rooms.adminOf(roomId)) {
+        if (byUserId != deps.rooms.leaderOf(roomId)) {
             throw ServiceException(ErrorCode.NOT_LEADER, BackendStrings.ONLY_LEADER_REMOVES_SEAT)
         }
         val target = state.seats.firstOrNull { it.seat == seat }

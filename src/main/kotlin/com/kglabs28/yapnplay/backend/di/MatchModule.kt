@@ -42,7 +42,7 @@ val matchModule = module {
     single<List<GameSessionFactory>> {
         listOf(
             RoyalLudoSessionFactory(RoyalLudoEngine(), get(), get(), get<Settings>()),
-            CityBazaarSessionFactory(CityBazaarEngine(), get(), get(), get(), get<Settings>()),
+            CityBazaarSessionFactory(CityBazaarEngine { get<Settings>()[GameSettings.CB_EIGHT_PLAYERS] == 1 }, get(), get(), get(), get<Settings>()),
             MonoSessionFactory(MonoEngine(), get(), get(), get(), get<Settings>()),
             MonoChaosSessionFactory(MonoChaosEngine(), get(), get(), get(), get<Settings>()),
             // CPU players only while testing (admin setting), read on every check.

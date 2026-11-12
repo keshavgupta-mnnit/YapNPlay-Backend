@@ -94,6 +94,8 @@ class RoomChannelHandler(
         MessageType.SET_TALKING_MUTED -> RoomAction.SetTalkingMuted(codec.payload(request, SetTalkingMuted.serializer()).talking)
         MessageType.TRANSFER_LEADER -> RoomAction.TransferLeader(codec.payload(request, TransferLeader.serializer()).userId)
         MessageType.TRANSFER_ADMIN -> RoomAction.TransferAdmin(codec.payload(request, TransferAdmin.serializer()).userId)
+        MessageType.REQUEST_LEADER -> RoomAction.RequestLeader
+        MessageType.DENY_LEADER_REQUEST -> RoomAction.DenyLeaderRequest
         MessageType.REMOVE_MEMBER -> RoomAction.RemoveMember(codec.payload(request, RemoveMember.serializer()).userId)
         MessageType.RENAME_ROOM -> RoomAction.RenameRoom(codec.payload(request, RenameRoom.serializer()).name)
         MessageType.APPROVE_JOIN -> RoomAction.ApproveJoin(codec.payload(request, ApproveJoin.serializer()).userId)

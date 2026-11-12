@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.application.rooms.actor
 
+import com.kglabs28.yapnplay.backend.contract.LeaderRequestInfo
 import com.kglabs28.yapnplay.backend.contract.CountdownStop
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.Presence
@@ -43,6 +44,9 @@ class PlayRoomState(
     var savedRoomId: String? = null
     var savedMembers: Set<String> = emptySet()
 
+    /** Someone asking to lead (the leader may refuse until it ends); null when nobody is. */
+    var leaderRequest: LeaderRequestInfo? = null
+
     /** Users who must get the next snapshot although they are no longer members (removed). */
     val extraRecipients = mutableSetOf<String>()
 
@@ -84,6 +88,7 @@ class PlayRoomState(
             temporary = room.temporary,
             savedRoomId = savedRoomId,
             savedRoomMissing = savedRoomId?.let { members.keys.count { it !in savedMembers } } ?: 0,
+            leaderRequest = leaderRequest,
             waitingList = if (receiver != null && receiver == room.adminId) {
                 waiting.map { JoinRequestInfo(it.userId, it.displayName, it.requestedAt) }
             } else {

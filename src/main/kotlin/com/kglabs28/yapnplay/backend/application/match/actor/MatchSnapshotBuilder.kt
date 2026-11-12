@@ -55,7 +55,7 @@ class MatchSnapshotBuilder(private val state: MatchState, private val rooms: Roo
                 ExtensionVoteInfo(vote.endsAt, vote.voters.sorted(), vote.yes.sorted(), vote.no.sorted(), offer.extraRounds, offer.extraMinutes)
             },
             mutedTalkers = state.mutedTalkers.sorted(),
-            canOfferSeats = state.roomId?.let { viewerUserId == rooms.leaderOf(it) || viewerUserId == rooms.adminOf(it) } == true,
+            canOfferSeats = state.roomId?.let { viewerUserId == rooms.leaderOf(it) } == true,
         )
     }
 

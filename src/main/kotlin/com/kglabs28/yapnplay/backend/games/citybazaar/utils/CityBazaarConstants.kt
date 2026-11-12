@@ -10,6 +10,10 @@ val CITY_BAZAAR_TAGLINES = listOf("Buy", "Build", "Boss")
 /** Rooms with friends: 3 to 6. Random (Quick Play) tables always seat 4. */
 const val CITY_BAZAAR_MIN_PLAYERS = 3
 const val CITY_BAZAAR_MAX_PLAYERS = 6
+/** With the admin switch on, a room may seat up to this many. */
+const val CITY_BAZAAR_MAX_PLAYERS_BIG = 8
+/** What an app reports (with its games) when it can seat 7 and 8 players round the board. */
+const val CITY_BAZAAR_BIG_TABLE_FEATURE = "city-royale-8"
 const val CITY_BAZAAR_QUICK_PLAY_SEATS = 4
 const val CITY_BAZAAR_SEARCH_SECONDS = 15L
 /** Seconds per decision before the turn plays itself. */

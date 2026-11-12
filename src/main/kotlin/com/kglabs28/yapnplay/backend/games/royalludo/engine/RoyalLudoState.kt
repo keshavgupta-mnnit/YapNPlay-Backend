@@ -51,7 +51,7 @@ class RoyalLudoState(
     override val rules: GameRules get() = _rules
     override val seats: List<SeatNumber> get() = _seats
     override val turn: TurnState get() = _turn
-    val ludoRules: RoyalLudoRules get() = _rules
+    val royalLudoRules: RoyalLudoRules get() = _rules
     val track: RoyalLudoTrack get() = RoyalLudoTrack(arms)
 
     fun colourForSeat(seat: Int): Int = seatColours[seat] ?: error("No colour for seat $seat")

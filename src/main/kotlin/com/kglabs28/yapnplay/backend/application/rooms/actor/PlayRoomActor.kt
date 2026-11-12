@@ -35,15 +35,14 @@ class PlayRoomActor(
     /** The current leader, readable from outside the actor (match seat handover asks). */
     @Volatile
     var leaderId: String = state.room.leaderId
-    /** Read by matches (the admin may hand out seats too). */
-    var adminId: String = state.room.adminId
-        private set
 
     private val inbox = Inbox<RoomCommand>(Inbox.UNLIMITED)
     private val guards = RoomGuards(state, deps)
     private val countdown = CountdownHandler(state, deps, guards, ::scheduleElapsed)
-    private val membership = MembershipHandler(state, deps, guards, countdown)
-    private val lobby = LobbyHandler(state, deps, guards, countdown)
+    private val leaderChange = LeaderChange(state, deps, countdown)
+    private val membership = MembershipHandler(state, deps, guards, countdown, leaderChange)
+    private val lobby = LobbyHandler(state, deps, guards, countdown, leaderChange)
+    private val leaderRequests = LeaderRequestHandler(state, deps, guards, leaderChange, ::scheduleLeaderRequest)
     private val worker: Job = scope.launch { for (command in inbox) process(command) }
 
     /** Sends [action] for [userId] and waits for the answer. */
@@ -67,6 +66,11 @@ class PlayRoomActor(
             is RoomCommand.Request -> command.reply.complete(handle(command.userId, command.action))
             is RoomCommand.CountdownElapsed -> {
                 countdown.elapsed(command.deadline)
+                broadcast()
+            }
+            is RoomCommand.LeaderRequestElapsed -> {
+                leaderRequests.elapsed(command.endsAt)
+                leaderId = state.room.leaderId
                 broadcast()
             }
             RoomCommand.DesertedCheck -> if (membership.dissolveIfDeserted()) {
@@ -101,6 +105,8 @@ class PlayRoomActor(
             is RoomAction.SetTalkingMuted -> done { lobby.setTalkingMuted(userId, action.talking) }
             is RoomAction.TransferLeader -> done { lobby.transferLeader(userId, action.userId) }
             is RoomAction.TransferAdmin -> done { lobby.transferAdmin(userId, action.userId) }
+            RoomAction.RequestLeader -> done { leaderRequests.request(userId) }
+            RoomAction.DenyLeaderRequest -> done { leaderRequests.deny(userId) }
             RoomAction.StartCountdown -> done { countdown.start(userId) }
             RoomAction.CancelCountdown -> done { countdown.cancelBy(userId) }
             RoomAction.Snapshot -> {
@@ -118,8 +124,8 @@ class PlayRoomActor(
                 RoomResult.Done
             }
         }
+        leaderRequests.dropIfStale()
         leaderId = state.room.leaderId
-        adminId = state.room.adminId
         // A Quick Play party everyone dropped out of (or whose match ended with nobody back) gets a grace to return.
         if (!deleted && membership.isDeserted()) scheduleDesertedCheck()
         if (deleted) {
@@ -165,6 +171,13 @@ class PlayRoomActor(
         scope.launch {
             delay(BackendConstants.TEMP_ROOM_GRACE_MS)
             inbox.trySend(RoomCommand.DesertedCheck)
+        }
+    }
+
+    private fun scheduleLeaderRequest(endsAt: Long, delayMillis: Long) {
+        scope.launch {
+            delay(delayMillis)
+            inbox.trySend(RoomCommand.LeaderRequestElapsed(endsAt))
         }
     }
 

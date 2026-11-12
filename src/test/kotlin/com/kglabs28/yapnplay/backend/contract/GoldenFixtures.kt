@@ -42,14 +42,14 @@ object GoldenFixtures {
         matchInProgress = null,
     )
 
-    val ludoState = RoyalLudoPublicState(
+    val royalLudoState = RoyalLudoPublicState(
         pieces = mapOf(1 to listOf(-1, 5, 56, 52), 2 to listOf(13, -1, -1, -1)),
         phase = "MOVE",
         lastRoll = 6,
         legalPieces = listOf(0, 1),
     )
 
-    val ludoEvents = listOf(
+    val royalLudoEvents = listOf(
         RoyalLudoWireEvent.Rolled(1, 6),
         RoyalLudoWireEvent.Moved(1, 1, 5, 11),
         RoyalLudoWireEvent.Captured(1, 2, 0),
@@ -57,7 +57,7 @@ object GoldenFixtures {
         RoyalLudoWireEvent.Reverted(1, mapOf(1 to listOf(-1, 5, 56, 52))),
     )
 
-    val ludoSnapshot = MatchSnapshot(
+    val royalLudoSnapshot = MatchSnapshot(
         matchId = MATCH,
         version = 12,
         serverTime = 1_760_000_100_000,
@@ -66,7 +66,7 @@ object GoldenFixtures {
             SeatInfo(1, Colour.RED, USER, MatchSeatStatus.ACTIVE, connected = true, autoPlay = false, consecutiveMisses = 0, displayName = "Keshav", level = 3, micOn = true),
             SeatInfo(2, Colour.GREEN, "cpu-1", MatchSeatStatus.ACTIVE, connected = true, autoPlay = false, consecutiveMisses = 0, cpu = true, displayName = "CPU 1"),
         ),
-        publicState = testJson.encodeToJsonElement(RoyalLudoPublicState.serializer(), ludoState).jsonObject,
+        publicState = testJson.encodeToJsonElement(RoyalLudoPublicState.serializer(), royalLudoState).jsonObject,
         legalMoves = listOf(LegalMove.MovePiece("0"), LegalMove.MovePiece("1")),
         turn = TurnInfo(1, "MOVE", 1_760_000_130_000),
         gameId = "royal-ludo",
@@ -75,7 +75,7 @@ object GoldenFixtures {
         startedAt = 1_760_000_000_000,
         spectators = listOf(SpectatorInfo(FRIEND, "Asha")),
         seatOffer = SeatOfferInfo(2, "Neha", SeatOfferStageName.TO_SPECTATOR, 1_760_000_130_000, FRIEND, "Asha", 1),
-        events = ludoEvents.take(2).map { testJson.encodeToJsonElement(RoyalLudoWireEvent.serializer(), it).jsonObject },
+        events = royalLudoEvents.take(2).map { testJson.encodeToJsonElement(RoyalLudoWireEvent.serializer(), it).jsonObject },
     )
 
     val bazaarState = CityBazaarPublicState(

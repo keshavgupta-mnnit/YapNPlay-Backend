@@ -38,7 +38,7 @@ fun main(args: Array<String>) {
     val variant = options.filterKeys { it.startsWith("B.") }.mapKeys { it.key.removePrefix("B.") }.mapValues { it.value.toInt() }
     val seats = options["seats"]?.toInt() ?: MONO_SEATS
     val report = when (options["game"] ?: "citybazaar") {
-        "ludo" -> ludoArena(games, ludoTuning(variant))
+        "ludo" -> royalLudoArena(games, royalLudoTuning(variant))
         // Rule checks over whole bot games (see MonoSimulation): ./gradlew arena -Parena="game=mono games=200 seats=4"
         "mono" -> MonoSimulation(games, seats, options["catches"]?.toInt() ?: 60).mono()
         "chaos" -> MonoSimulation(games, seats, options["catches"]?.toInt() ?: 60).chaos()
@@ -104,7 +104,7 @@ fun cityBazaarArena(games: Int, tuningB: CityBazaarBotTuning, tuningA: CityBazaa
     return ArenaReport("City Royale (net worth, rounds)", games, winsA, winsB, scoreA / perSet, scoreB / perSet, length / games)
 }
 
-fun ludoArena(games: Int, tuningB: RoyalLudoBotTuning, tuningA: RoyalLudoBotTuning = RoyalLudoBotTuning()): ArenaReport {
+fun royalLudoArena(games: Int, tuningB: RoyalLudoBotTuning, tuningA: RoyalLudoBotTuning = RoyalLudoBotTuning()): ArenaReport {
     val engine = RoyalLudoEngine()
     val botA = RoyalLudoBot(tuningA)
     val botB = RoyalLudoBot(tuningB)
@@ -148,7 +148,7 @@ private fun cityBazaarTuning(changes: Map<String, Int>): CityBazaarBotTuning = c
     }
 }
 
-private fun ludoTuning(changes: Map<String, Int>): RoyalLudoBotTuning = changes.entries.fold(RoyalLudoBotTuning()) { t, (key, value) ->
+private fun royalLudoTuning(changes: Map<String, Int>): RoyalLudoBotTuning = changes.entries.fold(RoyalLudoBotTuning()) { t, (key, value) ->
     when (key) {
         "baseCost" -> t.copy(baseCost = value)
         "captureWeightPct" -> t.copy(captureWeightPct = value)

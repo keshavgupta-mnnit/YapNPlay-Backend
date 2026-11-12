@@ -50,7 +50,7 @@ class RoyalLudoBot(
         private val seat = s.currentSeat
         private val colour = s.colourForSeat(seat)
         private val roll = s.lastRoll ?: 0
-        private val house = s.ludoRules.house
+        private val house = s.royalLudoRules.house
         private val pairs = house.pairProtection
         private val mine = s.piecesForSeat(seat)
         private val track = s.track

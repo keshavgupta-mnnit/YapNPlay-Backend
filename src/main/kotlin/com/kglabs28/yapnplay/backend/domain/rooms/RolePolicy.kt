@@ -16,9 +16,15 @@ class RolePolicy {
             .minByOrNull { it.onlineSince ?: Long.MAX_VALUE }
             ?.userId
 
-    /** Whoever comes online takes over from a leader who is offline. */
-    fun leaderAfterArrival(members: Map<String, LiveMember>, leaderId: String, arriving: String): String =
-        if (members[leaderId]?.online == true) leaderId else arriving
+    /**
+     * The room's admin ([adminId]) leads whenever they come in; anyone else who comes online takes
+     * over only from a leader who is offline.
+     */
+    fun leaderAfterArrival(members: Map<String, LiveMember>, leaderId: String, arriving: String, adminId: String? = null): String = when {
+        arriving == adminId -> arriving
+        members[leaderId]?.online == true -> leaderId
+        else -> arriving
+    }
 
     /**
      * The next admin when the admin leaves: the longest-standing member.

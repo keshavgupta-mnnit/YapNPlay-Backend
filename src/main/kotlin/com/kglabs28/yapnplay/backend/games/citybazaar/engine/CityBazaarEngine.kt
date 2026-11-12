@@ -1,5 +1,7 @@
 package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_BIG_TABLE_FEATURE
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_MAX_PLAYERS_BIG
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ExtendMatch
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ReachTimeLimit
 import com.kglabs28.yapnplay.backend.games.base.Game
@@ -52,7 +54,10 @@ import com.kglabs28.yapnplay.backend.games.citybazaar.utils.START_TILE
  * Pure: dice come from the injected [GameRandom]. Bids come from any player;
  * the server applies [CloseAuction], [EndMatch] and [LateRollFine].
  */
-class CityBazaarEngine : Game {
+/**
+ * [eightPlayers]: the admin switch letting a room seat 7 and 8 (else 6 at most).
+ */
+class CityBazaarEngine(private val eightPlayers: () -> Boolean = { false }) : Game {
     override val id = GameId(CITY_BAZAAR_ID)
     override val displayName = CITY_BAZAAR_DISPLAY_NAME
     override val timing = TimingConfig(turnSeconds = CITY_BAZAAR_TURN_SECONDS)
@@ -61,7 +66,10 @@ class CityBazaarEngine : Game {
     override val houseRuleOptions = CITY_BAZAAR_HOUSE_RULES
     override val fixedRules = CITY_BAZAAR_FIXED_RULES
     override val minPlayers = CITY_BAZAAR_MIN_PLAYERS
-    override val maxPlayers = CITY_BAZAAR_MAX_PLAYERS
+    override val maxPlayers: Int get() = if (eightPlayers()) CITY_BAZAAR_MAX_PLAYERS_BIG else CITY_BAZAAR_MAX_PLAYERS
+
+    /** 7 and 8 players need an app that seats them round the board. */
+    override fun featureNeeded(seats: Int): String? = if (seats > CITY_BAZAAR_MAX_PLAYERS) CITY_BAZAAR_BIG_TABLE_FEATURE else null
     override val maxSpectators: Int? = null
     override val turnPolicy: TurnPolicy = TurnPolicy.Sequential
     /** CPU seats: buys, builds and bids. */
@@ -73,12 +81,12 @@ class CityBazaarEngine : Game {
     override fun defaultRules(): GameRules = CityBazaarRules.STANDARD
 
     override fun rulesSummary(): String =
-        "City Royale for 3–6 players (random tables 4): buy cities, build on your own, " +
+        "City Royale for 3–6 players (up to 8 when switched on; random tables 4): buy cities, build on your own, " +
             "double rent with 3 of a colour, ₹1,500 at START; sell or auction to pay debts; " +
             "last one solvent wins, or the richest when time or rounds run out."
 
     override fun start(rules: GameRules, seatCount: Int, random: GameRandom): GameState {
-        require(seatCount in 2..CITY_BAZAAR_MAX_PLAYERS) { "City Royale needs 2-6 seats" }
+        require(seatCount in 2..CITY_BAZAAR_MAX_PLAYERS_BIG) { "City Royale needs 2-$CITY_BAZAAR_MAX_PLAYERS_BIG seats" }
         val cbRules = rules as? CityBazaarRules ?: CityBazaarRules.STANDARD
         val seats = (1..seatCount).toList()
         return CityBazaarState(

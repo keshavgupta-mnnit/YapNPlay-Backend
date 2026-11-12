@@ -15,6 +15,7 @@ class LobbyHandler(
     private val deps: PlayRoomDeps,
     private val guards: RoomGuards,
     private val countdown: CountdownHandler,
+    private val leaderChange: LeaderChange,
 ) {
     /** Any change resets everyone's ready/watching and loads the game's default house rules. */
     suspend fun selectGame(userId: String, gameId: String?) {
@@ -104,14 +105,7 @@ class LobbyHandler(
         if (!state.members.getValue(targetId).online) {
             throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.TARGET_OFFLINE)
         }
-        // A temporary room has one leader only: the admin role goes along.
-        val admin = if (state.room.temporary) targetId else state.room.adminId
-        val previous = state.room.leaderId
-        state.room = state.room.copy(leaderId = targetId, adminId = admin)
-        // The leader counted as ready: the one stepping down is now not ready, and the new one starts fresh.
-        listOf(previous, targetId).filter { it in state.members }.forEach { state.update(it) { copy(ready = false, readyAt = null) } }
-        deps.repository.updateRoles(state.room.id, targetId, admin)
-        countdown.revalidate(CountdownStopReason.SETTINGS_CHANGED, userId)
+        leaderChange.to(targetId, userId)
     }
 
     suspend fun transferAdmin(userId: String, targetId: String) {

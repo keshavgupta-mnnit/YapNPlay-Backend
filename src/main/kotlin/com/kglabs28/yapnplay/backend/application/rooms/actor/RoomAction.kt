@@ -26,6 +26,10 @@ sealed interface RoomAction {
     data object CancelCountdown : RoomAction
     data class TransferLeader(val userId: String) : RoomAction
     data class TransferAdmin(val userId: String) : RoomAction
+    /** Ask to lead while the admin is away: the leader may refuse in time, else the asker leads. */
+    data object RequestLeader : RoomAction
+    /** The leader refuses the request to lead. */
+    data object DenyLeaderRequest : RoomAction
     data class RemoveMember(val userId: String) : RoomAction
     data class RenameRoom(val name: String) : RoomAction
     data object Snapshot : RoomAction

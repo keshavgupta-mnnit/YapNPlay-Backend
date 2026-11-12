@@ -119,6 +119,8 @@ object BackendConstants {
     const val SEAT_CLAIM_MS = 30_000L
     const val SPECTATOR_ANSWER_MS = 30_000L
     const val LEADER_CHOICE_MS = 10_000L
+    /** How long the leader has to refuse someone asking to lead. */
+    const val LEADER_REQUEST_MS = 20_000L
     const val IDLE_TURNS_BEFORE_CHECK = 3
     const val ABSENCE_CHECK_MS = 15_000L
     /** A finished match keeps answering snapshot requests for this long. */
