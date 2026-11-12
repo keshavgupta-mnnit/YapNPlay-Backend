@@ -35,6 +35,8 @@ data class DoodleKingState(
     val wordCategory: String = "",
     val wordLanguage: String = "",
     val used: Set<String> = emptySet(),
+    /** Words offered in earlier matches, longest ago first: offered only once the others run out. */
+    val stale: List<String> = emptyList(),
     /** Letter positions given as hints, in order; the first [hintsShown] are showing. */
     val hintOrder: List<Int> = emptyList(),
     val hintsShown: Int = 0,

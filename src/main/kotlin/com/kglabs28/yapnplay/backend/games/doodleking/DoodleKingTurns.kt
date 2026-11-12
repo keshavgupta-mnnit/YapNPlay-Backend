@@ -1,7 +1,6 @@
 package com.kglabs28.yapnplay.backend.games.doodleking
 
 import com.kglabs28.yapnplay.backend.games.base.play.GameRandom
-import com.kglabs28.yapnplay.backend.games.base.play.shuffled
 
 /**
  * Moving a match through its turns: intro, pick, draw, reveal, next
@@ -66,9 +65,7 @@ class DoodleKingTurns(private val random: GameRandom) {
     private fun afterIntro(s: DoodleKingState, now: Long): DoodleKingState {
         // The next turn's feed opens with the note, so everyone sees why the turn moved on.
         if (s.drawer in s.absent) return begin(s, s.turnIndex + 1, now).copy(feed = listOf(DoodleFeedItem(DoodleFeedKind.SKIPPED, s.drawer)))
-        val pool = DoodleKingWords.pool(s.level, s.dkRules.house.hinglish).filter { it !in s.used }
-        // A very long match could run out of new words: then the level's words come round again.
-        val options = (pool.ifEmpty { DoodleKingWords.pool(s.level, s.dkRules.house.hinglish) }).shuffled(random).take(WORD_CHOICES)
+        val options = DoodleKingWordPicker.options(s, random)
         return s.copy(
             phase = DoodlePhase.PICK,
             phaseEndsAt = now + s.dkRules.mandatory.pickMs,

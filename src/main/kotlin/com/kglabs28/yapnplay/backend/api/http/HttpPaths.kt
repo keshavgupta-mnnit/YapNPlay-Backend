@@ -6,6 +6,7 @@ object HttpPaths {
     /** A browser's report of loading or running the web app (no sign-in). */
     const val WEB_LOG = "/web/log"
     const val ADMIN_WEB_LOGS = "/admin/web-logs"
+    const val ADMIN_WEB_LOGS_CLOSE = "/admin/web-logs/close"
     /** Public: the ad sellers allowed to sell YapNPlay's ads (AdMob reads it from the store listing's website). */
     const val APP_ADS_TXT = "/app-ads.txt"
     /** Public: Android checks it before opening invite links straight in the app (App Links). */

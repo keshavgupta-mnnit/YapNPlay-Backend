@@ -17,27 +17,36 @@ import com.kglabs28.yapnplay.backend.games.doodleking.HINGLISH_WORDS_KEY
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
-/** Starts Doodle King sessions: timing and points from the admin settings, Hinglish words by the room's toggle. */
+/**
+ * Starts Doodle King sessions: timing and points from the admin settings, Hinglish words by the room's
+ * toggle, and the words offered in earlier matches ([recentWords]) kept for last.
+ */
 class DoodleKingSessionFactory(
     override val game: DoodleKingEngine,
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
     private val settings: Settings = Settings.Defaults,
+    private val recentWords: DoodleRecentWords = DoodleRecentWords(),
 ) : GameSessionFactory {
 
     override fun start(seatCount: Int, houseRules: Map<String, Boolean>?): GameSession {
         // Quick Play (no toggles) is English only; a room's toggle is on unless turned off.
         val hinglish = houseRules?.let { it[HINGLISH_WORDS_KEY] ?: true } ?: false
         val rules = DoodleKingRules(mandatory(), DoodleKingHouseRules(hinglish))
-        val state = game.start(rules, seatCount, random) as DoodleKingState
+        val state = (game.start(rules, seatCount, random) as DoodleKingState).copy(stale = recentWords.oldestFirst())
         return session(state)
     }
 
     override fun restore(saved: JsonObject): GameSession = session(json.decodeFromJsonElement(DoodleKingSaved.serializer(), saved).engine)
 
     // The engine reads the test-bots setting; the session follows it.
-    private fun session(state: DoodleKingState) = DoodleKingSession(game, state, random, json, clock, testBots = { game.cpuFillAllowed }, extensionRounds = { settings[GameSettings.DK_EXTENSION_ROUNDS] })
+    private fun session(state: DoodleKingState) = DoodleKingSession(
+        game, state, random, json, clock,
+        testBots = { game.cpuFillAllowed },
+        extensionRounds = { settings[GameSettings.DK_EXTENSION_ROUNDS] },
+        onOffered = recentWords::offered,
+    )
 
     private fun mandatory() = DoodleKingMandatoryRules(
         rounds = settings[GameSettings.DK_ROUNDS],

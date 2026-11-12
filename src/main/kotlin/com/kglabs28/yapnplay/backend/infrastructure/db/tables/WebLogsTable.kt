@@ -2,7 +2,7 @@ package com.kglabs28.yapnplay.backend.infrastructure.db.tables
 
 import org.jetbrains.exposed.sql.Table
 
-/** Mirrors V27__web_logs.sql. */
+/** Mirrors V27__web_logs.sql and V28__web_log_stack.sql. */
 object WebLogsTable : Table("web_logs") {
     val id = uuid("id")
     val createdAt = long("created_at")
@@ -13,5 +13,6 @@ object WebLogsTable : Table("web_logs") {
     val device = varchar("device", 200)
     val elapsedMs = long("elapsed_ms")
     val version = varchar("version", 40)
+    val stack = text("stack").default("")
     override val primaryKey = PrimaryKey(id)
 }

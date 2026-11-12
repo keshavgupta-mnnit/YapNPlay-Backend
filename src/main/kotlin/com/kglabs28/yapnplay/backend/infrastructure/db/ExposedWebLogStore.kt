@@ -3,7 +3,9 @@ package com.kglabs28.yapnplay.backend.infrastructure.db
 import com.kglabs28.yapnplay.backend.domain.weblog.WebLog
 import com.kglabs28.yapnplay.backend.domain.weblog.WebLogStore
 import com.kglabs28.yapnplay.backend.infrastructure.db.tables.WebLogsTable
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.deleteWhere
@@ -24,6 +26,7 @@ class ExposedWebLogStore(private val db: DbQuery) : WebLogStore {
                 it[device] = log.device
                 it[elapsedMs] = log.elapsedMs
                 it[version] = log.version
+                it[stack] = log.stack
             }
         }
     }
@@ -41,7 +44,15 @@ class ExposedWebLogStore(private val db: DbQuery) : WebLogStore {
                 device = it[WebLogsTable.device],
                 elapsedMs = it[WebLogsTable.elapsedMs],
                 version = it[WebLogsTable.version],
+                stack = it[WebLogsTable.stack],
             )
+        }
+    }
+
+    override suspend fun delete(kind: String?, message: String?): Int = db.run {
+        WebLogsTable.deleteWhere {
+            val ofKind = if (kind == null) Op.TRUE else WebLogsTable.kind eq kind
+            if (message == null) ofKind else ofKind and (WebLogsTable.message eq message)
         }
     }
 

@@ -10,6 +10,7 @@ import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
 import com.kglabs28.yapnplay.backend.api.auth.AdminTokenCheck
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogCloseBody
 import com.kglabs28.yapnplay.backend.application.weblog.WebLogUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminAuthUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
@@ -192,6 +193,13 @@ fun Route.adminRoutes(
     }
     // What browsers reported while loading and running the web app (newest first; ?kind=FAILED…).
     get(HttpPaths.ADMIN_WEB_LOGS) { guard.run(call, AdminPermission.VIEW) { call.respond(webLogs.recent(call.request.queryParameters[KIND_PARAM])) } }
+    // Closing a bug (all its reports) and clearing the logs (?kind= for one kind): moderation work.
+    post(HttpPaths.ADMIN_WEB_LOGS_CLOSE) {
+        guard.run(call, AdminPermission.MODERATE) { admin -> call.respond(webLogs.close(call.receive<WebLogCloseBody>(), admin.adminId)) }
+    }
+    delete(HttpPaths.ADMIN_WEB_LOGS) {
+        guard.run(call, AdminPermission.MODERATE) { admin -> call.respond(webLogs.clear(call.request.queryParameters[KIND_PARAM], admin.adminId)) }
+    }
     get(HttpPaths.ADMIN_ROOMS) { guard.run(call, AdminPermission.VIEW) { call.respond(removal.rooms(call.request.queryParameters[HttpPaths.QUERY_PARAM].orEmpty())) } }
     delete(HttpPaths.ADMIN_ROOM) {
         guard.run(call, AdminPermission.REMOVE_PLAYERS) { admin ->

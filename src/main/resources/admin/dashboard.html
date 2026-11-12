@@ -241,7 +241,8 @@
     <div class="note">What browsers report while the web app loads and runs, newest first (kept 14 days). Failed: it broke before the first screen. Slow: still loading after 20 s / 60 s, with how far it got. Started: the first screen showed, with the load time and the device. Crash: an error inside the running app. Performance: frames a second (60 is smooth; under 30 feels slow) at 1 and 3 minutes in.</div>
     <div class="row" style="margin-top:8px"><label>Show <select id="webLogKind">
       <option value="">Everything</option><option value="FAILED">Failed</option><option value="SLOW">Slow</option><option value="STARTED">Started</option><option value="CRASH">Crash</option><option value="PERF">Performance</option>
-    </select></label></div>
+    </select></label> <button type="button" id="webLogsDownload">Download all</button> <button type="button" id="webLogsClear" class="danger">Clear</button></div>
+    <div class="note">Crashes carry the error's stack trace (where in the app it broke): Download saves one report as a text file, Download all saves everything shown. Close removes every report of that bug (the same kind and message); if it happens again it shows again. Clear removes everything shown (only the kind picked above, if one is).</div>
     <div class="panel" style="margin-top:8px"><table id="webLogsTable"></table></div>
   </section>
 
@@ -933,15 +934,57 @@
   }
 
   // ── Web logs ──
+  var shownWebLogs = [];
   function loadWebLogs() {
     var kind = $("webLogKind").value;
     api("GET", "/admin/web-logs" + (kind ? "?kind=" + kind : "")).then(function (logs) {
-      table("webLogsTable", [["#", true], ["When"], ["Kind"], ["Stage"], ["Message"], ["Seconds", true], ["Device"], ["Browser"], ["Build"]],
+      shownWebLogs = logs;
+      $("webLogsClear").hidden = !can("moderate");
+      table("webLogsTable", [["#", true], ["When"], ["Kind"], ["Stage"], ["Message"], ["Seconds", true], ["Device"], ["Browser"], ["Build"], [""]],
         logs.map(function (l, i) {
-          return [i + 1, when(l.createdAt), l.kind, l.stage, l.message, Math.round(l.elapsedMs / 100) / 10, l.device, l.userAgent, l.version];
+          var save = l.stack ? btn("Download", function () { saveText(webLogFileName(l), webLogText(l)); }) : null;
+          var close = can("moderate") && (l.kind === "CRASH" || l.kind === "FAILED") ? btn("Close", function () { closeWebLogBug(l); }) : null;
+          return [i + 1, when(l.createdAt), l.kind, l.stage, l.message, Math.round(l.elapsedMs / 100) / 10, l.device, l.userAgent, l.version, group(save, close)];
         }), "Nothing reported");
     }).catch(function (e) { say("Web logs: " + e.message, true); });
   }
+  /** Closes a bug: every report of the same kind and message goes. */
+  function closeWebLogBug(l) {
+    var count = shownWebLogs.filter(function (x) { return x.kind === l.kind && x.message === l.message; }).length;
+    if (!confirm("Close this bug? Its " + count + " report(s) shown here (and any older ones) are removed:\n\n" + l.message)) return;
+    api("POST", "/admin/web-logs/close", { kind: l.kind, message: l.message })
+      .then(function (r) { say("Bug closed: " + r.removed + " report(s) removed"); loadWebLogs(); })
+      .catch(function (e) { say(e.message, true); });
+  }
+  $("webLogsClear").addEventListener("click", function () {
+    var kind = $("webLogKind").value;
+    if (!confirm("Remove " + (kind ? "every " + kind + " report" : "every web log") + "? This can't be undone.")) return;
+    api("DELETE", "/admin/web-logs" + (kind ? "?kind=" + kind : ""))
+      .then(function (r) { say(r.removed + " report(s) removed"); loadWebLogs(); })
+      .catch(function (e) { say(e.message, true); });
+  });
+  /** One report as plain text: every field, then the stack trace a frame a line. */
+  function webLogText(l) {
+    return ["When: " + new Date(l.createdAt).toISOString(), "Kind: " + l.kind, "Stage: " + l.stage, "Message: " + l.message,
+      "Seconds: " + l.elapsedMs / 1000, "Device: " + l.device, "Browser: " + l.userAgent, "Build: " + l.version,
+      "Stack:", l.stack || "(none)"].join("\n");
+  }
+  function webLogFileName(l) {
+    return "yapnplay-" + l.kind.toLowerCase() + "-" + new Date(l.createdAt).toISOString().replace(/[:.]/g, "-") + ".txt";
+  }
+  /** Saves [text] as a file through the browser's own download. */
+  function saveText(name, text) {
+    var url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+    var a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  $("webLogsDownload").addEventListener("click", function () {
+    if (!shownWebLogs.length) { say("Nothing to download", true); return; }
+    saveText("yapnplay-web-logs-" + new Date().toISOString().replace(/[:.]/g, "-") + ".txt",
+      shownWebLogs.map(webLogText).join("\n\n" + "-".repeat(60) + "\n\n"));
+  });
 
   // ── Rooms ──
   function loadRooms() {

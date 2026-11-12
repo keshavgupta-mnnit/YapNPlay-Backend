@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.di
 
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
 import com.kglabs28.yapnplay.backend.application.match.games.doodleking.DoodleKingSessionFactory
+import com.kglabs28.yapnplay.backend.application.match.games.doodleking.DoodleRecentWords
 import com.kglabs28.yapnplay.backend.games.doodleking.DoodleKingEngine
 import com.kglabs28.yapnplay.backend.application.match.GetMatchHistoryUseCase
 import com.kglabs28.yapnplay.backend.games.monochaos.engine.MonoChaosEngine
@@ -46,7 +47,7 @@ val matchModule = module {
             MonoSessionFactory(MonoEngine(), get(), get(), get(), get<Settings>()),
             MonoChaosSessionFactory(MonoChaosEngine(), get(), get(), get(), get<Settings>()),
             // CPU players only while testing (admin setting), read on every check.
-            DoodleKingSessionFactory(DoodleKingEngine { get<Settings>()[GameSettings.DK_TEST_BOTS] == 1 }, get(), get(), get(), get<Settings>()),
+            DoodleKingSessionFactory(DoodleKingEngine { get<Settings>()[GameSettings.DK_TEST_BOTS] == 1 }, get(), get(), get(), get<Settings>(), DoodleRecentWords()),
             CyberBlastSessionFactory(CyberBlastEngine(), get(), get(), get<Settings>()),
         )
     }

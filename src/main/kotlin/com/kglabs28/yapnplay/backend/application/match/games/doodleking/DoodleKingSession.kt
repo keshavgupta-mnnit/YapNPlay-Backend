@@ -50,6 +50,8 @@ class DoodleKingSession(
     private val testBots: () -> Boolean = { false },
     /** Rounds a "keep playing" vote adds (admin setting). */
     private val extensionRounds: () -> Int = { 1 },
+    /** Each drawer's 3 words when they come up (remembered across matches). */
+    private val onOffered: (List<String>) -> Unit = {},
 ) : GameSession {
     private val mapper = DoodleKingWireMapper(json)
     private val canvas = DoodleCanvas().apply { reset(state.drawingId) }
@@ -169,7 +171,9 @@ class DoodleKingSession(
 
     private fun take(result: ApplyResult): List<GameEvent>? {
         if (result !is ApplyResult.Success) return null
+        val before = state.options
         state = result.state as DoodleKingState
+        if (state.options.isNotEmpty() && state.options != before) onOffered(state.options)
         return result.events
     }
 

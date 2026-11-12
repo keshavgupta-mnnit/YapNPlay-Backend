@@ -29,4 +29,4 @@ fun Route.webLogRoutes(webLogs: WebLogUseCase, limit: RateLimitName) {
 }
 
 private val JSON = Json { ignoreUnknownKeys = true }
-private const val MAX_BODY = 4_000
+private const val MAX_BODY = 10_000

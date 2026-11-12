@@ -1,12 +1,15 @@
 package com.kglabs28.yapnplay.backend.api
 
 import com.kglabs28.yapnplay.backend.application.admin.AdminUserView
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogCloseBody
 import com.kglabs28.yapnplay.backend.application.weblog.WebLogView
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogsRemoved
 import com.kglabs28.yapnplay.backend.support.newGuestToken
 import com.kglabs28.yapnplay.backend.support.serverTest
 import com.kglabs28.yapnplay.backend.support.testConfig
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -27,7 +30,7 @@ class WebLogApiTest {
     fun `a browser's report is kept and listed for the admin, newest first, by kind`() = serverTest(config) { client ->
         val sent = client.post("/web/log") {
             contentType(ContentType.Text.Plain)
-            setBody("""{"kind":"failed","stage":"page opened","message":"boom","userAgent":"iPhone","device":"cores 6","elapsedMs":1500,"version":"web-v9"}""")
+            setBody("""{"kind":"failed","stage":"page opened","message":"boom","userAgent":"iPhone","device":"cores 6","elapsedMs":1500,"version":"web-v9","stack":"Error: boom\n  at a.b\n  at c.d"}""")
         }
         assertEquals(HttpStatusCode.NoContent, sent.status)
         client.post("/web/log") { contentType(ContentType.Text.Plain); setBody("""{"kind":"STARTED","message":"first screen after 4 s"}""") }
@@ -42,6 +45,32 @@ class WebLogApiTest {
         assertEquals("boom", failed.message)
         assertEquals(1500, failed.elapsedMs)
         assertEquals("web-v9", failed.version)
+        // The stack keeps its lines, for the dashboard's download.
+        assertEquals("Error: boom\n  at a.b\n  at c.d", failed.stack)
+    }
+
+    @Test
+    fun `closing a bug removes all its reports, and clearing removes a kind`() = serverTest(config) { client ->
+        val bug = "nullptr " + UUID.randomUUID()
+        val other = "other " + UUID.randomUUID()
+        val slow = "slow " + UUID.randomUUID()
+        listOf("CRASH" to bug, "CRASH" to bug, "CRASH" to other, "SLOW" to slow).forEach { (kind, message) ->
+            client.post("/web/log") { contentType(ContentType.Text.Plain); setBody("""{"kind":"$kind","message":"$message"}""") }
+        }
+        fun List<WebLogView>.messages() = map { it.message }.filter { it == bug || it == other || it == slow }
+
+        val closed = client.post("/admin/web-logs/close") {
+            bearerAuth(adminToken); contentType(ContentType.Application.Json); setBody(WebLogCloseBody("crash", bug))
+        }.body<WebLogsRemoved>()
+        assertEquals(2, closed.removed)
+        assertEquals(listOf(slow, other), client.get("/admin/web-logs") { bearerAuth(adminToken) }.body<List<WebLogView>>().messages())
+
+        val cleared = client.delete("/admin/web-logs?kind=SLOW") { bearerAuth(adminToken) }.body<WebLogsRemoved>()
+        assertTrue(cleared.removed >= 1)
+        assertEquals(listOf(other), client.get("/admin/web-logs") { bearerAuth(adminToken) }.body<List<WebLogView>>().messages())
+        assertEquals(HttpStatusCode.Unauthorized, client.delete("/admin/web-logs").status)
+        // Leaves nothing behind for the other tests sharing the database.
+        client.post("/admin/web-logs/close") { bearerAuth(adminToken); contentType(ContentType.Application.Json); setBody(WebLogCloseBody("CRASH", other)) }
     }
 
     @Test
