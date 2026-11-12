@@ -1,7 +1,11 @@
 package com.kglabs28.yapnplay.backend.di
 
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedFeedbackRepository
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedWebIssueStore
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedWebSymbolStore
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedWebLogStore
+import com.kglabs28.yapnplay.backend.domain.weblog.WebIssueStore
+import com.kglabs28.yapnplay.backend.domain.weblog.WebSymbolStore
 import com.kglabs28.yapnplay.backend.domain.weblog.WebLogStore
 import com.kglabs28.yapnplay.backend.domain.feedback.FeedbackRepository
 import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
@@ -71,6 +75,8 @@ fun infrastructureModule(config: BackendConfig, overrides: BackendOverrides) = m
     single<FriendRepository> { ExposedFriendRepository(get()) }
     single<FeedbackRepository> { ExposedFeedbackRepository(get()) }
     single<WebLogStore> { ExposedWebLogStore(get()) }
+    single<WebIssueStore> { ExposedWebIssueStore(get()) }
+    single<WebSymbolStore> { ExposedWebSymbolStore(get()) }
     single<FriendRequestRepository> { ExposedFriendRequestRepository(get()) }
     single<BlockRepository> { ExposedBlockRepository(get()) }
     single<DeviceRepository> { ExposedDeviceRepository(get()) }

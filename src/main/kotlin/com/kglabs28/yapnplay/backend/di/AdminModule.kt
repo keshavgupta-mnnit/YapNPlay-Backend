@@ -4,7 +4,11 @@ import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminAnalyticsQuer
 import com.kglabs28.yapnplay.backend.application.admin.GetAdminAnalyticsUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminAnalyticsQueries
 import com.kglabs28.yapnplay.backend.application.admin.AdminFeedbackUseCase
+import com.kglabs28.yapnplay.backend.application.weblog.WebIssuesUseCase
 import com.kglabs28.yapnplay.backend.application.weblog.WebLogUseCase
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogViewMapper
+import com.kglabs28.yapnplay.backend.application.weblog.WebStackDecoder
+import com.kglabs28.yapnplay.backend.application.weblog.WebSymbolsUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedAdminDirectory
@@ -33,7 +37,10 @@ fun adminModule(config: BackendConfig) = module {
     single { AdminTokenCheck(config.adminToken) }
     single<AdminDirectory> { ExposedAdminDirectory(get()) }
     single { AdminFeedbackUseCase(get(), get(), get()) }
-    single { WebLogUseCase(get(), get(), get(), get()) }
+    single { WebSymbolsUseCase(get(), get()) }
+    single { WebLogViewMapper(WebStackDecoder { version -> get<WebSymbolsUseCase>().mapFor(version) }) }
+    single { WebLogUseCase(get(), get(), get(), get(), get()) }
+    single { WebIssuesUseCase(get(), get(), get(), get(), get()) }
     single { AdminActionsUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { AdminMatchesUseCase(get()) }
     single<AdminAccountStore> { ExposedAdminAccountStore(get()) }

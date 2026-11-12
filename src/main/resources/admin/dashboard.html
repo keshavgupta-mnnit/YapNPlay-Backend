@@ -36,6 +36,28 @@
   th { color: var(--muted); font-weight: 500; font-size: 12px; }
   td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
   tr:last-child td { border-bottom: 0; }
+  tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
+  td.wrap { white-space: normal; overflow-wrap: anywhere; min-width: 240px; }
+  .fields { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; padding: 12px 14px; font-size: 13px; margin: 0; }
+  .fields dt { color: var(--muted); } .fields dd { margin: 0; overflow-wrap: anywhere; }
+  pre.stack { margin: 0; padding: 12px 14px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 70vh; overflow: auto; }
+  pre.stack .ours { color: var(--accent); font-weight: 600; } pre.stack .lib { color: var(--muted); }
+  .spark { display: flex; align-items: flex-end; gap: 2px; height: 22px; min-width: 70px; }
+  .spark.big { height: 56px; }
+  .spark i { flex: 1; background: var(--accent); opacity: .75; border-radius: 2px 2px 0 0; min-height: 1px; }
+  .spark i.zero { background: var(--line); }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 9px; border: 1px solid var(--line); color: var(--muted); margin-right: 6px; white-space: nowrap; }
+  .badge.CRASH, .badge.FAILED, .badge.REGRESSED { color: var(--bad); border-color: var(--bad); }
+  .badge.CLOSED { color: var(--good); border-color: var(--good); }
+  .wl-title { font-size: 17px; font-weight: 600; overflow-wrap: anywhere; }
+  .wl-sub { color: var(--muted); font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
+  .wl-breakdowns { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .wl-breakdowns .panel { padding: 10px 14px; }
+  .share { display: grid; grid-template-columns: 1fr 52px; gap: 2px 8px; font-size: 12px; margin-top: 6px; }
+  .share .bar { grid-column: 1 / -1; }
+  .wl-event-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .wl-event-nav select { max-width: 100%; }
+  .wl-event-nav button { margin: 0; }
   .bar { height: 8px; background: var(--bar); border-radius: 4px; min-width: 2px; }
   .empty { color: var(--muted); padding: 12px; }
   .good { color: var(--good); } .bad { color: var(--bad); }
@@ -237,13 +259,58 @@
   </section>
 
   <section id="tab-weblogs" hidden>
-    <h2>Web logs</h2>
-    <div class="note">What browsers report while the web app loads and runs, newest first (kept 14 days). Failed: it broke before the first screen. Slow: still loading after 20 s / 60 s, with how far it got. Started: the first screen showed, with the load time and the device. Crash: an error inside the running app. Performance: frames a second (60 is smooth; under 30 feels slow) at 1 and 3 minutes in.</div>
-    <div class="row" style="margin-top:8px"><label>Show <select id="webLogKind">
-      <option value="">Everything</option><option value="FAILED">Failed</option><option value="SLOW">Slow</option><option value="STARTED">Started</option><option value="CRASH">Crash</option><option value="PERF">Performance</option>
-    </select></label> <button type="button" id="webLogsDownload">Download all</button> <button type="button" id="webLogsClear" class="danger">Clear</button></div>
-    <div class="note">Crashes carry the error's stack trace (where in the app it broke): Download saves one report as a text file, Download all saves everything shown. Close removes every report of that bug (the same kind and message); if it happens again it shows again. Clear removes everything shown (only the kind picked above, if one is).</div>
-    <div class="panel" style="margin-top:8px"><table id="webLogsTable"></table></div>
+    <h2>Web crashes</h2>
+    <div class="row" style="margin-top:8px">
+      <nav class="chips" id="wlView"><button type="button" data-view="issues" aria-pressed="true">Issues</button><button type="button" data-view="events" aria-pressed="false">All reports</button></nav>
+      <label>Period <select id="wlDays"><option value="1">Last 24 hours</option><option value="7" selected>Last 7 days</option><option value="14">Last 14 days</option></select></label>
+      <label>Version <select id="wlVersion"><option value="">All versions</option></select></label>
+      <button type="button" class="ghost" id="wlRefresh">Refresh</button>
+    </div>
+
+    <div id="wlIssues">
+      <div class="cards" id="wlSummary" style="margin-top:12px"></div>
+      <div class="note">Sessions are page loads, users are browsers (a random id each, no account). Crash-free: without a crash or a failed start.</div>
+      <div class="panel" style="margin-top:8px; padding:10px 14px"><div class="note" style="margin:0 0 6px">Crashing sessions a day</div><div class="spark big" id="wlTrend"></div></div>
+      <div class="row" style="margin-top:12px">
+        <nav class="chips" id="wlState"><button type="button" data-state="ACTIVE" aria-pressed="true">Open</button><button type="button" data-state="REGRESSED" aria-pressed="false">Regressed</button><button type="button" data-state="CLOSED" aria-pressed="false">Closed</button><button type="button" data-state="" aria-pressed="false">All</button></nav>
+        <nav class="chips" id="wlKind"><button type="button" data-kind="" aria-pressed="true">All types</button><button type="button" data-kind="CRASH" aria-pressed="false">Crashes</button><button type="button" data-kind="FAILED" aria-pressed="false">Failed starts</button><button type="button" data-kind="NON_FATAL" aria-pressed="false">Non-fatals</button></nav>
+        <input id="wlSearch" type="search" placeholder="Search issues…">
+      </div>
+      <div class="note">An issue is one error (its kind and text), across builds. Events: page loads it happened in; Times: how often in all (it repeats within a load). Tap an issue for its events, stack traces, keys and logs.</div>
+      <div class="panel" style="margin-top:8px"><table id="wlIssuesTable"></table></div>
+    </div>
+
+    <div id="wlIssue" hidden>
+      <div class="row" style="margin-top:12px">
+        <button type="button" class="ghost" id="wlIssueBack">&lsaquo; Issues</button>
+        <button type="button" id="wlIssueClose" class="danger" style="margin:0">Close issue</button>
+        <button type="button" id="wlIssueReopen" style="margin:0">Reopen</button>
+        <button type="button" class="ghost" id="wlIssueSaveAll">Download all events</button>
+      </div>
+      <h2 id="wlIssueKind"></h2>
+      <div class="wl-title" id="wlIssueTitle"></div>
+      <div class="note" id="wlIssueWhere"></div>
+      <div class="note" id="wlIssueState"></div>
+      <div class="cards" id="wlIssueCards" style="margin-top:12px"></div>
+      <div class="panel" style="margin-top:8px; padding:10px 14px"><div class="note" style="margin:0 0 6px">Events a day</div><div class="spark big" id="wlIssueTrend"></div></div>
+      <h2>Where it happens</h2>
+      <div class="wl-breakdowns" id="wlBreakdowns"></div>
+      <h2>Events</h2>
+      <div id="wlIssueEvent"></div>
+    </div>
+
+    <div id="wlEvents" hidden>
+      <div class="row" style="margin-top:12px"><label>Show <select id="webLogKind">
+        <option value="">Everything</option><option value="CRASH">Crash</option><option value="FAILED">Failed start</option><option value="NON_FATAL">Non-fatal</option><option value="SLOW">Slow</option><option value="STARTED">Started</option><option value="PERF">Performance</option>
+      </select></label> <button type="button" id="webLogsDownload" style="margin:0">Download all</button> <button type="button" id="webLogsClear" class="danger" style="margin:0">Clear</button></div>
+      <div class="note">Every report, newest first (kept 14 days). Failed: it broke before the first screen. Slow: still loading after 20 s / 60 s. Started: the first screen showed. Crash: an error in the running app. Non-fatal: an error the app caught. Performance: frames a second at 1 and 3 minutes in. Tap one for its details. Clear removes everything shown (only the kind picked, if one is).</div>
+      <div class="panel" style="margin-top:8px"><table id="webLogsTable"></table></div>
+    </div>
+
+    <div id="wlEvent" hidden>
+      <div class="row" style="margin-top:12px"><button type="button" class="ghost" id="wlEventBack">&lsaquo; All reports</button></div>
+      <div id="wlEventBody"></div>
+    </div>
   </section>
 
   <section id="tab-rooms" hidden>
@@ -933,41 +1000,260 @@
     }).catch(function (e) { say("Players: " + e.message, true); });
   }
 
-  // ── Web logs ──
-  var shownWebLogs = [];
+  // ── Web crashes (Crashlytics for the web app): issues, one issue's events, every report ──
+  var wl = { view: "issues", state: "ACTIVE", kind: "", page: null, issue: null, events: [], logs: [] };
+  var KIND_NAMES = { CRASH: "Crash", FAILED: "Failed start", NON_FATAL: "Non-fatal", SLOW: "Slow", STARTED: "Started", PERF: "Performance", OTHER: "Other" };
+  function wlQuery() {
+    var v = $("wlVersion").value;
+    return "days=" + $("wlDays").value + (v ? "&version=" + encodeURIComponent(v) : "");
+  }
+  function wlShow(part) { ["wlIssues", "wlIssue", "wlEvents", "wlEvent"].forEach(function (id) { $(id).hidden = id !== part; }); window.scrollTo(0, 0); }
+  function pressed(navId, attr, value) {
+    Array.prototype.forEach.call($(navId).querySelectorAll("button"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute(attr) === value)); });
+  }
+  function badge(text, cls) { return el("span", text, "badge " + (cls || "")); }
+  function ago(ms) {
+    var s = Math.round((Date.now() - ms) / 1000);
+    if (s < 60) return s + " s ago"; if (s < 3600) return Math.round(s / 60) + " min ago";
+    if (s < 86400) return Math.round(s / 3600) + " h ago"; return Math.round(s / 86400) + " d ago";
+  }
+  /** Small bars, one a day (oldest first); [title] on each says the day and count. */
+  function spark(days, big) {
+    var box = el("div", null, "spark" + (big ? " big" : ""));
+    var max = Math.max.apply(null, days.map(function (d) { return d.count; }).concat([1]));
+    days.forEach(function (d) {
+      var bar = el("i", null, d.count ? "" : "zero");
+      bar.style.height = Math.max(4, Math.round(d.count * 100 / max)) + "%";
+      bar.title = d.day + ": " + d.count;
+      box.appendChild(bar);
+    });
+    return box;
+  }
+  function setSpark(id, days) { var old = $(id), made = spark(days, true); made.id = id; old.replaceWith(made); }
   function loadWebLogs() {
+    if (wl.view === "issues") loadWebIssues(); else loadWebEvents();
+  }
+
+  // Issues: crash-free numbers, the trend and the issues (state, type and text filters are local).
+  function loadWebIssues() {
+    wlShow("wlIssues");
+    api("GET", "/admin/web-issues?" + wlQuery()).then(function (page) {
+      wl.page = page;
+      fillVersions(page.versions);
+      var s = page.summary;
+      cards("wlSummary", [["Crash-free sessions", s.crashFreeSessionsPct + "%", s.crashFreeSessionsPct < 99 ? "bad" : "good"],
+        ["Crash-free users", s.crashFreeUsersPct + "%", s.crashFreeUsersPct < 99 ? "bad" : "good"],
+        ["Sessions", s.sessions], ["Users", s.users], ["Crashing sessions", s.crashSessions], ["Users with a crash", s.crashUsers]]);
+      setSpark("wlTrend", s.days);
+      renderIssues();
+    }).catch(function (e) { say("Web crashes: " + e.message, true); });
+  }
+  function fillVersions(versions) {
+    var sel = $("wlVersion"), keep = sel.value;
+    sel.replaceChildren(el("option", "All versions"));
+    sel.firstChild.value = "";
+    versions.forEach(function (v) { var o = el("option", v); o.value = v; sel.appendChild(o); });
+    if (keep && versions.indexOf(keep) < 0) { var o = el("option", keep); o.value = keep; sel.appendChild(o); }
+    sel.value = keep;
+  }
+  function renderIssues() {
+    var text = $("wlSearch").value.trim().toLowerCase();
+    var issues = (wl.page ? wl.page.issues : []).filter(function (i) {
+      var stateOk = wl.state === "" || (wl.state === "ACTIVE" ? i.state !== "CLOSED" : i.state === wl.state);
+      var kindOk = wl.kind === "" || i.kind === wl.kind;
+      var textOk = !text || (i.title + " " + i.where).toLowerCase().indexOf(text) >= 0;
+      return stateOk && kindOk && textOk;
+    });
+    table("wlIssuesTable", [["Issue"], ["Events", true], ["Times", true], ["Users", true], ["Versions"], ["Last seen"], ["Trend"]],
+      issues.map(function (i) {
+        var cell = el("div");
+        var head = el("div"); head.appendChild(badge(KIND_NAMES[i.kind] || i.kind, i.kind));
+        if (i.state !== "OPEN") head.appendChild(badge(i.state === "REGRESSED" ? "Regressed" : "Closed", i.state));
+        head.appendChild(el("b", i.title)); cell.appendChild(head);
+        if (i.where) cell.appendChild(el("div", i.where, "wl-sub"));
+        var versions = i.versions.length > 2 ? i.versions.slice(0, 2).join(", ") + " +" + (i.versions.length - 2) : i.versions.join(", ");
+        return [cell, i.events, i.occurrences, i.users, versions, ago(i.lastSeen), spark(i.days)];
+      }), "No issues in this period");
+    var body = $("wlIssuesTable").tBodies[0];
+    if (body) Array.prototype.forEach.call(body.rows, function (tr, n) {
+      tr.className = "click"; tr.cells[0].className = "wrap";
+      tr.addEventListener("click", function () { openIssue(issues[n].id); });
+    });
+  }
+
+  // One issue: its numbers, where it happens, and its events one at a time (newest first).
+  function openIssue(id) {
+    api("GET", "/admin/web-issues/" + encodeURIComponent(id) + "?" + wlQuery()).then(function (d) {
+      wl.issue = d.issue; wl.events = d.events;
+      var i = d.issue;
+      wlShow("wlIssue");
+      $("wlIssueKind").textContent = (KIND_NAMES[i.kind] || i.kind) + " · " + (i.state === "OPEN" ? "Open" : i.state === "REGRESSED" ? "Regressed" : "Closed");
+      $("wlIssueTitle").textContent = i.title;
+      $("wlIssueWhere").textContent = i.where ? "In " + i.where : "Where: needs this build's symbol map (sent with each web release, live after the next backend deploy).";
+      $("wlIssueState").textContent = i.closedAt ? ("Closed " + when(i.closedAt) + " by " + i.closedBy + (i.note ? ": " + i.note : "") +
+        (i.state === "REGRESSED" ? ". It happened again after that." : "")) : "";
+      var mod = can("moderate");
+      $("wlIssueClose").hidden = !mod || i.state === "CLOSED";
+      $("wlIssueReopen").hidden = !mod || i.state === "OPEN";
+      cards("wlIssueCards", [["Events (sessions)", i.events], ["Times in all", i.occurrences], ["Users", i.users],
+        ["First seen", when(i.firstSeen)], ["Last seen", when(i.lastSeen)], ["Versions", i.versions.join(", ") || "unknown"]]);
+      setSpark("wlIssueTrend", i.days);
+      var box = $("wlBreakdowns"); box.replaceChildren();
+      d.breakdowns.forEach(function (b) {
+        var p = el("div", null, "panel"); p.appendChild(el("div", b.name, "note"));
+        var list = el("div", null, "share");
+        b.values.slice(0, 6).forEach(function (v) {
+          list.appendChild(el("span", v.value)); list.appendChild(el("span", v.pct + "%", "n"));
+          var bar = el("div", null, "bar"); bar.style.width = Math.max(1, v.pct) + "%"; list.appendChild(bar);
+        });
+        p.appendChild(list); box.appendChild(p);
+      });
+      showIssueEvent(0);
+    }).catch(function (e) { say("Issue: " + e.message, true); });
+  }
+  function showIssueEvent(n) {
+    var box = $("wlIssueEvent"); box.replaceChildren();
+    if (!wl.events.length) { box.appendChild(el("div", "No events in this period.", "note")); return; }
+    var nav = el("div", null, "wl-event-nav");
+    var prev = btn("‹ Newer", function () { showIssueEvent(n - 1); }, "ghost"); prev.disabled = n === 0;
+    var next = btn("Older ›", function () { showIssueEvent(n + 1); }, "ghost"); next.disabled = n >= wl.events.length - 1;
+    var pick = el("select");
+    wl.events.forEach(function (e, k) {
+      var o = el("option", (k + 1) + ". " + when(e.createdAt) + " · " + e.os + " · " + e.browser + " · " + e.version + (e.occurrences > 1 ? " · ×" + e.occurrences : ""));
+      o.value = String(k); pick.appendChild(o);
+    });
+    pick.value = String(n);
+    pick.addEventListener("change", function () { showIssueEvent(Number(pick.value)); });
+    nav.appendChild(prev); nav.appendChild(el("span", "Event " + (n + 1) + " of " + wl.events.length, "note")); nav.appendChild(next); nav.appendChild(pick);
+    box.appendChild(nav);
+    box.appendChild(eventPanel(wl.events[n]));
+  }
+  $("wlIssueBack").addEventListener("click", function () { wlShow("wlIssues"); });
+  $("wlIssueClose").addEventListener("click", function () {
+    if (!wl.issue) return;
+    var note = prompt("Close this issue? It stays in the list as closed and shows as regressed if it happens again.\n\nNote (the fix, the release; optional):", "");
+    if (note === null) return;
+    api("POST", "/admin/web-issues/" + encodeURIComponent(wl.issue.id) + "/close", { note: note })
+      .then(function () { say("Issue closed"); openIssue(wl.issue.id); }).catch(function (e) { say(e.message, true); });
+  });
+  $("wlIssueReopen").addEventListener("click", function () {
+    if (!wl.issue) return;
+    api("POST", "/admin/web-issues/" + encodeURIComponent(wl.issue.id) + "/reopen")
+      .then(function () { say("Issue reopened"); openIssue(wl.issue.id); }).catch(function (e) { say(e.message, true); });
+  });
+  $("wlIssueSaveAll").addEventListener("click", function () {
+    if (!wl.issue) return;
+    var head = ["Issue: " + wl.issue.title, "Type: " + wl.issue.kind, "Where: " + (wl.issue.where || "-"), "Events: " + wl.issue.events +
+      ", times: " + wl.issue.occurrences + ", users: " + wl.issue.users, "Versions: " + wl.issue.versions.join(", ")].join("\n");
+    saveText("yapnplay-issue-" + wl.issue.id + ".txt", head + "\n\n" + wl.events.map(webLogText).join("\n\n" + "-".repeat(60) + "\n\n"));
+  });
+
+  /** One event in full: what, where, the device and page, the stack (our frames stand out), keys and logs. */
+  function eventPanel(e) {
+    var box = el("div");
+    var actions = el("div", null, "row");
+    actions.appendChild(btn("Download this event", function () { saveText(webLogFileName(e), webLogText(e)); }));
+    box.appendChild(actions);
+    var c = e.context || {};
+    var data = [["Message", e.message], ["When", when(e.createdAt) + " (" + ago(e.createdAt) + ")"], ["Build", e.version || "unknown"],
+      ["Screen", c.screen || "-"], ["Stage", e.stage], ["After", Math.round(e.elapsedMs / 100) / 10 + " s on the page"],
+      ["Times in this session", e.occurrences], ["OS", e.os], ["Browser", e.browser], ["Device", e.device],
+      ["Viewport", (c.viewport || "-") + " · " + (c.orientation || "-") + " · ×" + (c.pixelRatio || "?")],
+      ["User", (e.installId || "-").substring(0, 8)], ["Session", (e.pageLoad || "-").substring(0, 8)], ["User agent", e.userAgent]];
+    var fields = el("dl", null, "fields");
+    data.forEach(function (f) { fields.appendChild(el("dt", f[0])); fields.appendChild(el("dd", f[1])); });
+    var p = el("div", null, "panel"); p.appendChild(fields); box.appendChild(p);
+
+    box.appendChild(el("h2", "Stack trace"));
+    var raw = false;
+    var note = el("div", null, "note");
+    var pre = el("pre", null, "stack");
+    var toggle = btn("Show raw", function () { raw = !raw; drawStack(); }, "ghost");
+    toggle.hidden = !e.decodedStack;
+    function drawStack() {
+      var text = (!raw && e.decodedStack) || e.stack;
+      note.textContent = !e.stack ? "No stack trace with this report." : (!raw && e.decodedStack) ? "Function names from the " + e.version + " symbol map; our code is highlighted." : (e.decodeNote || "");
+      toggle.textContent = raw ? "Show names" : "Show raw";
+      pre.replaceChildren();
+      (text || "").split("\n").forEach(function (line) {
+        pre.appendChild(el("span", line + "\n", /com\.kglabs28/.test(line) ? "ours" : (/^(kotlin\.|androidx\.|org\.jetbrains\.)/.test(line) ? "lib" : "")));
+      });
+    }
+    drawStack();
+    var stackHead = el("div", null, "row"); stackHead.appendChild(note); stackHead.appendChild(toggle);
+    box.appendChild(stackHead);
+    var sp = el("div", null, "panel"); sp.style.marginTop = "8px"; sp.appendChild(pre); box.appendChild(sp);
+
+    box.appendChild(el("h2", "Keys"));
+    var keys = el("dl", null, "fields");
+    var names = Object.keys(c).sort();
+    if (!names.length) keys.appendChild(el("dd", "None with this report."));
+    names.forEach(function (k) { keys.appendChild(el("dt", k)); keys.appendChild(el("dd", c[k])); });
+    var kp = el("div", null, "panel"); kp.appendChild(keys); box.appendChild(kp);
+
+    box.appendChild(el("h2", "Logs (the last things that happened, oldest first)"));
+    var logs = el("pre", (e.breadcrumbs || []).join("\n") || "None with this report.", "stack");
+    var lp = el("div", null, "panel"); lp.appendChild(logs); box.appendChild(lp);
+    return box;
+  }
+
+  // Every report (load, speed and errors): the list, then one report in full.
+  function loadWebEvents() {
+    wlShow("wlEvents");
     var kind = $("webLogKind").value;
-    api("GET", "/admin/web-logs" + (kind ? "?kind=" + kind : "")).then(function (logs) {
-      shownWebLogs = logs;
+    api("GET", "/admin/web-logs?" + wlQuery() + (kind ? "&kind=" + kind : "")).then(function (logs) {
+      wl.logs = logs;
       $("webLogsClear").hidden = !can("moderate");
-      table("webLogsTable", [["#", true], ["When"], ["Kind"], ["Stage"], ["Message"], ["Seconds", true], ["Device"], ["Browser"], ["Build"], [""]],
-        logs.map(function (l, i) {
-          var save = l.stack ? btn("Download", function () { saveText(webLogFileName(l), webLogText(l)); }) : null;
-          var close = can("moderate") && (l.kind === "CRASH" || l.kind === "FAILED") ? btn("Close", function () { closeWebLogBug(l); }) : null;
-          return [i + 1, when(l.createdAt), l.kind, l.stage, l.message, Math.round(l.elapsedMs / 100) / 10, l.device, l.userAgent, l.version, group(save, close)];
-        }), "Nothing reported");
+      table("webLogsTable", [["When"], ["Kind"], ["Message"], ["Build"], ["Times", true], ["OS"]],
+        logs.map(function (l) { return [when(l.createdAt), KIND_NAMES[l.kind] || l.kind, l.message, l.version, l.occurrences, l.os]; }), "Nothing reported");
+      var body = $("webLogsTable").tBodies[0];
+      if (body) Array.prototype.forEach.call(body.rows, function (tr, n) {
+        tr.className = "click"; tr.cells[2].className = "wrap";
+        tr.addEventListener("click", function () { wlShow("wlEvent"); var b = $("wlEventBody"); b.replaceChildren(eventPanel(logs[n])); });
+      });
     }).catch(function (e) { say("Web logs: " + e.message, true); });
   }
-  /** Closes a bug: every report of the same kind and message goes. */
-  function closeWebLogBug(l) {
-    var count = shownWebLogs.filter(function (x) { return x.kind === l.kind && x.message === l.message; }).length;
-    if (!confirm("Close this bug? Its " + count + " report(s) shown here (and any older ones) are removed:\n\n" + l.message)) return;
-    api("POST", "/admin/web-logs/close", { kind: l.kind, message: l.message })
-      .then(function (r) { say("Bug closed: " + r.removed + " report(s) removed"); loadWebLogs(); })
-      .catch(function (e) { say(e.message, true); });
-  }
+  $("wlEventBack").addEventListener("click", function () { wlShow("wlEvents"); });
+  $("webLogKind").addEventListener("change", loadWebEvents);
   $("webLogsClear").addEventListener("click", function () {
     var kind = $("webLogKind").value;
-    if (!confirm("Remove " + (kind ? "every " + kind + " report" : "every web log") + "? This can't be undone.")) return;
+    if (!confirm("Remove " + (kind ? "every " + (KIND_NAMES[kind] || kind) + " report" : "every web report") + "? Issues built from them go too. This can't be undone.")) return;
     api("DELETE", "/admin/web-logs" + (kind ? "?kind=" + kind : ""))
-      .then(function (r) { say(r.removed + " report(s) removed"); loadWebLogs(); })
+      .then(function (r) { say(r.removed + " report(s) removed"); loadWebEvents(); })
       .catch(function (e) { say(e.message, true); });
   });
-  /** One report as plain text: every field, then the stack trace a frame a line. */
+  $("webLogsDownload").addEventListener("click", function () {
+    if (!wl.logs.length) { say("Nothing to download", true); return; }
+    saveText("yapnplay-web-logs-" + new Date().toISOString().replace(/[:.]/g, "-") + ".txt",
+      wl.logs.map(webLogText).join("\n\n" + "-".repeat(60) + "\n\n"));
+  });
+
+  // The filters: view, period, version, state, type, text.
+  Array.prototype.forEach.call($("wlView").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { wl.view = b.getAttribute("data-view"); pressed("wlView", "data-view", wl.view); loadWebLogs(); });
+  });
+  Array.prototype.forEach.call($("wlState").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { wl.state = b.getAttribute("data-state"); pressed("wlState", "data-state", wl.state); renderIssues(); });
+  });
+  Array.prototype.forEach.call($("wlKind").querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () { wl.kind = b.getAttribute("data-kind"); pressed("wlKind", "data-kind", wl.kind); renderIssues(); });
+  });
+  $("wlSearch").addEventListener("input", renderIssues);
+  $("wlDays").addEventListener("change", loadWebLogs);
+  $("wlVersion").addEventListener("change", loadWebLogs);
+  $("wlRefresh").addEventListener("click", function () { if (!$("wlIssue").hidden && wl.issue) openIssue(wl.issue.id); else loadWebLogs(); });
+
+  /** One report as plain text: every field, keys, logs, then the stack trace a frame a line. */
   function webLogText(l) {
-    return ["When: " + new Date(l.createdAt).toISOString(), "Kind: " + l.kind, "Stage: " + l.stage, "Message: " + l.message,
-      "Seconds: " + l.elapsedMs / 1000, "Device: " + l.device, "Browser: " + l.userAgent, "Build: " + l.version,
-      "Stack:", l.stack || "(none)"].join("\n");
+    var c = l.context || {};
+    return ["When: " + new Date(l.createdAt).toISOString(), "Kind: " + l.kind, "Message: " + l.message, "Build: " + l.version,
+      "Stage: " + l.stage, "After: " + l.elapsedMs / 1000 + " s", "Times in this session: " + l.occurrences,
+      "OS: " + l.os, "Browser: " + l.browser, "Device: " + l.device, "User agent: " + l.userAgent,
+      "User: " + (l.installId || "-"), "Session: " + (l.pageLoad || "-"),
+      "Keys:", Object.keys(c).sort().map(function (k) { return "  " + k + " = " + c[k]; }).join("\n") || "  (none)",
+      "Logs:", (l.breadcrumbs || []).map(function (b) { return "  " + b; }).join("\n") || "  (none)",
+      "Stack" + (l.decodedStack ? " (names from the " + l.version + " symbol map)" : "") + ":", l.decodedStack || l.stack || "(none)",
+      l.decodedStack ? "Raw stack:\n" + l.stack : ""].join("\n");
   }
   function webLogFileName(l) {
     return "yapnplay-" + l.kind.toLowerCase() + "-" + new Date(l.createdAt).toISOString().replace(/[:.]/g, "-") + ".txt";
@@ -980,11 +1266,6 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
-  $("webLogsDownload").addEventListener("click", function () {
-    if (!shownWebLogs.length) { say("Nothing to download", true); return; }
-    saveText("yapnplay-web-logs-" + new Date().toISOString().replace(/[:.]/g, "-") + ".txt",
-      shownWebLogs.map(webLogText).join("\n\n" + "-".repeat(60) + "\n\n"));
-  });
 
   // ── Rooms ──
   function loadRooms() {
@@ -1169,7 +1450,6 @@
     });
   });
   window.addEventListener("beforeunload", function (e) { if (hasDirty()) { e.preventDefault(); e.returnValue = ""; } });
-  $("webLogKind").addEventListener("change", loadWebLogs);
   $("userSearch").addEventListener("submit", function (e) { e.preventDefault(); userPage = 0; loadUsers(); });
   $("userPrev").addEventListener("click", function () { if (userPage > 0) { userPage--; loadUsers(); } });
   $("userNext").addEventListener("click", function () { userPage++; loadUsers(); });

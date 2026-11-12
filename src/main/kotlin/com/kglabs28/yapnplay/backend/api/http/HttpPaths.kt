@@ -6,7 +6,15 @@ object HttpPaths {
     /** A browser's report of loading or running the web app (no sign-in). */
     const val WEB_LOG = "/web/log"
     const val ADMIN_WEB_LOGS = "/admin/web-logs"
-    const val ADMIN_WEB_LOGS_CLOSE = "/admin/web-logs/close"
+    /** Web crash issues (?days=&version=) and one issue's page, close and reopen. */
+    const val ADMIN_WEB_ISSUES = "/admin/web-issues"
+    const val ADMIN_WEB_ISSUE = "/admin/web-issues/{issueId}"
+    const val ADMIN_WEB_ISSUE_CLOSE = "/admin/web-issues/{issueId}/close"
+    const val ADMIN_WEB_ISSUE_REOPEN = "/admin/web-issues/{issueId}/reopen"
+    const val ISSUE_ID_PARAM = "issueId"
+    /** A web build's symbol map (gzipped), uploaded by its release; [VERSION_PARAM] is the build. */
+    const val ADMIN_WEB_SYMBOLS = "/admin/web-symbols/{version}"
+    const val VERSION_PARAM = "version"
     /** Public: the ad sellers allowed to sell YapNPlay's ads (AdMob reads it from the store listing's website). */
     const val APP_ADS_TXT = "/app-ads.txt"
     /** Public: Android checks it before opening invite links straight in the app (App Links). */

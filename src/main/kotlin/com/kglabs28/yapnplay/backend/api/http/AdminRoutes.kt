@@ -10,7 +10,10 @@ import com.kglabs28.yapnplay.backend.api.auth.AdminAuth
 import com.kglabs28.yapnplay.backend.api.auth.AdminTokenCheck
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.application.admin.AdminActionsUseCase
-import com.kglabs28.yapnplay.backend.application.weblog.WebLogCloseBody
+import com.kglabs28.yapnplay.backend.application.weblog.WebIssueCloseBody
+import com.kglabs28.yapnplay.backend.application.weblog.WebIssuesUseCase
+import com.kglabs28.yapnplay.backend.application.weblog.WebLogPeriod
+import com.kglabs28.yapnplay.backend.application.weblog.WebSymbolsUseCase
 import com.kglabs28.yapnplay.backend.application.weblog.WebLogUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminAuthUseCase
 import com.kglabs28.yapnplay.backend.application.admin.AdminMatchesUseCase
@@ -68,6 +71,8 @@ fun Route.adminRoutes(
     restart: AdminRestartUseCase,
     getAnalytics: GetAdminAnalyticsUseCase,
     webLogs: WebLogUseCase,
+    webIssues: WebIssuesUseCase,
+    webSymbols: WebSymbolsUseCase,
 ) {
     val page by lazy {
         AdminTokenCheck::class.java.getResource(DASHBOARD_RESOURCE)?.readText() ?: error(DASHBOARD_RESOURCE)
@@ -191,12 +196,51 @@ fun Route.adminRoutes(
             call.respond(HttpStatusCode.NoContent)
         }
     }
-    // What browsers reported while loading and running the web app (newest first; ?kind=FAILED…).
-    get(HttpPaths.ADMIN_WEB_LOGS) { guard.run(call, AdminPermission.VIEW) { call.respond(webLogs.recent(call.request.queryParameters[KIND_PARAM])) } }
-    // Closing a bug (all its reports) and clearing the logs (?kind= for one kind): moderation work.
-    post(HttpPaths.ADMIN_WEB_LOGS_CLOSE) {
-        guard.run(call, AdminPermission.MODERATE) { admin -> call.respond(webLogs.close(call.receive<WebLogCloseBody>(), admin.adminId)) }
+    // What browsers reported while loading and running the web app (newest first; ?kind=FAILED&days=7&version=…).
+    get(HttpPaths.ADMIN_WEB_LOGS) {
+        guard.run(call, AdminPermission.VIEW) {
+            val q = call.request.queryParameters
+            call.respond(webLogs.recent(q[KIND_PARAM], WebLogPeriod.days(q[DAYS_PARAM]), q[VERSION_PARAM]))
+        }
     }
+    // Web crash issues, like Crashlytics: the list with crash-free numbers, one issue, close and reopen.
+    get(HttpPaths.ADMIN_WEB_ISSUES) {
+        guard.run(call, AdminPermission.VIEW) {
+            val q = call.request.queryParameters
+            call.respond(webIssues.page(WebLogPeriod.days(q[DAYS_PARAM]), q[VERSION_PARAM]))
+        }
+    }
+    get(HttpPaths.ADMIN_WEB_ISSUE) {
+        guard.run(call, AdminPermission.VIEW) {
+            val q = call.request.queryParameters
+            val detail = webIssues.detail(call.parameters[HttpPaths.ISSUE_ID_PARAM].orEmpty(), WebLogPeriod.days(q[DAYS_PARAM]), q[VERSION_PARAM])
+            if (detail == null) call.respond(HttpStatusCode.NotFound, ErrorBody(ErrorCode.NOT_FOUND, "No events of this issue in the period"))
+            else call.respond(detail)
+        }
+    }
+    post(HttpPaths.ADMIN_WEB_ISSUE_CLOSE) {
+        guard.run(call, AdminPermission.MODERATE) { admin ->
+            webIssues.close(call.parameters[HttpPaths.ISSUE_ID_PARAM].orEmpty(), call.receive<WebIssueCloseBody>().note, admin.adminId)
+            call.respond(HttpStatusCode.NoContent)
+        }
+    }
+    post(HttpPaths.ADMIN_WEB_ISSUE_REOPEN) {
+        guard.run(call, AdminPermission.MODERATE) { admin ->
+            webIssues.reopen(call.parameters[HttpPaths.ISSUE_ID_PARAM].orEmpty(), admin.adminId)
+            call.respond(HttpStatusCode.NoContent)
+        }
+    }
+    // A web release uploads its build's symbol map (the gzipped file): its crash stacks get names at once.
+    put(HttpPaths.ADMIN_WEB_SYMBOLS) {
+        guard.run(call, AdminPermission.EDIT_SETTINGS) {
+            val version = call.parameters[HttpPaths.VERSION_PARAM].orEmpty()
+            val bytes = call.receive<ByteArray>()
+            val kept = if (bytes.size <= SYMBOLS_MAX_BYTES) webSymbols.upload(version, bytes) else null
+            if (kept == null) call.respond(HttpStatusCode.BadRequest, ErrorBody(ErrorCode.BAD_REQUEST, "Not a symbol map of $version"))
+            else call.respond(kept)
+        }
+    }
+    // Clearing the logs (?kind= for one kind): moderation work.
     delete(HttpPaths.ADMIN_WEB_LOGS) {
         guard.run(call, AdminPermission.MODERATE) { admin -> call.respond(webLogs.clear(call.request.queryParameters[KIND_PARAM], admin.adminId)) }
     }
@@ -327,6 +371,10 @@ private const val DIRECTION_PARAM = "dir"
 private const val ASCENDING = "asc"
 private const val PAGE_PARAM = "page"
 private const val KIND_PARAM = "kind"
+private const val DAYS_PARAM = "days"
+/** A symbol map is a couple of MB gzipped at most; more is not one. */
+private const val SYMBOLS_MAX_BYTES = 20 * 1024 * 1024
+private const val VERSION_PARAM = "version"
 private const val PAGE_SIZE_PARAM = "size"
 private const val TOTAL_COUNT_HEADER = "X-Total-Count"
 private const val TEST_ERROR_LOGGER = "AdminTestError"
