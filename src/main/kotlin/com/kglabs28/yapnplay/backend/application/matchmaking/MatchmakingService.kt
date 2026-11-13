@@ -113,7 +113,7 @@ class MatchmakingService(
         }
         val humans = table.players.size
         when {
-            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = (tableFor(game, humans, table.cap) - humans).coerceAtLeast(0))
+            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = (table.cap - humans).coerceAtLeast(0))
             humans >= game.minPlayers -> start(table, cpuCount = 0)
             else -> cancel(table, QueueCancelReason.NOT_ENOUGH_PLAYERS)
         }
@@ -141,12 +141,6 @@ class MatchmakingService(
         val message = codec.push(Channel.MATCHMAKING, MessageType.QUEUE_STATUS, QueueStatus.serializer(), status)
         table.players.forEach { notifier.send(it, message) }
     }
-
-    /**
-     * The table CPUs fill when the search ends: the one that fits who came (Royal Ludo: 2-4 the square
-     * board, 5-6 the hexagon, 7-8 the octagon), never above the most the search waits for.
-     */
-    private fun tableFor(game: GameDescriptor, humans: Int, cap: Int): Int = game.roomTableSize(humans).coerceAtMost(cap)
 
     /** The most players [userId]'s search waits for: [seatsOf], less where their app can't draw that table. */
     private fun capFor(game: GameDescriptor, userId: String): Int {

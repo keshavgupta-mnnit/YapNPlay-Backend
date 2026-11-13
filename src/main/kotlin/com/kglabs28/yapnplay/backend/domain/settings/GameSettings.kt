@@ -212,7 +212,7 @@ object GameSettings {
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
     val RL_BIG_BOARD_PIECES = IntSetting("ludo.big_board_pieces", SettingGroup.ROYAL_LUDO, "Pieces each on the 5-8 player boards (3 or 4); a room's 3 Pieces rule still wins", 4, 3, 4)
-    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play: most players it waits for (starts at once when full). When the search ends the board fits who came: 2-4 square, 5-6 hexagon, 7-8 octagon, CPUs fill it", 8, 2, 8)
+    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play: the table size (starts at once when full). When the search ends CPUs fill the rest of it (4 square, 5-6 hexagon, 7-8 octagon board)", 8, 2, 8)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
     val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)

@@ -111,26 +111,26 @@ class MatchmakingServiceTest {
     }
 
     @Test
-    fun `apps with the big boards wait for up to 8 and the board fits who came`() = runTest {
+    fun `apps with the big boards wait for up to 8 and CPUs fill the whole table`() = runTest {
         val (kit, mm) = setup()
         kit.notifier.features = setOf(ROYAL_LUDO_BIG_BOARDS_FEATURE)
         listOf("a", "b", "c", "d", "e").forEach { mm.join(it, ROYAL_LUDO_ID) }
         assertEquals(null, kit.found("a"))
         advanceTimeBy(DEADLINE_MS)
         runCurrent()
-        // Five came: the hexagon board, one CPU.
+        // Five came: the table stays the admin's 8 (Quick Play never shrinks to who came), three CPUs.
         assertEquals(5, kit.found("a")!!.humanPlayers)
-        assertEquals(1, kit.found("a")!!.cpuPlayers)
+        assertEquals(3, kit.found("a")!!.cpuPlayers)
     }
 
     @Test
-    fun `two players on a big-board app get the square board`() = runTest {
+    fun `two players on a big-board app still get the full table`() = runTest {
         val (kit, mm) = setup()
         kit.notifier.features = setOf(ROYAL_LUDO_BIG_BOARDS_FEATURE)
         listOf("a", "b").forEach { mm.join(it, ROYAL_LUDO_ID) }
         advanceTimeBy(DEADLINE_MS)
         runCurrent()
-        assertEquals(2, kit.found("a")!!.cpuPlayers)
+        assertEquals(6, kit.found("a")!!.cpuPlayers)
     }
 
     private companion object {
