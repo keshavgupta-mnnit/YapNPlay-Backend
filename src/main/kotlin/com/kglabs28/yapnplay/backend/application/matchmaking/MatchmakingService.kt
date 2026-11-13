@@ -60,19 +60,17 @@ class MatchmakingService(
         if (entryCoins !in settings[GameSettings.LEAGUE_FEES]) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.NO_SUCH_LEAGUE)
         if (!fees.canEnter(userId, entryCoins)) throw ServiceException(ErrorCode.NOT_ENOUGH_COINS, BackendStrings.NOT_ENOUGH_COINS)
         if (matches.isPlaying(userId)) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
-        // A table that needs a newer app (Royal Ludo's 6- and 8-player boards): an older one can't join it.
-        game.featureNeeded(seatsOf(game))?.let { feature ->
-            if (!notifier.supports(userId, feature)) throw ServiceException(ErrorCode.GAME_UNAVAILABLE, BackendStrings.UPDATE_FOR_BIG_BOARD)
-        }
+        // An app that can't draw the big boards (Royal Ludo 5-8) searches among its own kind, for at most 4.
+        val cap = capFor(game, userId)
         lock.withLock {
             if (forming.values.any { userId in it.players }) throw ServiceException(ErrorCode.ALREADY_IN_QUEUE, BackendStrings.ALREADY_BUSY)
-            val table = forming.getOrPut(keyOf(gameId, entryCoins)) {
+            val table = forming.getOrPut(keyOf(gameId, entryCoins, cap)) {
                 val deadline = clock.nowMillis() + settings[GameSettings.QUICK_PLAY_SEARCH_SECONDS] * BackendConstants.MILLIS_PER_SECOND
-                FormingTable(gameId, entryCoins, deadline).also { it.timer = scheduleDeadline(it) }
+                FormingTable(gameId, entryCoins, cap, deadline).also { it.timer = scheduleDeadline(it) }
             }
             table.players += userId
             joinsByGame.getOrPut(gameId) { AtomicInteger() }.incrementAndGet()
-            if (table.players.size >= seatsOf(game)) start(table, cpuCount = 0) else sendStatus(table)
+            if (table.players.size >= table.cap) start(table, cpuCount = 0) else sendStatus(table)
         }
     }
 
@@ -115,7 +113,7 @@ class MatchmakingService(
         }
         val humans = table.players.size
         when {
-            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = (seatsOf(game) - humans).coerceAtLeast(0))
+            game.matchmaking.fillWithCpu && game.cpuFillAllowed -> start(table, cpuCount = (tableFor(game, humans, table.cap) - humans).coerceAtLeast(0))
             humans >= game.minPlayers -> start(table, cpuCount = 0)
             else -> cancel(table, QueueCancelReason.NOT_ENOUGH_PLAYERS)
         }
@@ -139,21 +137,33 @@ class MatchmakingService(
     }
 
     private fun sendStatus(table: FormingTable) {
-        val seats = games.findEnabled(table.gameId)?.let(::seatsOf) ?: return
-        val status = QueueStatus(table.gameId, table.players.size, seats, table.deadline, clock.nowMillis(), table.entryCoins)
+        val status = QueueStatus(table.gameId, table.players.size, table.cap, table.deadline, clock.nowMillis(), table.entryCoins)
         val message = codec.push(Channel.MATCHMAKING, MessageType.QUEUE_STATUS, QueueStatus.serializer(), status)
         table.players.forEach { notifier.send(it, message) }
     }
 
-    /** A Quick Play table's size: Royal Ludo's comes from the admin setting (4, or 6 / 8 to try the big boards). */
+    /**
+     * The table CPUs fill when the search ends: the one that fits who came (Royal Ludo: 2-4 the square
+     * board, 5-6 the hexagon, 7-8 the octagon), never above the most the search waits for.
+     */
+    private fun tableFor(game: GameDescriptor, humans: Int, cap: Int): Int = game.roomTableSize(humans).coerceAtMost(cap)
+
+    /** The most players [userId]'s search waits for: [seatsOf], less where their app can't draw that table. */
+    private fun capFor(game: GameDescriptor, userId: String): Int {
+        var seats = seatsOf(game)
+        while (seats > game.minPlayers && game.featureNeeded(seats)?.let { !notifier.supports(userId, it) } == true) seats--
+        return seats
+    }
+
+    /** The most players a Quick Play search waits for: Royal Ludo's from the admin setting (up to 8). */
     private fun seatsOf(game: GameDescriptor): Int =
         if (game.id.value == ROYAL_LUDO_ID) settings[GameSettings.RL_QUICK_PLAY_SEATS].coerceIn(game.minPlayers, game.maxPlayers) else game.matchmaking.seats
 
-    private fun keyOf(gameId: String, entryCoins: Int) = "$gameId:$entryCoins"
+    private fun keyOf(gameId: String, entryCoins: Int, cap: Int) = "$gameId:$entryCoins:$cap"
 
-    /** Players waiting for one game in one league, in arrival order. */
-    private inner class FormingTable(val gameId: String, val entryCoins: Int, val deadline: Long) {
-        val key = keyOf(gameId, entryCoins)
+    /** Players waiting for one game in one league (and table size), in arrival order. */
+    private inner class FormingTable(val gameId: String, val entryCoins: Int, val cap: Int, val deadline: Long) {
+        val key = keyOf(gameId, entryCoins, cap)
         val players = linkedSetOf<String>()
         var timer: Job? = null
     }

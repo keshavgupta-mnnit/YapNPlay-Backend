@@ -92,7 +92,6 @@ object BackendStrings {
     const val SEAT_NOT_BOT = "That seat isn't played by a bot."
     const val ONLY_LEADER_REMOVES_SEAT = "Only the room's leader or admin can remove a seat."
     const val TOO_FEW_TO_REMOVE = "At least two players must stay in the game."
-    const val UPDATE_FOR_BIG_BOARD = "Update YapNPlay to play Royal Ludo with more than 4 players."
     const val SEAT_OFFER_BUSY = "A seat is already on offer: wait for its answer."
     const val UNKNOWN_LEAGUE = "That league is not offered."
     const val LEAGUE_UNAFFORDABLE = "Someone in the lobby cannot pay that league's entry."

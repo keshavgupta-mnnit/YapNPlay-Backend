@@ -15,5 +15,10 @@ class RecordingNotifier : ClientNotifier {
 
     override fun isConnected(userId: String): Boolean = true
 
+    /** App features (beyond the first games) every user's app reports; none: an older app. */
+    var features: Set<String> = emptySet()
+
+    override fun supports(userId: String, gameId: String): Boolean = gameId in features || super.supports(userId, gameId)
+
     fun typesFor(userId: String): List<String> = sent.filter { it.first == userId }.map { it.second.type }
 }

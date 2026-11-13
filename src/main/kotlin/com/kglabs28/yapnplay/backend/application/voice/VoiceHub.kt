@@ -13,6 +13,7 @@ import com.kglabs28.yapnplay.backend.contract.VoiceSignalKind
 import com.kglabs28.yapnplay.backend.contract.transport.Channel
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.domain.common.Clock
+import com.kglabs28.yapnplay.backend.domain.voice.VoiceSession
 
 /**
  * Who is in which voice room, and the go-between for their connection setup.
@@ -28,47 +29,68 @@ class VoiceHub(
     private val clock: Clock,
     /** The admin kill switch: false refuses every join. */
     private val voiceOn: () -> Boolean = { true },
+    /** Each finished stretch someone spent in a voice room (for the admin dashboard). */
+    private val onSessionEnd: (VoiceSession) -> Unit = {},
 ) {
     private val lock = Any()
     private val members = mutableMapOf<String, MutableSet<String>>()
     private val roomOf = mutableMapOf<String, String>()
+    /** When each person came into their current voice room (rejoining the same one keeps it). */
+    private val joinedAt = mutableMapOf<String, Long>()
 
     /** Puts [userId] in the voice room [token] is for; returns the others there. */
     fun join(userId: String, token: String): VoicePeers {
         if (!voiceOn()) throw ServiceException(ErrorCode.VOICE_UNAVAILABLE, BackendStrings.VOICE_OFF)
         val pass = passes.verify(token, clock.nowMillis())?.takeIf { it.userId == userId }
             ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_VOICE_PASS)
+        val now = clock.nowMillis()
+        var ended: VoiceSession? = null
         val changed = synchronized(lock) {
-            val left = removeLocked(userId)
-            val room = members.getOrPut(pass.voiceRoom) { linkedSetOf() }
-            if (userId !in room && room.size >= BackendConstants.VOICE_ROOM_MAX_PEERS) {
+            val room = members[pass.voiceRoom]
+            if (roomOf[userId] != pass.voiceRoom && (room?.size ?: 0) >= BackendConstants.VOICE_ROOM_MAX_PEERS) {
                 throw ServiceException(ErrorCode.ROOM_FULL, BackendStrings.VOICE_ROOM_FULL)
             }
-            room += userId
+            val since = joinedAt[userId]
+            val left = removeLocked(userId)
+            if (left != pass.voiceRoom) {
+                ended = since?.let { VoiceSession(userId, it, now) }
+                joinedAt[userId] = now
+            }
+            members.getOrPut(pass.voiceRoom) { linkedSetOf() } += userId
             roomOf[userId] = pass.voiceRoom
             listOfNotNull(left, pass.voiceRoom).distinct().map { it to members[it].orEmpty().toSet() }
         }
+        ended?.let(onSessionEnd)
         changed.forEach { (_, people) -> announce(people, except = userId) }
         return VoicePeers(changed.first { it.first == pass.voiceRoom }.second.filter { it != userId })
     }
 
     /** Takes [userId] out of their voice room (left, or their connection closed). */
     fun leave(userId: String) {
+        val now = clock.nowMillis()
+        var ended: VoiceSession? = null
         val people = synchronized(lock) {
             val room = removeLocked(userId) ?: return
+            ended = joinedAt.remove(userId)?.let { VoiceSession(userId, it, now) }
             members[room].orEmpty().toSet()
         }
+        ended?.let(onSessionEnd)
         announce(people)
     }
 
     /** Empties every voice room and tells everyone there ([VoiceClosed]): a kill switch was turned. */
     fun closeAll() {
+        val now = clock.nowMillis()
+        val ended = mutableListOf<VoiceSession>()
         val people = synchronized(lock) {
             roomOf.keys.toList().also {
+                joinedAt.forEach { (user, since) -> ended += VoiceSession(user, since, now) }
+                joinedAt.clear()
                 roomOf.clear()
                 members.clear()
             }
         }
+        ended.forEach(onSessionEnd)
         people.forEach { notifier.send(it, codec.push(Channel.VOICE, MessageType.VOICE_CLOSED, VoiceClosed.serializer(), VoiceClosed)) }
     }
 

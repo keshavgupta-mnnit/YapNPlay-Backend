@@ -154,10 +154,14 @@ object BackendConstants {
     const val RELAY_FLUSH_MS = 5 * 60_000L
     /** One phone's report covers about a minute: anything above this is not real and is ignored. */
     const val RELAY_REPORT_MAX_BYTES = 200L * 1024 * 1024
+    /** The admin dashboard's calendar days are counted in this time zone. */
+    const val STATS_TIME_ZONE = "Asia/Kolkata"
     /** Admin settings in GB become bytes with this. */
     const val BYTES_PER_GB = 1_000_000_000L
     /** How often the voice kill switches and the relay cap are checked. */
     const val VOICE_SWITCH_CHECK_MS = 15_000L
+    /** A stretch in a voice room shorter than this (a screen handing over) isn't counted as voice use. */
+    const val VOICE_SESSION_MIN_MS = 5_000L
     /** Most people per voice room (each phone sends its voice to every other one). */
     const val VOICE_ROOM_MAX_PEERS = 16
     const val VOICE_ROOM_PREFIX = "room-"

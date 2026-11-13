@@ -11,6 +11,7 @@ import com.kglabs28.yapnplay.backend.contract.VoiceSignal
 import com.kglabs28.yapnplay.backend.contract.VoiceSignalKind
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.domain.common.Clock
+import com.kglabs28.yapnplay.backend.domain.voice.VoiceSession
 import com.kglabs28.yapnplay.backend.support.RecordingNotifier
 import com.kglabs28.yapnplay.backend.support.testJson
 import kotlin.test.Test
@@ -70,7 +71,7 @@ class VoiceHubTest {
     @Test
     fun `the kill switch refuses joins and closing empties every voice room`() {
         var on = true
-        val switched = VoiceHub(passes, notifier, codec, Clock { now }) { on }
+        val switched = VoiceHub(passes, notifier, codec, Clock { now }, voiceOn = { on })
         switched.join("a", pass("a", "room-1"))
         switched.join("b", pass("b", "room-1"))
         switched.closeAll()
@@ -78,6 +79,19 @@ class VoiceHubTest {
         assertEquals(emptyList(), switched.join("a", pass("a", "room-1")).peers)
         on = false
         assertEquals(ErrorCode.VOICE_UNAVAILABLE, assertFailsWith<ServiceException> { switched.join("b", pass("b", "room-1")) }.code)
+    }
+
+    @Test
+    fun `a stretch in a voice room is recorded when it ends, rejoining the same room keeps it going`() {
+        var clock = now
+        val sessions = mutableListOf<VoiceSession>()
+        val tracked = VoiceHub(passes, notifier, codec, Clock { clock }, onSessionEnd = { sessions += it })
+        tracked.join("a", pass("a", "room-1"))
+        clock += 30_000
+        tracked.join("a", pass("a", "room-1"))
+        clock += 30_000
+        tracked.leave("a")
+        assertEquals(listOf(VoiceSession("a", now, now + 60_000)), sessions)
     }
 
     @Test

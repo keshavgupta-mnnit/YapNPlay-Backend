@@ -24,6 +24,9 @@ import com.kglabs28.yapnplay.backend.application.voice.RelayUsageMeter
 import com.kglabs28.yapnplay.backend.application.voice.VoiceKillSwitch
 import com.kglabs28.yapnplay.backend.application.voice.VoicePolicy
 import com.kglabs28.yapnplay.backend.domain.voice.RelayUsageStore
+import com.kglabs28.yapnplay.backend.domain.voice.VoiceSessionStore
+import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedVoiceSessionStore
+import com.kglabs28.yapnplay.backend.application.voice.VoiceSessionRecorder
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedRelayUsageStore
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
@@ -42,7 +45,9 @@ fun socialModule(config: BackendConfig) = module {
     single<RelayUsageStore> { ExposedRelayUsageStore(get()) }
     single { RelayUsageMeter(get(), get(), get(ROOMS_SCOPE)) }
     single { VoicePolicy(get(), get()) }
-    single { VoiceHub(get(), get(), get(), get(), get<VoicePolicy>()::voiceOn) }
+    single<VoiceSessionStore> { ExposedVoiceSessionStore(get()) }
+    single { VoiceSessionRecorder(get(), get(ROOMS_SCOPE)) }
+    single { VoiceHub(get(), get(), get(), get(), get<VoicePolicy>()::voiceOn, get<VoiceSessionRecorder>()::ended) }
     single(createdAtStart = true) { VoiceKillSwitch(get(), get(), get(ROOMS_SCOPE)) }
     single { IssueVoiceTokenUseCase(get(), get(), get(), get(), get(), get()) }
     single { ModerationService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }

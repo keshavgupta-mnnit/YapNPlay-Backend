@@ -3,6 +3,7 @@ package com.kglabs28.yapnplay.backend.application
 import com.kglabs28.yapnplay.backend.application.voice.RelayUsage
 import com.kglabs28.yapnplay.backend.application.voice.RelayUsageMeter
 import com.kglabs28.yapnplay.backend.domain.common.Clock
+import com.kglabs28.yapnplay.backend.domain.voice.RelayDay
 import com.kglabs28.yapnplay.backend.domain.voice.RelayUsageStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -21,6 +22,12 @@ class RelayUsageMeterTest {
             months[month] = (months[month] ?: 0) + bytes
         }
         override suspend fun bytes(month: String): Long = months[month] ?: 0
+        val days = mutableMapOf<Pair<String, String>, Long>()
+        override suspend fun addDaily(day: String, userId: String, bytes: Long) {
+            days[day to userId] = (days[day to userId] ?: 0) + bytes
+        }
+        override suspend fun daily(fromDay: String, toDay: String): List<RelayDay> = emptyList()
+        override suspend fun users(fromDay: String, toDay: String): Int = 0
     }
 
     /** 2026-11-13 12:00 UTC. */
@@ -31,15 +38,17 @@ class RelayUsageMeterTest {
         val store = MemoryStore()
         val scope = CoroutineScope(Job())
         val meter = RelayUsageMeter(store, Clock { now }, scope)
-        meter.record(1_000)
-        meter.record(500)
-        meter.record(-5)
-        meter.record(Long.MAX_VALUE)
+        meter.record("a", 1_000)
+        meter.record("b", 500)
+        meter.record("a", -5)
+        meter.record("a", Long.MAX_VALUE)
         assertEquals(RelayUsage("2026-11", 1_500), meter.thisMonth())
         meter.flush()
         meter.flush()
         assertEquals(1, store.writes)
         assertEquals(RelayUsage("2026-11", 1_500), meter.thisMonth())
+        // Per person per day too, on the dashboard's (India) calendar day.
+        assertEquals(mapOf(("2026-11-13" to "a") to 1_000L, ("2026-11-13" to "b") to 500L), store.days)
         scope.cancel()
     }
 }

@@ -26,7 +26,7 @@ class VoiceChannelHandler(
         }
         MessageType.LEAVE_VOICE -> codec.ack(request).also { hub.leave(userId) }
         MessageType.VOICE_SIGNAL -> codec.ack(request).also { hub.relay(userId, codec.payload(request, VoiceSignal.serializer())) }
-        MessageType.VOICE_RELAY_USAGE -> codec.ack(request).also { relayUsage.record(codec.payload(request, VoiceRelayUsage.serializer()).bytes) }
+        MessageType.VOICE_RELAY_USAGE -> codec.ack(request).also { relayUsage.record(userId, codec.payload(request, VoiceRelayUsage.serializer()).bytes) }
         else -> throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.UNKNOWN_TYPE)
     }
 }

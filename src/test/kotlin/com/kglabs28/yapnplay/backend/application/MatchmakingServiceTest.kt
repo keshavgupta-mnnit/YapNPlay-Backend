@@ -10,6 +10,7 @@ import com.kglabs28.yapnplay.backend.contract.MatchFound
 import com.kglabs28.yapnplay.backend.contract.transport.MessageType
 import com.kglabs28.yapnplay.backend.games.base.GameRegistry
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoEngine
+import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_BIG_BOARDS_FEATURE
 import com.kglabs28.yapnplay.backend.games.royalludo.utils.ROYAL_LUDO_ID
 import com.kglabs28.yapnplay.backend.support.InMemoryModerationRepository
 import com.kglabs28.yapnplay.backend.support.MatchTestKit
@@ -107,6 +108,29 @@ class MatchmakingServiceTest {
         mm.join("d", ROYAL_LUDO_ID, 500)
         assertEquals(500, kit.found("d")!!.entryCoins)
         assertEquals(null, kit.found("broke"))
+    }
+
+    @Test
+    fun `apps with the big boards wait for up to 8 and the board fits who came`() = runTest {
+        val (kit, mm) = setup()
+        kit.notifier.features = setOf(ROYAL_LUDO_BIG_BOARDS_FEATURE)
+        listOf("a", "b", "c", "d", "e").forEach { mm.join(it, ROYAL_LUDO_ID) }
+        assertEquals(null, kit.found("a"))
+        advanceTimeBy(DEADLINE_MS)
+        runCurrent()
+        // Five came: the hexagon board, one CPU.
+        assertEquals(5, kit.found("a")!!.humanPlayers)
+        assertEquals(1, kit.found("a")!!.cpuPlayers)
+    }
+
+    @Test
+    fun `two players on a big-board app get the square board`() = runTest {
+        val (kit, mm) = setup()
+        kit.notifier.features = setOf(ROYAL_LUDO_BIG_BOARDS_FEATURE)
+        listOf("a", "b").forEach { mm.join(it, ROYAL_LUDO_ID) }
+        advanceTimeBy(DEADLINE_MS)
+        runCurrent()
+        assertEquals(2, kit.found("a")!!.cpuPlayers)
     }
 
     private companion object {
