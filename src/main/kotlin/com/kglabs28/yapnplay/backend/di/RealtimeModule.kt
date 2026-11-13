@@ -8,6 +8,7 @@ import com.kglabs28.yapnplay.backend.api.ws.MatchChannelHandler
 import com.kglabs28.yapnplay.backend.api.ws.MatchmakingChannelHandler
 import com.kglabs28.yapnplay.backend.api.ws.ModerationChannelHandler
 import com.kglabs28.yapnplay.backend.api.ws.RoomChannelHandler
+import com.kglabs28.yapnplay.backend.api.ws.VoiceChannelHandler
 import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.realtime.EnvelopeCodec
 import com.kglabs28.yapnplay.backend.application.stats.GetOnlineStatsUseCase
@@ -30,8 +31,9 @@ val realtimeModule = module {
     single { MatchChannelHandler(get(), get(), get(), get()) }
     single { MatchmakingChannelHandler(get(), get()) }
     single { ModerationChannelHandler(get(), get()) }
-    single { EnvelopeRouter(get(), get(), get(), get(), get()) }
+    single { VoiceChannelHandler(get(), get(), get()) }
+    single { EnvelopeRouter(get(), get(), get(), get(), get(), get()) }
     single { OnlineTimeTracker(get(), get()) }
-    single { ConnectionHooks(get(), get(), get(), get()) }
+    single { ConnectionHooks(get(), get(), get(), get(), get()) }
     single { GetOnlineStatsUseCase(get()) }
 }

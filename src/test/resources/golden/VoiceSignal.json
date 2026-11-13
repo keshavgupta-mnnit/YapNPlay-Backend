@@ -1,0 +1,5 @@
+{
+    "peer": "5d2f1e44-0c1b-4b8e-9a51-3f7c2d8e6a10",
+    "kind": "offer",
+    "sdp": "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n"
+}

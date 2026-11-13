@@ -7,7 +7,6 @@ import com.kglabs28.yapnplay.backend.config.BackendStrings
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
 import com.kglabs28.yapnplay.backend.contract.VoiceToken
 import com.kglabs28.yapnplay.backend.domain.common.Clock
-import com.kglabs28.yapnplay.backend.domain.identity.UserRepository
 import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
 
 /**
@@ -17,13 +16,15 @@ import com.kglabs28.yapnplay.backend.domain.rooms.PlayRoomRepository
  * round). A Nearby party lives on its host's phone, so the server can't
  * check who is in it: its random id (from the phone) is the voice room,
  * and only those who know the id find it. The app asks again before the
- * pass runs out.
+ * pass runs out. The pass is used with JoinVoice on the VOICE channel. The admin
+ * kill switches ([VoicePolicy]) refuse passes (voice off) or leave out the relay.
  */
 class IssueVoiceTokenUseCase(
-    private val signer: VoiceTokenSigner?,
+    private val passes: VoicePasses,
+    private val iceServers: IceServerSource,
+    private val policy: VoicePolicy,
     private val rooms: PlayRoomRepository,
     private val matches: MatchRegistry,
-    private val users: UserRepository,
     private val clock: Clock,
 ) {
     suspend fun forRoom(userId: String, roomId: String): VoiceToken {
@@ -43,11 +44,9 @@ class IssueVoiceTokenUseCase(
     }
 
     private suspend fun issue(userId: String, voiceRoom: String): VoiceToken {
-        val signer = signer ?: throw ServiceException(ErrorCode.VOICE_UNAVAILABLE, BackendStrings.VOICE_UNAVAILABLE)
-        val name = users.findById(userId)?.displayName.orEmpty()
-        val now = clock.nowMillis() / BackendConstants.MILLIS_PER_SECOND
-        val expires = now + BackendConstants.VOICE_TOKEN_TTL_SECONDS
-        val token = signer.sign(userId, name, voiceRoom, now, expires)
-        return VoiceToken(signer.url, token, expires * BackendConstants.MILLIS_PER_SECOND)
+        if (!policy.voiceOn()) throw ServiceException(ErrorCode.VOICE_UNAVAILABLE, BackendStrings.VOICE_OFF)
+        val expiresAt = clock.nowMillis() + BackendConstants.VOICE_TOKEN_TTL_SECONDS * BackendConstants.MILLIS_PER_SECOND
+        val token = passes.sign(VoicePass(userId, voiceRoom, expiresAt))
+        return VoiceToken(BackendConstants.WS_PATH, token, expiresAt, iceServers.current(withRelay = policy.relayAllowed()))
     }
 }

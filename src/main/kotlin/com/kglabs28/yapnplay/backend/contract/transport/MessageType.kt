@@ -104,4 +104,15 @@ object MessageType {
     const val REPORT_VOTE_REQUESTED = "ReportVoteRequested"
     const val REPORT_RESOLVED = "ReportResolved"
     const val PENALTY_ISSUED = "PenaltyIssued"
+
+    // ── Voice channel (0.16.0) ────────────────────────────────────────────
+    const val JOIN_VOICE = "JoinVoice"
+    /** No payload; Ack. */
+    const val LEAVE_VOICE = "LeaveVoice"
+    const val VOICE_PEERS = "VoicePeers"
+    const val VOICE_SIGNAL = "VoiceSignal"
+    /** About once a minute while relayed: TURN bytes since the last report; Ack. */
+    const val VOICE_RELAY_USAGE = "VoiceRelayUsage"
+    /** Push: the server closed the voice room (a kill switch); no payload. */
+    const val VOICE_CLOSED = "VoiceClosed"
 }

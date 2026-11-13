@@ -103,7 +103,7 @@ object GoldenSamples {
         GoldenCase("SendFriendRequestReply", SendFriendRequestReply.serializer(), SendFriendRequestReply(FriendRequestOutcomeCode.SENT)),
         GoldenCase("BlockUserBody", BlockUserBody.serializer(), BlockUserBody(FRIEND)),
         GoldenCase("BlockedUsers", BlockedUsers.serializer(), BlockedUsers(listOf(BlockedUserSummary(FRIEND, "Asha", "a07", 1_760_000_200_000)))),
-        GoldenCase("VoiceToken", VoiceToken.serializer(), VoiceToken("wss://example.livekit.cloud", "eyJhbGciOiJIUzI1NiJ9.example.sig", 1_760_000_600_000)),
+        GoldenCase("VoiceToken", VoiceToken.serializer(), VoiceToken("/ws", "cGF5bG9hZA.c2ln", 1_760_000_600_000, listOf(IceServer(listOf("stun:stun.l.google.com:19302")), IceServer(listOf("turn:turn.example.com:3478?transport=udp"), "user-example", "credential-example")))),
         // ── WebSocket framing ───────────────────────────────────────────
         GoldenCase(
             "Envelope",
@@ -275,5 +275,11 @@ object GoldenSamples {
         GoldenCase("CastReportVote", CastReportVote.serializer(), CastReportVote("r-1", agree = true)),
         GoldenCase("ReportResolved", ReportResolved.serializer(), ReportResolved("r-1", true, "Asha", 2, 1, 0, 2)),
         GoldenCase("PenaltyIssued", PenaltyIssued.serializer(), PenaltyIssued(50, 1_760_000_600_000)),
+        // ── VOICE channel ───────────────────────────────────────────────
+        GoldenCase("JoinVoice", JoinVoice.serializer(), JoinVoice("cGF5bG9hZA.c2ln")),
+        GoldenCase("VoicePeers", VoicePeers.serializer(), VoicePeers(listOf(FRIEND))),
+        GoldenCase("VoiceClosed", VoiceClosed.serializer(), VoiceClosed),
+        GoldenCase("VoiceRelayUsage", VoiceRelayUsage.serializer(), VoiceRelayUsage(1_048_576)),
+        GoldenCase("VoiceSignal", VoiceSignal.serializer(), VoiceSignal(FRIEND, VoiceSignalKind.OFFER, "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n")),
     )
 }

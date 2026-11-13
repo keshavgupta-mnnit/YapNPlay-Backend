@@ -31,7 +31,7 @@ import org.koin.dsl.module
 /** The operator dashboard: stats, sign-in, moderation and removals. */
 fun adminModule(config: BackendConfig) = module {
     single<AdminStatsQueries> { ExposedAdminStatsQueries(get()) }
-    single { GetAdminStatsUseCase(get(), get(), get(), get(), get(), get(), get(), get()) }
+    single { GetAdminStatsUseCase(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     single<AdminAnalyticsQueries> { ExposedAdminAnalyticsQueries(get()) }
     single { GetAdminAnalyticsUseCase(get(), get(), get(), get()) }
     single { AdminTokenCheck(config.adminToken) }

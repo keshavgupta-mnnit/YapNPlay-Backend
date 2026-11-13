@@ -20,6 +20,21 @@ data class AdminStats(
     val games: List<GameUsage>,
     val moderation: ModerationStats,
     val matches: MatchTotals = MatchTotals(),
+    val voiceRelay: VoiceRelayStats = VoiceRelayStats(),
+)
+
+/** Voice relay (TURN) data this calendar month (UTC), against the free plan's allowance. */
+@Serializable
+data class VoiceRelayStats(
+    val month: String = "",
+    val bytes: Long = 0,
+    val warnBytes: Long = 0,
+    val limitBytes: Long = 0,
+    /** Where the relay stops by itself (0: never). */
+    val capBytes: Long = 0,
+    val voiceOn: Boolean = true,
+    /** The relay is handed out now (switched on and under the cap). */
+    val relayActive: Boolean = true,
 )
 
 /** Every match ever started, by how it ended, and the time spent playing. */

@@ -18,8 +18,8 @@ data class BackendConfig(
     val countdownSeconds: Int,
     val guestCreationsPerHour: Int,
     val disabledGames: Set<String>,
-    /** Null when voice is not set up. */
-    val voice: VoiceConfig? = null,
+    /** TURN relays for voice (none: STUN only). */
+    val voice: VoiceConfig = VoiceConfig(),
     /** Firebase service-account JSON; null: pushes are only logged. */
     val firebaseServiceAccountJson: String? = null,
     /** Token for the read-only /admin dashboard; null: the dashboard refuses everyone. */

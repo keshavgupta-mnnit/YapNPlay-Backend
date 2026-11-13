@@ -60,7 +60,7 @@
   .wl-event-nav button { margin: 0; }
   .bar { height: 8px; background: var(--bar); border-radius: 4px; min-width: 2px; }
   .empty { color: var(--muted); padding: 12px; }
-  .good { color: var(--good); } .bad { color: var(--bad); }
+  .good { color: var(--good); } .bad { color: var(--bad); } .warn { color: #e8a33d; }
   .box { max-width: 380px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
   #signin { margin: 12vh auto 0; }
   .box h2 { margin-top: 0; }
@@ -218,6 +218,10 @@
 
   <h2>All time</h2>
   <div class="cards" id="totalCards"></div>
+
+  <h2>Voice relay · this month</h2>
+  <div class="cards" id="relayCards"></div>
+  <div class="note">Voice goes phone to phone; players on strict networks go through the free TURN relay, which allows 1000 GB a month. Turns orange at 500 GB: check whether the use looks right before it reaches the limit. Counted as the phones report it (UTC month).</div>
   </section>
 
   <section id="tab-reports" hidden>
@@ -552,6 +556,21 @@
       ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching", L.spectatorsNow || 0]
     ]);
     $("build").textContent = s.version ? "v" + s.version + " · " + s.commit : "";
+    renderRelay(s.voiceRelay || {});
+  }
+
+  /** This month's voice relay data against the free allowance: orange from the warning level, red at the limit. */
+  function renderRelay(r) {
+    var gb = function (b) { return (b / 1e9).toFixed(b >= 1e10 ? 0 : 2) + " GB"; };
+    var bytes = r.bytes || 0, warn = r.warnBytes || 0, limit = r.limitBytes || 0;
+    var cls = limit && bytes >= limit ? "bad" : warn && bytes >= warn ? "warn" : "good";
+    var box = $("relayCards"); box.replaceChildren();
+    box.appendChild(card("Relayed this month", gb(bytes), (r.month || "") + (limit ? " · " + Math.round(bytes * 100 / limit) + "% of " + gb(limit) : ""), cls));
+    if (warn) box.appendChild(card("Warning at", gb(warn), bytes >= warn ? "reached: check the use" : gb(warn - bytes) + " to go"));
+    box.appendChild(card("Relay stops by itself at", r.capBytes ? gb(r.capBytes) : "never", "Settings › Voice"));
+    box.appendChild(card("Voice chat", r.voiceOn === false ? "OFF" : "On", "kill switch: Settings › Voice", r.voiceOn === false ? "bad" : "good"));
+    box.appendChild(card("Relay", r.voiceOn === false || r.relayActive === false ? "Stopped" : "On",
+      r.relayActive === false ? "switched off or cap reached" : "players on strict networks can talk", r.relayActive === false ? "bad" : "good"));
   }
 
   function card(label, value, sub, cls) {

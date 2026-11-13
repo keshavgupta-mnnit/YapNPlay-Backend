@@ -41,6 +41,7 @@ class GetMeUseCase(
             maxGroupMembers = settings[GameSettings.GROUP_MAX_MEMBERS],
             launchAd = settings[GameSettings.LAUNCH_AD_ON] == 1,
             launchAdGapMinutes = settings[GameSettings.LAUNCH_AD_GAP_MINUTES],
+            voiceOn = settings[GameSettings.VOICE_ON] == 1,
         )
     }
 }

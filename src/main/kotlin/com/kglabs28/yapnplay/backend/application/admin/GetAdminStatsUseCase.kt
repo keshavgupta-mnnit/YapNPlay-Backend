@@ -8,6 +8,11 @@ import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.rooms.RoomPresence
 import com.kglabs28.yapnplay.backend.domain.common.Clock
 import com.kglabs28.yapnplay.backend.games.base.GameRegistry
+import com.kglabs28.yapnplay.backend.application.voice.RelayUsageMeter
+import com.kglabs28.yapnplay.backend.application.voice.VoicePolicy
+import com.kglabs28.yapnplay.backend.domain.settings.GameSettings
+import com.kglabs28.yapnplay.backend.domain.settings.Settings
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 
 /** `GET /admin/stats`: database totals plus the live in-memory picture. Read-only. */
 class GetAdminStatsUseCase(
@@ -19,6 +24,9 @@ class GetAdminStatsUseCase(
     private val games: GameRegistry,
     private val clock: Clock,
     private val rooms: PlayRoomActors,
+    private val relayUsage: RelayUsageMeter,
+    private val voicePolicy: VoicePolicy,
+    private val settings: Settings,
 ) {
     /** Totals within [range]; the per-day charts cover the range, or the last [DAYS_SHOWN] days for every time. */
     suspend operator fun invoke(range: StatsRange = StatsRange.ALL): AdminStats {
@@ -57,6 +65,17 @@ class GetAdminStatsUseCase(
             ),
             moderation = moderation(now, range),
             matches = queries.matchTotals(range).let { MatchTotals(it.completed, it.abandoned, it.playMillis / MILLIS_PER_MINUTE, queries.playersLeft(range)) },
+            voiceRelay = relayUsage.thisMonth().let {
+                VoiceRelayStats(
+                    month = it.month,
+                    bytes = it.bytes,
+                    warnBytes = settings[GameSettings.VOICE_RELAY_WARN_GB] * BackendConstants.BYTES_PER_GB,
+                    limitBytes = settings[GameSettings.VOICE_RELAY_PLAN_GB] * BackendConstants.BYTES_PER_GB,
+                    capBytes = settings[GameSettings.VOICE_RELAY_CAP_GB] * BackendConstants.BYTES_PER_GB,
+                    voiceOn = voicePolicy.voiceOn(),
+                    relayActive = voicePolicy.relayAllowed(),
+                )
+            },
         )
     }
 
