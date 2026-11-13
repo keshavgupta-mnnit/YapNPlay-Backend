@@ -99,6 +99,8 @@ data class Me(
     val launchAd: Boolean = false,
     /** …at most once in this many minutes for this player (`ads.launch_ad_gap_minutes`; 0: every open). */
     val launchAdGapMinutes: Int = 10,
+    /** 0.16.0: voice chat is on (admin kill switch `voice.on`); off, the app greys out mic and speaker. */
+    val voiceOn: Boolean = true,
 )
 
 /** Provisional (post-POC friends): the user's friends, online first. */
@@ -179,15 +181,17 @@ data class RoomSummary(
     val temporary: Boolean = false,
 )
 
-/** Response with a voice provider connection token. */
+/** A pass into one voice room (0.16.0: peer-to-peer, set up over the VOICE channel of /ws). */
 @Serializable
 data class VoiceToken(
-    /** WebSocket URL for the voice provider. */
+    /** The backend path that carries the voice setup ("/ws"). */
     val url: String,
-    /** Access token for the voice provider. */
+    /** The pass JoinVoice sends. */
     val token: String,
     /** Expiry time in epoch milliseconds. */
     val expiresAt: Long,
+    /** STUN / TURN servers for the peer connections. */
+    val iceServers: List<IceServer> = emptyList(),
 )
 
 /** Answer to `JoinRoom(code)` from someone who is not a member yet. */

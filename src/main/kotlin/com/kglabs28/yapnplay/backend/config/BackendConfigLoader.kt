@@ -55,12 +55,20 @@ class BackendConfigLoader(private val env: (String) -> String? = System::getenv)
         )
     }
 
-    private fun voice(): VoiceConfig? {
-        val url = env(EnvKeys.LIVEKIT_URL)?.takeIf { it.isNotBlank() } ?: return null
-        val key = env(EnvKeys.LIVEKIT_API_KEY)?.takeIf { it.isNotBlank() } ?: return null
-        val secret = env(EnvKeys.LIVEKIT_API_SECRET)?.takeIf { it.isNotBlank() } ?: return null
-        return VoiceConfig(url, key, secret)
+    private fun voice(): VoiceConfig = VoiceConfig(
+        fixedTurn = EnvKeys.TURN_PREFIXES.mapNotNull(::turnServer),
+        cloudflareKeyId = text(EnvKeys.CLOUDFLARE_TURN_KEY_ID),
+        cloudflareApiToken = text(EnvKeys.CLOUDFLARE_TURN_API_TOKEN),
+    )
+
+    /** The TURN server set by `<prefix>URLS` (comma-separated), `<prefix>USERNAME` and `<prefix>CREDENTIAL`, if any. */
+    private fun turnServer(prefix: String): TurnServer? {
+        val urls = env(prefix + EnvKeys.TURN_URLS_SUFFIX).orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }
+        if (urls.isEmpty()) return null
+        return TurnServer(urls, text(prefix + EnvKeys.TURN_USERNAME_SUFFIX), text(prefix + EnvKeys.TURN_CREDENTIAL_SUFFIX))
     }
+
+    private fun text(key: String): String? = env(key)?.trim()?.takeIf { it.isNotEmpty() }
 
     private fun int(key: String): Int? = env(key)?.trim()?.toIntOrNull()
 }

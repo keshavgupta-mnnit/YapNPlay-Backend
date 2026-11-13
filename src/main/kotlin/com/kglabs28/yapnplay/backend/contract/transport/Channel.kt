@@ -15,4 +15,7 @@ enum class Channel {
 
     /** Voice-chat reports and votes (ReportPlayer, CastReportVote, …). */
     MODERATION,
+
+    /** 0.16.0: peer-to-peer voice setup (JoinVoice, LeaveVoice, VoicePeers, VoiceSignal). */
+    VOICE,
 }

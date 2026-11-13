@@ -16,6 +16,7 @@ enum class SettingGroup(val label: String) {
     XP("XP and level"),
     MATCH("All matches"),
     ROOMS("Groups"),
+    VOICE("Voice"),
 }
 
 /** A value the operator can change from the admin dashboard without a deploy. */
@@ -81,6 +82,12 @@ object GameSettings {
     val AD_COOLDOWN_MINUTES = IntSetting("coins.ad_cooldown_minutes", SettingGroup.ECONOMY, "Minutes between paid rewarded ads", 60, 0, 1_440)
     /** The ad shown when the app opens or comes back to the front (Android, AdMob App Open): on or off for everyone, and how often. */
     val LAUNCH_AD_ON = IntSetting("ads.launch_ad_on", SettingGroup.ECONOMY, "Open ad: an ad when the app opens or comes back (never on a player's first launch)", 1, 0, 1)
+    // ── Voice kill switches (checked every few seconds; turning off disconnects everyone from voice) ──
+    val VOICE_ON = IntSetting("voice.on", SettingGroup.VOICE, "Voice chat on (0: off for everyone; voice rooms are closed)", 1, 0, 1)
+    val VOICE_RELAY_ON = IntSetting("voice.relay_on", SettingGroup.VOICE, "TURN relay on (0: phones connect directly only; players on strict networks can't talk)", 1, 0, 1)
+    val VOICE_RELAY_CAP_GB = IntSetting("voice.relay_cap_gb", SettingGroup.VOICE, "Relay stops by itself once this month's relayed data reaches (GB; 0: never)", 900, 0, 100_000)
+    val VOICE_RELAY_WARN_GB = IntSetting("voice.relay_warn_gb", SettingGroup.VOICE, "Dashboard warns once this month's relayed data reaches (GB)", 500, 0, 100_000)
+    val VOICE_RELAY_PLAN_GB = IntSetting("voice.relay_plan_gb", SettingGroup.VOICE, "The relay plan's free data a month (GB, shown on the dashboard)", 1_000, 1, 100_000)
     val LAUNCH_AD_GAP_MINUTES = IntSetting("ads.launch_ad_gap_minutes", SettingGroup.ECONOMY, "Open ad: minutes at least between two for one player (0: every open)", 10, 0, 1_440)
     val LEAGUE_FEES = IntListSetting(
         "coins.league_fees", SettingGroup.ECONOMY, "Quick Play league fees (Starter, Bronze, Silver, Gold, Diamond)",
@@ -205,7 +212,7 @@ object GameSettings {
     // ── Royal Ludo ────────────────────────────────────────────────────────
     val RL_TURN_SECONDS = IntSetting("rl.turn_seconds", SettingGroup.ROYAL_LUDO, "Turn time (seconds)", 10, 5, MAX_SECONDS)
     val RL_BIG_BOARD_PIECES = IntSetting("ludo.big_board_pieces", SettingGroup.ROYAL_LUDO, "Pieces each on the 5-8 player boards (3 or 4); a room's 3 Pieces rule still wins", 4, 3, 4)
-    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play players (5-6: hexagon board, 7-8: octagon; CPUs fill the rest)", 4, 2, 8)
+    val RL_QUICK_PLAY_SEATS = IntSetting("ludo.quick_play_seats", SettingGroup.ROYAL_LUDO, "Quick Play: the table size (starts at once when full). When the search ends CPUs fill the rest of it (4 square, 5-6 hexagon, 7-8 octagon board)", 8, 2, 8)
     val RL_CPU_THINK_MS = IntSetting("rl.cpu_think_ms", SettingGroup.ROYAL_LUDO, "Bots: least think time before each decision (ms)", 2_000, 0, 10_000)
     val RL_CPU_THINK_JITTER_MS = IntSetting("rl.cpu_think_jitter_ms", SettingGroup.ROYAL_LUDO, "Bots: extra random think time, up to (ms); 2000 + 3000 = 2-5 s", 3_000, 0, 10_000)
     val RL_CPU_DECISION_EXTRA_MS = IntSetting("rl.cpu_decision_extra_ms", SettingGroup.ROYAL_LUDO, "Bots: extra time for a real choice (which piece to move) (ms); 0 keeps every decision within 2-5 s", 0, 0, 10_000)
@@ -288,7 +295,7 @@ object GameSettings {
     val BLAST_BOT_PLANNED_BOMB_PCT = IntSetting("blast.bot_planned_bomb_pct", SettingGroup.CYBER_BLAST, "Bots: a spot is worth this % of the bomb they could drop there", 70, 0, 100)
 
     val ALL: List<GameSetting<*>> = listOf(
-        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LAUNCH_AD_ON, LAUNCH_AD_GAP_MINUTES, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
+        GROUP_MAX_MEMBERS, DAILY_BONUS, REFERRAL_BONUS, AD_REWARDS, AD_DAILY_LIMIT, AD_COOLDOWN_MINUTES, LAUNCH_AD_ON, LAUNCH_AD_GAP_MINUTES, VOICE_ON, VOICE_RELAY_ON, VOICE_RELAY_CAP_GB, VOICE_RELAY_WARN_GB, VOICE_RELAY_PLAN_GB, LEAGUE_FEES, EMOJI_GIFT_PRICES, COMPLETION_COINS, COMPLETION_DAILY_CAP, COMPLETION_MIN_MINUTES,
     ) + POT_SPLITS.values + listOf(
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,

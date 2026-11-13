@@ -139,8 +139,31 @@ object BackendConstants {
     const val PENALTY_BLOCK_MS = 10 * 60_000L
 
     // ── Voice ────────────────────────────────────────────────────────────
-    /** LiveKit tokens live 10 minutes (contract). */
+    /** Voice passes live 10 minutes (contract). */
     const val VOICE_TOKEN_TTL_SECONDS = 600L
+    /** Free public STUN servers: each phone learns its own internet address from them. */
+    val STUN_URLS = listOf("stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302")
+    const val CLOUDFLARE_TURN_URL = "https://rtc.live.cloudflare.com/v1/turn/keys/%s/credentials/generate-ice-servers"
+    /** Cloudflare TURN credentials live a day; fetched again once less than [TURN_REFRESH_MARGIN_SECONDS] is left. */
+    const val TURN_CREDENTIAL_TTL_SECONDS = 86_400L
+    const val TURN_REFRESH_MARGIN_SECONDS = 7_200L
+    /** After a failed Cloudflare call, wait this long before trying again (STUN only meanwhile). */
+    const val TURN_RETRY_SECONDS = 60L
+    const val TURN_HTTP_TIMEOUT_SECONDS = 5L
+    /** Relayed voice reports are written to the database this often (only when there is something new). */
+    const val RELAY_FLUSH_MS = 5 * 60_000L
+    /** One phone's report covers about a minute: anything above this is not real and is ignored. */
+    const val RELAY_REPORT_MAX_BYTES = 200L * 1024 * 1024
+    /** The admin dashboard's calendar days are counted in this time zone. */
+    const val STATS_TIME_ZONE = "Asia/Kolkata"
+    /** Admin settings in GB become bytes with this. */
+    const val BYTES_PER_GB = 1_000_000_000L
+    /** How often the voice kill switches and the relay cap are checked. */
+    const val VOICE_SWITCH_CHECK_MS = 15_000L
+    /** A stretch in a voice room shorter than this (a screen handing over) isn't counted as voice use. */
+    const val VOICE_SESSION_MIN_MS = 5_000L
+    /** Most people per voice room (each phone sends its voice to every other one). */
+    const val VOICE_ROOM_MAX_PEERS = 16
     const val VOICE_ROOM_PREFIX = "room-"
     const val VOICE_MATCH_PREFIX = "match-"
     /** A Nearby party's lobby or table id, made on the host's phone ("nearby-room-…", "nearby-match-…"). */
@@ -168,4 +191,12 @@ object BackendConstants {
     const val DEFAULT_EMBEDDED_DB_DIR = "data/postgres"
     const val DEFAULT_EMBEDDED_DB_PORT = 54329
     const val DEFAULT_DB_POOL_SIZE = 5
+
+    // ── Database pool: let a scale-to-zero database (Neon) sleep when idle ──
+    /** Keep no connection open while nobody needs one. */
+    const val DB_POOL_MIN_IDLE = 0
+    /** Close a connection after this long unused (Neon sleeps 5 min after the last one closes). */
+    const val DB_IDLE_TIMEOUT_MS = 60_000L
+    /** No keep-alive queries on idle connections; they would keep the database awake. */
+    const val DB_KEEPALIVE_MS = 0L
 }

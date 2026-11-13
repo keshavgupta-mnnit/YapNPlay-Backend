@@ -60,7 +60,7 @@
   .wl-event-nav button { margin: 0; }
   .bar { height: 8px; background: var(--bar); border-radius: 4px; min-width: 2px; }
   .empty { color: var(--muted); padding: 12px; }
-  .good { color: var(--good); } .bad { color: var(--bad); }
+  .good { color: var(--good); } .bad { color: var(--bad); } .warn { color: #e8a33d; }
   .box { max-width: 380px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
   #signin { margin: 12vh auto 0; }
   .box h2 { margin-top: 0; }
@@ -177,6 +177,10 @@
   <div id="actionMsg" class="msg"></div>
 
   <section id="tab-overview">
+  <h2>Voice relay · this month</h2>
+  <div class="cards" id="relayCards"></div>
+  <div class="note">Voice goes phone to phone; players on strict networks go through the TURN relay (free up to the plan size). Turns orange at the warning level: check whether the use looks right before it reaches the limit. Counted as the phones report it (UTC month). Switches: Game Settings › Voice.</div>
+
   <div class="live">
     <h2><span class="dot"></span>Live now</h2>
     <div class="cards" id="liveCards"></div>
@@ -200,6 +204,16 @@
     <div><h2 id="playersChartTitle">Players</h2><div class="panel chart" id="playersChart"></div></div>
     <div><h2 id="matchesChartTitle">Matches</h2><div class="panel chart" id="matchesChart"></div></div>
   </div>
+
+  <h2>Voice chat · period</h2>
+  <div class="cards" id="voiceCards"></div>
+  <div class="grid2">
+    <div><h2>Voice people per day</h2><div class="panel chart" id="voicePeopleChart"></div></div>
+    <div><h2>Voice minutes per day</h2><div class="panel chart" id="voiceMinutesChart"></div></div>
+  </div>
+  <h2>Relayed data per day (MB)</h2><div class="panel chart" id="voiceRelayChart"></div>
+  <div class="panel"><table id="voiceDays"></table></div>
+  <div class="note">People: different players who were in a voice chat (5 s or more). Relay: those whose voice had to go through the TURN relay, and its data. Days in India time; the "All" period shows the last 14 days.</div>
 
   <div class="grid2">
     <div><h2>Where new players come from · period</h2><div class="panel sources" id="sourcesPeriod"></div></div>
@@ -552,6 +566,66 @@
       ["On mic", L.onMicNow || 0], ["Chatting in a lobby", L.chattingInLobbyNow || 0], ["Watching", L.spectatorsNow || 0]
     ]);
     $("build").textContent = s.version ? "v" + s.version + " · " + s.commit : "";
+    renderRelay(s.voiceRelay || {});
+  }
+
+  /** Bytes in the unit that reads best: 0 B, 820 KB, 14.3 MB, 2.41 GB, 512 GB. */
+  function sizeText(b) {
+    b = b || 0;
+    var units = [[1e9, "GB"], [1e6, "MB"], [1e3, "KB"]];
+    for (var i = 0; i < units.length; i++) if (b >= units[i][0]) { var v = b / units[i][0]; return v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2) + " " + units[i][1]; }
+    return Math.round(b) + " B";
+  }
+
+  /**
+   * Voice chat use in the period: people, time and relay data, then the same day by day (charts on the
+   * period's own days when it is counted in days, else on the days voice was used).
+   */
+  function renderVoiceUsage(v, dayLabels, shortLabel) {
+    var byDay = {};
+    (v.perDay || []).forEach(function (d) { byDay[d.day] = d; });
+    var days = dayLabels ? dayLabels.map(function (l) { return l.slice(0, 10); }) : Object.keys(byDay).sort();
+    var at = function (field) { return days.map(function (d) { return byDay[d] ? byDay[d][field] || 0 : 0; }); };
+    var dayShort = shortLabel || function (l) { return l.slice(8, 10) + "/" + l.slice(5, 7); };
+    barChart("voicePeopleChart", days, [
+      { name: "People in voice", color: "#5b4bdb", values: at("users") },
+      { name: "Through the relay", color: "#e8a33d", values: at("relayUsers") }
+    ], false, dayShort);
+    barChart("voiceMinutesChart", days, [{ name: "Minutes in voice", color: "#1f8a4c", values: at("minutes") }], false, dayShort);
+    barChart("voiceRelayChart", days, [
+      { name: "Relayed MB", color: "#e8a33d", values: at("relayBytes").map(function (b) { return Math.round(b / 1e5) / 10; }) }
+    ], false, dayShort);
+    var box = $("voiceCards"); box.replaceChildren();
+    [
+      card("People who used voice", v.users || 0),
+      card("Voice sessions", v.sessions || 0),
+      card("Time in voice", minutes(v.minutes)),
+      card("Average per person", minutes(v.averageMinutesPerUser)),
+      card("People through the relay", v.relayUsers || 0, pctText(v.relayUsers || 0, v.users || 0) + " of voice users"),
+      card("Relayed data", sizeText(v.relayBytes)),
+      card("Relayed per relay user", sizeText(v.averageRelayBytesPerUser))
+    ].forEach(function (c) { box.appendChild(c); });
+    table("voiceDays",
+      [["Day"], ["People", 1], ["Sessions", 1], ["Minutes", 1], ["Avg min / person", 1], ["Relay people", 1], ["Relayed"], ["Relayed / person"]],
+      (v.perDay || []).slice().reverse().map(function (d) {
+        return [d.day, d.users, d.sessions, d.minutes, d.users ? Math.round(d.minutes / d.users) : 0, d.relayUsers || 0,
+          sizeText(d.relayBytes), d.relayUsers ? sizeText(d.relayBytes / d.relayUsers) : "—"];
+      }),
+      "No voice chat in this period");
+  }
+
+  /** This month's voice relay data against the free allowance: orange from the warning level, red at the limit. */
+  function renderRelay(r) {
+    var gb = sizeText;
+    var bytes = r.bytes || 0, warn = r.warnBytes || 0, limit = r.limitBytes || 0;
+    var cls = limit && bytes >= limit ? "bad" : warn && bytes >= warn ? "warn" : "good";
+    var box = $("relayCards"); box.replaceChildren();
+    box.appendChild(card("Relayed this month", gb(bytes), (r.month || "") + (limit ? " · " + Math.round(bytes * 100 / limit) + "% of " + gb(limit) : ""), cls));
+    if (warn) box.appendChild(card("Warning at", gb(warn), bytes >= warn ? "reached: check the use" : gb(warn - bytes) + " to go"));
+    box.appendChild(card("Relay stops by itself at", r.capBytes ? gb(r.capBytes) : "never", "Settings › Voice"));
+    box.appendChild(card("Voice chat", r.voiceOn === false ? "OFF" : "On", "kill switch: Settings › Voice", r.voiceOn === false ? "bad" : "good"));
+    box.appendChild(card("Relay", r.voiceOn === false || r.relayActive === false ? "Stopped" : "On",
+      r.relayActive === false ? "switched off or cap reached" : "players on strict networks can talk", r.relayActive === false ? "bad" : "good"));
   }
 
   function card(label, value, sub, cls) {
@@ -591,6 +665,8 @@
       { name: "Stopped", color: "#c2362f", values: a.timeline.map(function (p) { return p.matchesStopped; }) },
       { name: "Still running / other", color: "#9aa3b2", values: a.timeline.map(function (p) { return Math.max(0, p.matchesStarted - p.matchesCompleted - p.matchesStopped); }) }
     ], true, short);
+
+    renderVoiceUsage(s.voiceUsage || {}, a.bucket === "hour" ? null : labels, short);
 
     sourcesPanel("sourcesPeriod", a.sources);
     sourcesPanel("sourcesAll", a.allTimeSources);
@@ -664,7 +740,8 @@
     me = null; dirty = {};
     $("dash").hidden = true; $("signout").hidden = true; $("restartServer").hidden = true; $("signin").hidden = false;
     ["liveCards", "totalCards", "kpiCards", "playersChart", "matchesChart", "sourcesPeriod", "sourcesAll", "games", "modCards", "reported", "usersTable", "roomsTable",
-     "reportsTable", "auditTable", "settingsTable", "adminsTable", "matchesTable", "botTable"]
+     "reportsTable", "auditTable", "settingsTable", "adminsTable", "matchesTable", "botTable",
+     "relayCards", "voiceCards", "voicePeopleChart", "voiceMinutesChart", "voiceRelayChart", "voiceDays"]
       .forEach(function (id) { $(id).replaceChildren(); });
     $("status").textContent = ""; $("whoami").textContent = "";
     $("error").textContent = message || "";

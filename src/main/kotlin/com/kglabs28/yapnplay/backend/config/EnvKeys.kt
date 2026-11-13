@@ -17,10 +17,17 @@ object EnvKeys {
     const val GUEST_CREATIONS_PER_HOUR = "GUEST_CREATIONS_PER_HOUR"
     /** Comma-separated game ids switched off (the app's `game_enabled_<id>` flags). */
     const val DISABLED_GAMES = "DISABLED_GAMES"
-    /** LiveKit server URL (wss://...). Voice is off when the three LiveKit values are not all set. */
-    const val LIVEKIT_URL = "LIVEKIT_URL"
-    const val LIVEKIT_API_KEY = "LIVEKIT_API_KEY"
-    const val LIVEKIT_API_SECRET = "LIVEKIT_API_SECRET"
+    /** Voice TURN relay, Cloudflare: the TURN key's id and its API token (both secret-ish; from the dashboard). */
+    const val CLOUDFLARE_TURN_KEY_ID = "CLOUDFLARE_TURN_KEY_ID"
+    const val CLOUDFLARE_TURN_API_TOKEN = "CLOUDFLARE_TURN_API_TOKEN"
+    /**
+     * Voice TURN relays, fixed servers: TURN_URLS (comma-separated turn:/turns: URLs), TURN_USERNAME,
+     * TURN_CREDENTIAL; a second one as TURN2_URLS / TURN2_USERNAME / TURN2_CREDENTIAL, and so on up to TURN3_.
+     */
+    val TURN_PREFIXES = listOf("TURN_", "TURN2_", "TURN3_")
+    const val TURN_URLS_SUFFIX = "URLS"
+    const val TURN_USERNAME_SUFFIX = "USERNAME"
+    const val TURN_CREDENTIAL_SUFFIX = "CREDENTIAL"
     /** The Firebase service-account JSON (its whole content). Pushes are only logged when unset. */
     const val FIREBASE_SERVICE_ACCOUNT_JSON = "FIREBASE_SERVICE_ACCOUNT_JSON"
     /** Secret for the read-only /admin dashboard. The dashboard is closed when unset. */

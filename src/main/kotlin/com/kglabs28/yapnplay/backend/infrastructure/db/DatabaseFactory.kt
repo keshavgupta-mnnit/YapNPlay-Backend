@@ -1,5 +1,6 @@
 package com.kglabs28.yapnplay.backend.infrastructure.db
 
+import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.config.DatabaseConfig
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -29,6 +30,9 @@ class DatabaseFactory {
                 username = user
                 this.password = password
                 maximumPoolSize = poolSize
+                minimumIdle = BackendConstants.DB_POOL_MIN_IDLE
+                idleTimeout = BackendConstants.DB_IDLE_TIMEOUT_MS
+                keepaliveTime = BackendConstants.DB_KEEPALIVE_MS
             },
         )
         Flyway.configure().dataSource(dataSource).load().migrate()

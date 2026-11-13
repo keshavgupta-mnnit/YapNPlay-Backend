@@ -1,7 +1,7 @@
 # YapNPlay backend image (Render and any Docker host).
 # Stage 1 builds one runnable JAR with the Gradle wrapper; stage 2 runs it
 # on a small Java 21 runtime. Secrets never go in here: the host passes
-# them as environment variables (DB_URL, LIVEKIT_*, ADMIN_TOKEN, …).
+# them as environment variables (DB_URL, CLOUDFLARE_TURN_*, ADMIN_TOKEN, …).
 
 # Gradle itself runs on Java 25 (gradle/gradle-daemon-jvm.properties); the
 # code is compiled for Java 21, so the runtime stage below stays on 21.

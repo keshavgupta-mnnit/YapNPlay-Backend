@@ -96,7 +96,7 @@ Errors are `{"code": "<ErrorCode>", "message": "…"}`.
 | `DELETE /friends/{userId}` | 204 (both ways) |
 | `POST /blocks` `BlockUserBody` · `GET /blocks` · `DELETE /blocks/{userId}` | 204 · `BlockedUsers` · 204 |
 | `POST /devices` `RegisterDevice` | 204 (Firebase push token) |
-| `POST /rooms/{roomId}/voice-token` · `/matches/{matchId}/voice-token` | `VoiceToken` (10 min; `VOICE_UNAVAILABLE` without LiveKit) |
+| `POST /rooms/{roomId}/voice-token` · `/matches/{matchId}/voice-token` | `VoiceToken` (10 min; a pass for `JoinVoice` on the VOICE channel, with STUN / TURN servers) |
 | `POST /penalties/clear-with-ad` | 204 |
 
 **Admin (operator only, not in the app contract):** `GET /admin` serves a

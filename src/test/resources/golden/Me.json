@@ -14,5 +14,6 @@
     "dailyBonus": 100,
     "maxGroupMembers": 16,
     "launchAd": false,
-    "launchAdGapMinutes": 10
+    "launchAdGapMinutes": 10,
+    "voiceOn": true
 }

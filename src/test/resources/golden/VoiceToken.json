@@ -1,5 +1,21 @@
 {
-    "url": "wss://example.livekit.cloud",
-    "token": "eyJhbGciOiJIUzI1NiJ9.example.sig",
-    "expiresAt": 1760000600000
+    "url": "/ws",
+    "token": "cGF5bG9hZA.c2ln",
+    "expiresAt": 1760000600000,
+    "iceServers": [
+        {
+            "urls": [
+                "stun:stun.l.google.com:19302"
+            ],
+            "username": null,
+            "credential": null
+        },
+        {
+            "urls": [
+                "turn:turn.example.com:3478?transport=udp"
+            ],
+            "username": "user-example",
+            "credential": "credential-example"
+        }
+    ]
 }

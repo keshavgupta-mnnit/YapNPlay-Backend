@@ -15,8 +15,8 @@ class DotEnvFileTest {
 
     @Test
     fun `reads keys, skips comments and blanks, strips quotes`() {
-        val env = DotEnvFile(fileWith("# comment\nLIVEKIT_URL=wss://x.livekit.cloud\n\nNAME=\"quoted\"\nEMPTY=\n")).read()
-        assertEquals("wss://x.livekit.cloud", env["LIVEKIT_URL"])
+        val env = DotEnvFile(fileWith("# comment\nTURN_URLS=turn:turn.example.com:3478\n\nNAME=\"quoted\"\nEMPTY=\n")).read()
+        assertEquals("turn:turn.example.com:3478", env["TURN_URLS"])
         assertEquals("quoted", env["NAME"])
         assertNull(env["EMPTY"])
     }
@@ -31,6 +31,6 @@ class DotEnvFileTest {
     @Test
     fun `a missing file changes nothing`() {
         val lookup = DotEnvFile(File("does-not-exist.env")).withEnvironment { null }
-        assertNull(lookup("LIVEKIT_URL"))
+        assertNull(lookup("TURN_URLS"))
     }
 }

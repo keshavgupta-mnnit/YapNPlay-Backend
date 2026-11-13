@@ -20,6 +20,49 @@ data class AdminStats(
     val games: List<GameUsage>,
     val moderation: ModerationStats,
     val matches: MatchTotals = MatchTotals(),
+    val voiceRelay: VoiceRelayStats = VoiceRelayStats(),
+    val voiceUsage: VoiceUsageStats = VoiceUsageStats(),
+)
+
+/** Voice chat use in the chosen period (sessions that started in it), and per day. */
+@Serializable
+data class VoiceUsageStats(
+    /** Different people who were in a voice room. */
+    val users: Int = 0,
+    val sessions: Int = 0,
+    val minutes: Long = 0,
+    /** Minutes in voice per person who used it. */
+    val averageMinutesPerUser: Long = 0,
+    /** Different people whose voice went through the TURN relay, the bytes relayed, and per such person. */
+    val relayUsers: Int = 0,
+    val relayBytes: Long = 0,
+    val averageRelayBytesPerUser: Long = 0,
+    val perDay: List<VoiceDayStats> = emptyList(),
+)
+
+@Serializable
+data class VoiceDayStats(
+    /** `YYYY-MM-DD` in [AdminStats.timeZone]. */
+    val day: String,
+    val users: Int,
+    val sessions: Int,
+    val minutes: Long,
+    val relayUsers: Int = 0,
+    val relayBytes: Long = 0,
+)
+
+/** Voice relay (TURN) data this calendar month (UTC), against the free plan's allowance. */
+@Serializable
+data class VoiceRelayStats(
+    val month: String = "",
+    val bytes: Long = 0,
+    val warnBytes: Long = 0,
+    val limitBytes: Long = 0,
+    /** Where the relay stops by itself (0: never). */
+    val capBytes: Long = 0,
+    val voiceOn: Boolean = true,
+    /** The relay is handed out now (switched on and under the cap). */
+    val relayActive: Boolean = true,
 )
 
 /** Every match ever started, by how it ended, and the time spent playing. */

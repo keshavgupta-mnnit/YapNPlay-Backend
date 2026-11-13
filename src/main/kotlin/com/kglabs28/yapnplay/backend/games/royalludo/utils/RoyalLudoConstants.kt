@@ -10,7 +10,7 @@ val ROYAL_LUDO_TAGLINES = listOf("Roll", "Race", "Rule")
 /**
  * Royal Ludo plays 4 to 8: a room's players pick the board (up to 4 the square board, 5–6 the
  * hexagon, 7–8 the octagon; see RoyalLudoTrack) and CPU fill tops up to that board's size. Below
- * 4 a room needs CPU fill. Quick Play always makes a 4-player square board.
+ * 4 a room needs CPU fill. Quick Play always makes the admin's table size (ludo.quick_play_seats), CPUs filling it.
  */
 const val ROYAL_LUDO_PLAYERS = 4
 const val ROYAL_LUDO_MAX_PLAYERS = 8

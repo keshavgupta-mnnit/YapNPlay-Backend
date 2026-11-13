@@ -20,6 +20,7 @@ class EnvelopeRouter(
     private val matches: MatchChannelHandler,
     private val matchmaking: MatchmakingChannelHandler,
     private val moderation: ModerationChannelHandler,
+    private val voice: VoiceChannelHandler,
 ) {
     suspend fun handle(userId: String, request: Envelope): Envelope = try {
         // A ping, on any channel: answered at once, so the app can time the round trip.
@@ -28,6 +29,7 @@ class EnvelopeRouter(
             Channel.MATCH -> matches.handle(userId, request)
             Channel.MATCHMAKING -> matchmaking.handle(userId, request)
             Channel.MODERATION -> moderation.handle(userId, request)
+            Channel.VOICE -> voice.handle(userId, request)
         }
     } catch (e: ServiceException) {
         codec.rejected(request.requestId, request.channel, e.code, e.message)

@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.api
 
 import com.kglabs28.yapnplay.backend.api.errors.ErrorBody
 import com.kglabs28.yapnplay.backend.contract.ErrorCode
+import com.kglabs28.yapnplay.backend.contract.VoiceToken
 import com.kglabs28.yapnplay.backend.support.newGuestToken
 import com.kglabs28.yapnplay.backend.support.serverTest
 import io.ktor.client.call.body
@@ -9,6 +10,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.post
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class NearbyVoiceTokenApiTest {
 
@@ -22,10 +24,12 @@ class NearbyVoiceTokenApiTest {
     }
 
     @Test
-    fun `a Nearby party id passes the check (voice itself is off in tests)`() = serverTest { client ->
+    fun `a Nearby party id gets a pass with STUN servers`() = serverTest { client ->
         val token = client.newGuestToken()
-        val body = client.post("/nearby/nearby-room-abc123def456/voice-token") { bearerAuth(token) }.body<ErrorBody>()
-        assertEquals(ErrorCode.VOICE_UNAVAILABLE, body.code)
+        val pass = client.post("/nearby/nearby-room-abc123def456/voice-token") { bearerAuth(token) }.body<VoiceToken>()
+        assertEquals("/ws", pass.url)
+        assertTrue(pass.token.isNotBlank())
+        assertTrue(pass.iceServers.any { server -> server.urls.any { it.startsWith("stun:") } })
     }
 
     @Test
