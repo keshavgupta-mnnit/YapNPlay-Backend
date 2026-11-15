@@ -12,6 +12,9 @@ const val CITY_BAZAAR_MIN_PLAYERS = 3
 const val CITY_BAZAAR_MAX_PLAYERS = 6
 /** With the admin switch on, a room may seat up to this many. */
 const val CITY_BAZAAR_MAX_PLAYERS_BIG = 8
+
+/** House rule: a room table seats 7 and 8 too (off: 6 at most). */
+const val CITY_BAZAAR_EIGHT_PLAYERS_RULE = "eight_players"
 /** What an app reports (with its games) when it can seat 7 and 8 players round the board. */
 const val CITY_BAZAAR_BIG_TABLE_FEATURE = "city-royale-8"
 const val CITY_BAZAAR_QUICK_PLAY_SEATS = 4
@@ -79,10 +82,11 @@ val CITY_BAZAAR_HOUSE_RULES = listOf(
     HouseRuleOption("money_popups", "Money Popups", "Show a popup for every payment (off: a quick coin animation)", true),
     HouseRuleOption("round_limit", "Round Limit", "End after the set number of rounds; richest wins", true),
     HouseRuleOption("time_limit", "Time Limit", "End when the match time is up; richest wins", true),
+    HouseRuleOption(CITY_BAZAAR_EIGHT_PLAYERS_RULE, "Up to 8 Players", "7 and 8 players can join; everyone starts with less money", false),
 )
 
 val CITY_BAZAAR_FIXED_RULES = listOf(
-    "Rooms 3–6 players, random tables 4",
+    "Rooms 3–6 players (up to 8 with the house rule), random tables 4",
     "₹1,500 every time you pass or land on START",
     "Land on your own city to build: up to 3 houses, then a hotel",
     "Jail: right away, roll for doubles (3 tries), pay ₹500 or take half rent",

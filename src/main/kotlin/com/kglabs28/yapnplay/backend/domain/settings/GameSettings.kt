@@ -166,7 +166,6 @@ object GameSettings {
     val CB_START_CASH_LARGE = IntSetting("cb.start_cash_large", SettingGroup.CITY_BAZAAR, "Each player's starting money, 5 or 6 players (₹)", 15_000, 1_000, 1_000_000)
     val CB_START_CASH_EIGHT = IntSetting("cb.start_cash_eight", SettingGroup.CITY_BAZAAR, "Each player's starting money, 7 or 8 players (₹)", 13_000, 1_000, 10_000_000)
     /** Rooms may seat 7 and 8 (the app must be new enough): off until the bigger table is tested. */
-    val CB_EIGHT_PLAYERS = IntSetting("cb.eight_players", SettingGroup.CITY_BAZAAR, "Allow 7 and 8 players in rooms (round limit scales down to keep games as long)", 0, 0, 1)
     val CB_BANK_START = IntSetting("cb.bank_start", SettingGroup.CITY_BAZAAR, "Bank's starting money (₹)", 300_000, 0, 100_000_000)
     val CB_CLUB_REST_EACH = IntSetting("cb.club_rest_each", SettingGroup.CITY_BAZAAR, "Club / Rest House amount per player (₹)", 50, 0, 100_000)
     val CB_MESSAGE_PAUSE_MS = IntSetting("cb.message_pause_ms", SettingGroup.CITY_BAZAAR, "Reading time per table message (ms)", 2_500, 0, 10_000)
@@ -299,7 +298,7 @@ object GameSettings {
         XP_PER_PLAY, XP_PLACE_BONUS, XP_PER_MINUTE, XP_TIME_CAP_MINUTES, XP_PER_LEVEL,
         VOTE_SECONDS, TURN_GAP_MS, TURN_FOLLOW_UP_SECONDS, START_WAIT_SECONDS, QUICK_PLAY_SEARCH_SECONDS, END_VOTE_SECONDS, END_VOTE_COOLDOWN_MINUTES,
         BOT_STANDING_MIN_PCT, BOT_STANDING_MAX_PCT,
-        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_TIME_LIMIT_MINUTES, CB_VOTE_GAP_MINUTES, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_START_CASH, CB_START_CASH_LARGE, CB_START_CASH_EIGHT, CB_EIGHT_PLAYERS, CB_BANK_START,
+        CB_TURN_SECONDS, CB_DEBT_SECONDS, CB_CPU_BID_DELAY_MS, CB_CPU_FIRST_BID_DELAY_MS, CB_ROUND_LIMIT, CB_TIME_LIMIT_MINUTES, CB_VOTE_GAP_MINUTES, CB_EXTENSION_ROUNDS, CB_EXTENSION_MINUTES, CB_START_CASH, CB_START_CASH_LARGE, CB_START_CASH_EIGHT, CB_BANK_START,
         CB_CLUB_REST_EACH, CB_MESSAGE_PAUSE_MS, CB_MESSAGE_PAUSE_CAP_MS, CB_CPU_THINK_MS, CB_CPU_THINK_JITTER_MS, CB_CPU_DECISION_EXTRA_MS,
         CB_CPU_RESERVE, CB_CPU_SAFETY_BUFFER, CB_AUTO_BUY_RESERVE, CB_AUTO_SAFETY_BUFFER,
         CB_BOT_RUIN_WEIGHT_PCT, CB_BOT_DENIAL_WEIGHT_PCT, CB_BOT_RUIN_TARGET_PCT, CB_BOT_PRESSURE_VALUE, CB_BOT_COMFORT_PCT, CB_BOT_JAIL_POSTPONE_PCT, CB_BOT_DEFAULT_ROUNDS,

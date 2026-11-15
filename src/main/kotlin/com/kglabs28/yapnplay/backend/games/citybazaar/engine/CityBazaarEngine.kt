@@ -2,6 +2,7 @@ package com.kglabs28.yapnplay.backend.games.citybazaar.engine
 
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_BIG_TABLE_FEATURE
 import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_MAX_PLAYERS_BIG
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_EIGHT_PLAYERS_RULE
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ExtendMatch
 import com.kglabs28.yapnplay.backend.games.citybazaar.engine.action.ReachTimeLimit
 import com.kglabs28.yapnplay.backend.games.base.Game
@@ -54,10 +55,7 @@ import com.kglabs28.yapnplay.backend.games.citybazaar.utils.START_TILE
  * Pure: dice come from the injected [GameRandom]. Bids come from any player;
  * the server applies [CloseAuction], [EndMatch] and [LateRollFine].
  */
-/**
- * [eightPlayers]: the admin switch letting a room seat 7 and 8 (else 6 at most).
- */
-class CityBazaarEngine(private val eightPlayers: () -> Boolean = { false }) : Game {
+class CityBazaarEngine : Game {
     override val id = GameId(CITY_BAZAAR_ID)
     override val displayName = CITY_BAZAAR_DISPLAY_NAME
     override val timing = TimingConfig(turnSeconds = CITY_BAZAAR_TURN_SECONDS)
@@ -66,7 +64,11 @@ class CityBazaarEngine(private val eightPlayers: () -> Boolean = { false }) : Ga
     override val houseRuleOptions = CITY_BAZAAR_HOUSE_RULES
     override val fixedRules = CITY_BAZAAR_FIXED_RULES
     override val minPlayers = CITY_BAZAAR_MIN_PLAYERS
-    override val maxPlayers: Int get() = if (eightPlayers()) CITY_BAZAAR_MAX_PLAYERS_BIG else CITY_BAZAAR_MAX_PLAYERS
+    /** 6 at a table; a room with the house rule "Up to 8 Players" seats 7 and 8 too. */
+    override val maxPlayers: Int = CITY_BAZAAR_MAX_PLAYERS
+
+    override fun maxPlayersFor(houseRules: Map<String, Boolean>): Int =
+        if (houseRules[CITY_BAZAAR_EIGHT_PLAYERS_RULE] == true) CITY_BAZAAR_MAX_PLAYERS_BIG else CITY_BAZAAR_MAX_PLAYERS
 
     /** 7 and 8 players need an app that seats them round the board. */
     override fun featureNeeded(seats: Int): String? = if (seats > CITY_BAZAAR_MAX_PLAYERS) CITY_BAZAAR_BIG_TABLE_FEATURE else null

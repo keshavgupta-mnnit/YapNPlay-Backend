@@ -27,9 +27,11 @@ class StartPolicy {
         houseRules: Map<String, Boolean>,
         entryCoins: Int = 0,
     ): SeatPlan {
-        val players = readyHumans(members, leaderId).take(game.maxPlayers).map { it.userId }
+        // How many sit depends on the room's house rules (City Royale: 8 with "Up to 8 Players", else 6).
+        val max = game.maxPlayersFor(houseRules)
+        val players = readyHumans(members, leaderId).take(max).map { it.userId }
         // CPU fill: a full table (the game decides its size), not just the bare minimum.
-        val bots = if (botFill && game.cpuFillAllowed) (game.roomTableSize(players.size) - players.size).coerceAtLeast(0) else 0
+        val bots = if (botFill && game.cpuFillAllowed) (game.roomTableSize(players.size).coerceAtMost(max) - players.size).coerceAtLeast(0) else 0
         val spectators = members.filter { it.online && it.userId !in players }.map { it.userId }
         return SeatPlan(game.id.value, players, bots, spectators, houseRules, entryCoins)
     }

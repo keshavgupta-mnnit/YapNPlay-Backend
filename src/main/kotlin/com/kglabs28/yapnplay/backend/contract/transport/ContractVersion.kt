@@ -4,6 +4,8 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * The contract version. Any change bumps this, is written in
  * docs/backend-api-contract.md, and the golden files change with it.
  *
+ * 0.16.2 — City Royale house rule "eight_players" (Up to 8 Players, off by default): a room seats 7 and 8 only with it on, else 6.
+ * The admin switch cb.eight_players is gone.
  * 0.16.1 — voice holds up through network blips: VoiceSignal.id (optional; an offer's id, echoed by its answer). A dropped
  * connection keeps its voice room place for 30 s (no VoicePeers change); rejoining the same voice room tells nobody.
  * 0.16.0 — voice is peer-to-peer WebRTC (no hosted voice service): VoiceToken.url is "/ws", token is the pass for JoinVoice, new VoiceToken.iceServers (IceServer: urls, username?, credential?; STUN always, TURN when the server has one). VOICE channel: JoinVoice(token) -> VoicePeers(peers); VoicePeers pushed to the voice room on every change; LeaveVoice -> Ack; VoiceSignal(peer, kind offer/answer, sdp) -> Ack, forwarded with peer = sender. The newcomer offers to everyone already there; candidates travel inside the SDP. VoiceRelayUsage(bytes) -> Ack about once a minute while relayed (TURN use for the admin dashboard). Admin kill switches (voice.on, voice.relay_on, voice.relay_cap_gb): Me.voiceOn; with voice off passes and JoinVoice answer VOICE_UNAVAILABLE; a switch turned off pushes VoiceClosed (join again for a pass without the relay).
@@ -59,4 +61,4 @@ package com.kglabs28.yapnplay.backend.contract.transport
  * error codes BLOCKED, SEAT_TAKEN, VOICE_UNAVAILABLE; JoinRoomResult reply type.
  * 0.3.0 — Quick Play matchmaking, lobby, CPU seats.
  */
-const val CONTRACT_VERSION: String = "0.16.1"
+const val CONTRACT_VERSION: String = "0.16.2"
