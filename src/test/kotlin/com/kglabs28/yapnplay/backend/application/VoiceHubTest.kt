@@ -102,4 +102,44 @@ class VoiceHubTest {
         assertEquals(emptyList(), lastPeersOf("a"))
         assertTrue(hub.join("c", pass("c", "match-9")).peers == listOf("b"))
     }
+
+    @Test
+    fun `a signal keeps its offer id when forwarded`() {
+        hub.join("a", pass("a", "room-1"))
+        hub.join("b", pass("b", "room-1"))
+        hub.relay("a", VoiceSignal("b", VoiceSignalKind.ANSWER, "answer-sdp", "offer-7"))
+        val forwarded = notifier.sent.last { it.first == "b" && it.second.type == MessageType.VOICE_SIGNAL }
+        assertEquals(VoiceSignal("a", VoiceSignalKind.ANSWER, "answer-sdp", "offer-7"), codec.payload(forwarded.second, VoiceSignal.serializer()))
+    }
+
+    private val delayed = mutableListOf<() -> Unit>()
+    private val graced = VoiceHub(passes, notifier, codec, Clock { now }, schedule = { _, action -> delayed += action })
+
+    @Test
+    fun `a dropped connection keeps its place until the grace ends`() {
+        graced.join("a", pass("a", "room-1"))
+        graced.join("b", pass("b", "room-1"))
+        graced.disconnected("b")
+        assertEquals(listOf("b"), lastPeersOf("a"))
+        delayed.single()()
+        assertEquals(emptyList(), lastPeersOf("a"))
+    }
+
+    @Test
+    fun `rejoining within the grace keeps the call and tells nobody`() {
+        graced.join("a", pass("a", "room-1"))
+        graced.join("b", pass("b", "room-1"))
+        graced.disconnected("b")
+        val before = notifier.sent.size
+        assertEquals(listOf("a"), graced.join("b", pass("b", "room-1")).peers)
+        delayed.single()()
+        assertEquals(before, notifier.sent.size)
+        assertEquals(listOf("b"), lastPeersOf("a"))
+    }
+
+    @Test
+    fun `a drop outside any voice room schedules nothing`() {
+        graced.disconnected("z")
+        assertTrue(delayed.isEmpty())
+    }
 }

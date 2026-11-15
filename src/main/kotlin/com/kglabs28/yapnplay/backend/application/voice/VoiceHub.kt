@@ -21,6 +21,12 @@ import com.kglabs28.yapnplay.backend.domain.voice.VoiceSession
  * answers between two people in the same voice room. A user is in one voice
  * room at a time; joining another leaves the first. Everyone there gets the
  * new list of the others ([VoicePeers]) whenever someone comes or goes.
+ *
+ * A dropped connection (a network blip, the phone switching networks) is not a
+ * goodbye: the person stays in their voice room for [BackendConstants.VOICE_AWAY_GRACE_MS]
+ * while their phone reconnects and joins again, so the others never hang up on a
+ * call whose audio (phone to phone) is still going. Only a real leave, or no
+ * rejoin within the grace, takes them out.
  */
 class VoiceHub(
     private val passes: VoicePasses,
@@ -31,12 +37,16 @@ class VoiceHub(
     private val voiceOn: () -> Boolean = { true },
     /** Each finished stretch someone spent in a voice room (for the admin dashboard). */
     private val onSessionEnd: (VoiceSession) -> Unit = {},
+    /** Runs an action after a delay in ms (the away grace); tests run it by hand. */
+    private val schedule: (Long, () -> Unit) -> Unit = { _, _ -> },
 ) {
     private val lock = Any()
     private val members = mutableMapOf<String, MutableSet<String>>()
     private val roomOf = mutableMapOf<String, String>()
     /** When each person came into their current voice room (rejoining the same one keeps it). */
     private val joinedAt = mutableMapOf<String, Long>()
+    /** People whose connection dropped, each with the mark of their pending leave (a join or a newer drop replaces it). */
+    private val away = mutableMapOf<String, Any>()
 
     /** Puts [userId] in the voice room [token] is for; returns the others there. */
     fun join(userId: String, token: String): VoicePeers {
@@ -45,14 +55,17 @@ class VoiceHub(
             ?: throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.BAD_VOICE_PASS)
         val now = clock.nowMillis()
         var ended: VoiceSession? = null
+        var rejoined = false
         val changed = synchronized(lock) {
             val room = members[pass.voiceRoom]
             if (roomOf[userId] != pass.voiceRoom && (room?.size ?: 0) >= BackendConstants.VOICE_ROOM_MAX_PEERS) {
                 throw ServiceException(ErrorCode.ROOM_FULL, BackendStrings.VOICE_ROOM_FULL)
             }
+            away.remove(userId)
             val since = joinedAt[userId]
             val left = removeLocked(userId)
-            if (left != pass.voiceRoom) {
+            rejoined = left == pass.voiceRoom
+            if (!rejoined) {
                 ended = since?.let { VoiceSession(userId, it, now) }
                 joinedAt[userId] = now
             }
@@ -61,8 +74,25 @@ class VoiceHub(
             listOfNotNull(left, pass.voiceRoom).distinct().map { it to members[it].orEmpty().toSet() }
         }
         ended?.let(onSessionEnd)
-        changed.forEach { (_, people) -> announce(people, except = userId) }
+        // Back in the same voice room (a reconnect): nobody else's list changed, so nobody is told.
+        if (!rejoined) changed.forEach { (_, people) -> announce(people, except = userId) }
         return VoicePeers(changed.first { it.first == pass.voiceRoom }.second.filter { it != userId })
+    }
+
+    /**
+     * [userId]'s connection dropped: they stay in their voice room for the away grace, and leave it
+     * then unless they joined again meanwhile.
+     */
+    fun disconnected(userId: String) {
+        val mark = Any()
+        synchronized(lock) {
+            if (roomOf[userId] == null) return
+            away[userId] = mark
+        }
+        schedule(BackendConstants.VOICE_AWAY_GRACE_MS) {
+            val gone = synchronized(lock) { away[userId] === mark && away.remove(userId) != null }
+            if (gone) leave(userId)
+        }
     }
 
     /** Takes [userId] out of their voice room (left, or their connection closed). */
@@ -86,6 +116,7 @@ class VoiceHub(
             roomOf.keys.toList().also {
                 joinedAt.forEach { (user, since) -> ended += VoiceSession(user, since, now) }
                 joinedAt.clear()
+                away.clear()
                 roomOf.clear()
                 members.clear()
             }
@@ -106,6 +137,7 @@ class VoiceHub(
 
     /** The voice room [userId] was in, now without them. Call with [lock] held. */
     private fun removeLocked(userId: String): String? {
+        away.remove(userId)
         val room = roomOf.remove(userId) ?: return null
         val people = members[room] ?: return room
         people -= userId

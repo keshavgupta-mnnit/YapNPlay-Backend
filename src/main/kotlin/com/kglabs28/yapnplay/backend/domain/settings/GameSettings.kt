@@ -246,7 +246,6 @@ object GameSettings {
     val DK_PASS_PENALTY = IntSetting("dk.pass_penalty", SettingGroup.DOODLE_KING, "Points lost for passing or drawing nothing", 50, 0, 500)
     val DK_HINT_START_PCT = IntSetting("dk.hint_start_pct", SettingGroup.DOODLE_KING, "Letter hints start after this % of the drawing time", 40, 0, 95)
     // TODO before the live release: back to 0 (or set 0 on the admin board). On while Doodle King is being tested.
-    val DK_TEST_BOTS = IntSetting("dk.test_bots", SettingGroup.DOODLE_KING, "CPU players fill Doodle King tables (testing; turn off so only real players play)", 1, 0, 1)
 
     // ── Cyber Blast ───────────────────────────────────────────────────────
     val BLAST_FRAME_MS = IntSetting("blast.frame_ms", SettingGroup.CYBER_BLAST, "Board updates sent every (ms; lower is smoother but more data)", 50, 30, 200)
@@ -310,7 +309,7 @@ object GameSettings {
         RL_TURN_SECONDS, RL_QUICK_PLAY_SEATS, RL_BIG_BOARD_PIECES, RL_CPU_THINK_MS, RL_CPU_THINK_JITTER_MS, RL_CPU_DECISION_EXTRA_MS, RL_SIX_BOOST_PER_MISS_PCT, RL_SIX_CHANCE_CAP_PCT,
         RL_BOT_BASE_COST, RL_BOT_CAPTURE_WEIGHT_PCT, RL_BOT_EXTRA_TURN, RL_BOT_FINISH, RL_BOT_LEAVE_BASE, RL_BOT_RISK_WEIGHT_PCT, RL_BOT_CHASE, RL_BOT_FLEX, RL_BOT_ENDGAME_CAPTURE_PCT,
         DK_ROUNDS, DK_DRAW_SECONDS, DK_INTRO_SECONDS, DK_PICK_SECONDS, DK_REVEAL_SECONDS, DK_GUESS_POINTS, DK_LEVEL_POINTS_PCT, DK_DRAWER_PER_GUESS,
-        DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS, DK_TEST_BOTS,
+        DK_ALL_GUESSED_BONUS, DK_PASS_PENALTY, DK_HINT_START_PCT, DK_EXTENSION_ROUNDS,
         BLAST_FRAME_MS, BLAST_LIVES, BLAST_START_RADIUS, BLAST_MAX_RADIUS, BLAST_RADIUS_PER_HIT, BLAST_BOMBS, BLAST_FUSE_MS, BLAST_FLAME_MS,
         BLAST_SPEED, BLAST_BOOST_SPEED, BLAST_BOOST_SECONDS, BLAST_SHIELD_MS, BLAST_HIT_POINTS, BLAST_HIT_PENALTY, BLAST_SELF_PENALTY,
         BLAST_CRATE_POINTS, BLAST_CRATE_DENSITY_PCT, BLAST_DENSITY_FEW_PCT, BLAST_DENSITY_MANY_PCT, BLAST_DENSITY_PER_PLAYER_PCT, BLAST_BIG_CLOSE_AFTER_SECONDS, BLAST_ITEM_EVERY_SECONDS, BLAST_ITEM_JITTER_SECONDS, BLAST_ITEM_LIFE_SECONDS, BLAST_MAX_ITEMS,

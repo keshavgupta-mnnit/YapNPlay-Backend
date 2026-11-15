@@ -46,8 +46,6 @@ class DoodleKingSession(
     private val random: GameRandom,
     private val json: Json,
     private val clock: Clock,
-    /** TESTING ONLY: CPU seats play (admin setting), read on every tick. */
-    private val testBots: () -> Boolean = { false },
     /** Rounds a "keep playing" vote adds (admin setting). */
     private val extensionRounds: () -> Int = { 1 },
     /** Each drawer's 3 words when they come up (remembered across matches). */
@@ -55,7 +53,6 @@ class DoodleKingSession(
 ) : GameSession {
     private val mapper = DoodleKingWireMapper(json)
     private val canvas = DoodleCanvas().apply { reset(state.drawingId) }
-    private val bots = DoodleTestBots(random)
 
     override val currentSeat: Int get() = state.drawer
     override val phase: String get() = state.phase.name
@@ -94,19 +91,15 @@ class DoodleKingSession(
     override fun botPlay(seat: Int, mode: BotMode): List<GameEvent>? = null
 
     /**
-     * Every match tick: test bots act, then phases move on and hints show. [cpuSeats]: seats
-     * the server plays (CPUs, away or Autoplay players); [botSeats]: seats with nobody there.
+     * Every match tick: phases move on and hints show. [cpuSeats]: seats the server plays (away
+     * or Autoplay players: Doodle King has no bots, so they just sit their turns out).
      */
     override fun tick(now: Long, cpuSeats: Set<Int>, botSeats: Set<Int>): List<GameEvent>? {
         if (isFinished) return null
-        val playing = if (testBots()) botSeats else emptySet()
         val events = mutableListOf<GameEvent>()
-        bots.act(state, playing, now)?.let { (seat, action) -> apply(seat, action)?.let(events::addAll) }
-        take(engine.apply(state, SeatNumber(state.drawer), DoodleTick(now, cpuSeats - playing), random))?.let(events::addAll)
+        take(engine.apply(state, SeatNumber(state.drawer), DoodleTick(now, cpuSeats), random))?.let(events::addAll)
         if (canvas.drawingId != state.drawingId) {
             canvas.reset(state.drawingId)
-            // A test bot's turn to draw: its sketch is there at once.
-            if (state.phase == DoodlePhase.DRAW && state.drawer in playing) bots.sketch(state.drawingId).forEach(canvas::addWhole)
             markInk()
         }
         return events.ifEmpty { null }

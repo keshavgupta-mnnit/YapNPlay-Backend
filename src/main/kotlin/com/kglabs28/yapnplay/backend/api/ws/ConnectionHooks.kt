@@ -9,7 +9,7 @@ import com.kglabs28.yapnplay.backend.application.voice.VoiceHub
 /**
  * What happens when a user's connection opens or finally closes (not when
  * a newer connection replaced it): a running block is re-sent; a dropped
- * player leaves their voice room and the Quick Play queue, their seat starts its away grace;
+ * player leaves the Quick Play queue, their seat and their voice room place start their away grace;
  * their time in the app is counted.
  */
 class ConnectionHooks(
@@ -25,7 +25,7 @@ class ConnectionHooks(
     }
 
     suspend fun disconnected(userId: String) {
-        voice.leave(userId)
+        voice.disconnected(userId)
         onlineTime.disconnected(userId)
         matchmaking.leave(userId)
         matchPresence.disconnected(userId)
