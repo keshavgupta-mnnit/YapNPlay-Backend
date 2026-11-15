@@ -26,13 +26,16 @@ data class VoicePeers(val peers: List<String>)
  * Connection setup for one other person in the same voice room, whose user id is [peer]:
  * the receiver when the app sends it (Ack), the sender when the server forwards it.
  * [kind] is "offer" or "answer"; [sdp] is the full session description, its network
- * candidates included (no separate candidate messages).
+ * candidates included (no separate candidate messages). [id] names an offer (made by the
+ * offering phone); its answer carries the same [id], so a late answer to an older offer is
+ * never taken for the newest one. Forwarded as sent; absent from older apps.
  */
 @Serializable
 data class VoiceSignal(
     val peer: String,
     val kind: String,
     val sdp: String,
+    val id: String? = null,
 )
 
 /**

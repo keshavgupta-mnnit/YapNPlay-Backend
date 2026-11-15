@@ -28,6 +28,9 @@ import com.kglabs28.yapnplay.backend.domain.voice.VoiceSessionStore
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedVoiceSessionStore
 import com.kglabs28.yapnplay.backend.application.voice.VoiceSessionRecorder
 import com.kglabs28.yapnplay.backend.infrastructure.db.ExposedRelayUsageStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 
@@ -47,7 +50,15 @@ fun socialModule(config: BackendConfig) = module {
     single { VoicePolicy(get(), get()) }
     single<VoiceSessionStore> { ExposedVoiceSessionStore(get()) }
     single { VoiceSessionRecorder(get(), get(ROOMS_SCOPE)) }
-    single { VoiceHub(get(), get(), get(), get(), get<VoicePolicy>()::voiceOn, get<VoiceSessionRecorder>()::ended) }
+    single {
+        val scope = get<CoroutineScope>(ROOMS_SCOPE)
+        VoiceHub(get(), get(), get(), get(), get<VoicePolicy>()::voiceOn, get<VoiceSessionRecorder>()::ended) { ms, action ->
+            scope.launch {
+                delay(ms)
+                action()
+            }
+        }
+    }
     single(createdAtStart = true) { VoiceKillSwitch(get(), get(), get(ROOMS_SCOPE)) }
     single { IssueVoiceTokenUseCase(get(), get(), get(), get(), get(), get()) }
     single { ModerationService(get(), get(), get(), get(), get(), get(), get(), get(), get(ROOMS_SCOPE)) }

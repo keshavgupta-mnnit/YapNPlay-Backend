@@ -5,6 +5,7 @@ import com.kglabs28.yapnplay.backend.config.BackendConstants
 import com.kglabs28.yapnplay.backend.config.VoiceConfig
 import com.kglabs28.yapnplay.backend.contract.IceServer
 import com.kglabs28.yapnplay.backend.domain.common.Clock
+import org.slf4j.LoggerFactory
 
 /**
  * Free public STUN, plus every TURN relay that is set up: fixed ones from the
@@ -19,6 +20,13 @@ class ConfiguredIceServers(
 
     private val stun = IceServer(BackendConstants.STUN_URLS)
     private val fixedTurn = config.fixedTurn.map { IceServer(it.urls, it.username, it.credential) }
+
+    init {
+        // Shown in the server log at start, so a missing relay (some players then can't talk at all) is easy to spot.
+        val relays = listOfNotNull("Cloudflare".takeIf { cloudflare != null }, "${fixedTurn.size} fixed".takeIf { fixedTurn.isNotEmpty() })
+        if (relays.isEmpty()) log.warn("Voice relay: none set up (STUN only) - players on strict networks will not be able to talk")
+        else log.info("Voice relay: ${relays.joinToString(" + ")}")
+    }
 
     @Volatile private var cached: List<IceServer> = emptyList()
     @Volatile private var cachedUntil = 0L
@@ -42,6 +50,7 @@ class ConfiguredIceServers(
     }
 
     private companion object {
+        val log = LoggerFactory.getLogger(ConfiguredIceServers::class.java)
         const val MILLIS = 1_000L
     }
 }

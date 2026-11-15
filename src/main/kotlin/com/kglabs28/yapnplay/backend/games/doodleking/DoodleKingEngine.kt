@@ -23,10 +23,10 @@ import com.kglabs28.yapnplay.backend.games.base.rules.TurnPolicy
 /**
  * Doodle King: one player draws a word, the others race to guess it. Turns
  * run on the game's own clock ([DoodleTick]); guesses come from anyone at
- * once. Pure: the time comes in with each action. No CPU players outside
- * testing ([testBots], an admin setting read on every check).
+ * once. Pure: the time comes in with each action. Played by people only: no
+ * CPU players, ever (no bot fill in rooms or Quick Play).
  */
-class DoodleKingEngine(private val testBots: () -> Boolean = { false }) : Game {
+class DoodleKingEngine : Game {
     override val id = GameId(DOODLE_KING_ID)
     override val displayName = DOODLE_KING_DISPLAY_NAME
     override val timing = TimingConfig(turnSeconds = DEFAULT_DRAW_SECONDS)
@@ -38,8 +38,8 @@ class DoodleKingEngine(private val testBots: () -> Boolean = { false }) : Game {
     override val maxPlayers = DOODLE_KING_MAX_PLAYERS
     override val maxSpectators: Int? = null
     override val turnPolicy: TurnPolicy = TurnPolicy.Simultaneous
-    override val cpuFillAllowed: Boolean get() = testBots()
-    /** Bots never act through the engine; the test bots live in the session. */
+    override val cpuFillAllowed: Boolean get() = false
+    /** No bots: nothing ever plays a Doodle King seat. */
     override val bot: GameBot = object : GameBot {
         override fun chooseAction(state: GameState, seat: SeatNumber): Action? = null
     }

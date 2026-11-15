@@ -38,6 +38,10 @@
   tr:last-child td { border-bottom: 0; }
   tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
   td.wrap { white-space: normal; overflow-wrap: anywhere; min-width: 240px; }
+  /* Game Settings: the long descriptions wrap so the whole table fits the screen (no sideways scroll); the
+     value, default and allowed columns stay on one line and as narrow as they can be. */
+  #settingsTable td:first-child, #settingsTable th:first-child { white-space: normal; overflow-wrap: anywhere; width: 100%; min-width: 140px; }
+  #settingsTable td input:not([type=checkbox]) { width: 90px; }
   .fields { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; padding: 12px 14px; font-size: 13px; margin: 0; }
   .fields dt { color: var(--muted); } .fields dd { margin: 0; overflow-wrap: anywhere; }
   pre.stack { margin: 0; padding: 12px 14px; font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 70vh; overflow: auto; }
@@ -624,8 +628,11 @@
     if (warn) box.appendChild(card("Warning at", gb(warn), bytes >= warn ? "reached: check the use" : gb(warn - bytes) + " to go"));
     box.appendChild(card("Relay stops by itself at", r.capBytes ? gb(r.capBytes) : "never", "Settings › Voice"));
     box.appendChild(card("Voice chat", r.voiceOn === false ? "OFF" : "On", "kill switch: Settings › Voice", r.voiceOn === false ? "bad" : "good"));
-    box.appendChild(card("Relay", r.voiceOn === false || r.relayActive === false ? "Stopped" : "On",
-      r.relayActive === false ? "switched off or cap reached" : "players on strict networks can talk", r.relayActive === false ? "bad" : "good"));
+    // Checked live: the server asks Cloudflare for the relay each time this page loads.
+    var stopped = r.voiceOn === false || r.relayActive === false, broken = !stopped && r.relayReady === false;
+    box.appendChild(card("Relay (backup route for Jio/Airtel and strict networks)", stopped ? "Stopped" : broken ? "NOT WORKING" : "On",
+      stopped ? "switched off or cap reached" : broken ? "Cloudflare key missing or refused: many players can't talk" : "checked just now: everyone can connect",
+      stopped || broken ? "bad" : "good"));
   }
 
   function card(label, value, sub, cls) {

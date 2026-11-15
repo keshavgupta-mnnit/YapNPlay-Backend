@@ -45,6 +45,9 @@ interface GameDescriptor {
      */
     fun roomTableSize(players: Int): Int = maxOf(players, minPlayers, matchmaking.seats).coerceAtMost(maxPlayers)
 
+    /** The most players a room table seats with these [houseRules] (a house rule may allow a bigger table). */
+    fun maxPlayersFor(houseRules: Map<String, Boolean>): Int = maxPlayers
+
     /**
      * A table of [seats] that needs an app newer than the game itself (Royal Ludo's 6- and 8-player
      * boards): the feature every player's app must report, or null.

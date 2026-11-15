@@ -63,6 +63,8 @@ data class VoiceRelayStats(
     val voiceOn: Boolean = true,
     /** The relay is handed out now (switched on and under the cap). */
     val relayActive: Boolean = true,
+    /** The server got relay addresses just now (a relay is set up and Cloudflare accepts its key). */
+    val relayReady: Boolean = true,
 )
 
 /** Every match ever started, by how it ended, and the time spent playing. */

@@ -162,6 +162,11 @@ object BackendConstants {
     const val VOICE_SWITCH_CHECK_MS = 15_000L
     /** A stretch in a voice room shorter than this (a screen handing over) isn't counted as voice use. */
     const val VOICE_SESSION_MIN_MS = 5_000L
+    /**
+     * A dropped connection keeps its place in the voice room this long (the phone reconnects and
+     * joins again meanwhile), so a network blip never makes the others hang up on them.
+     */
+    const val VOICE_AWAY_GRACE_MS = 30_000L
     /** Most people per voice room (each phone sends its voice to every other one). */
     const val VOICE_ROOM_MAX_PEERS = 16
     const val VOICE_ROOM_PREFIX = "room-"

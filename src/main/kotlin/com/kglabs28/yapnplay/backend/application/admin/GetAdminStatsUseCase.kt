@@ -8,6 +8,7 @@ import com.kglabs28.yapnplay.backend.application.realtime.ClientNotifier
 import com.kglabs28.yapnplay.backend.application.rooms.RoomPresence
 import com.kglabs28.yapnplay.backend.domain.common.Clock
 import com.kglabs28.yapnplay.backend.games.base.GameRegistry
+import com.kglabs28.yapnplay.backend.application.voice.IceServerSource
 import com.kglabs28.yapnplay.backend.application.voice.RelayUsageMeter
 import com.kglabs28.yapnplay.backend.application.voice.VoicePolicy
 import com.kglabs28.yapnplay.backend.domain.voice.VoiceSessionStore
@@ -34,6 +35,7 @@ class GetAdminStatsUseCase(
     private val settings: Settings,
     private val voiceSessions: VoiceSessionStore,
     private val relayStore: RelayUsageStore,
+    private val iceServers: IceServerSource,
 ) {
     /** Totals within [range]; the per-day charts cover the range, or the last [DAYS_SHOWN] days for every time. */
     suspend operator fun invoke(range: StatsRange = StatsRange.ALL): AdminStats {
@@ -81,6 +83,7 @@ class GetAdminStatsUseCase(
                     capBytes = settings[GameSettings.VOICE_RELAY_CAP_GB] * BackendConstants.BYTES_PER_GB,
                     voiceOn = voicePolicy.voiceOn(),
                     relayActive = voicePolicy.relayAllowed(),
+                    relayReady = iceServers.current(withRelay = true).any { server -> server.urls.any { it.startsWith(TURN_SCHEME) } },
                 )
             },
             voiceUsage = voiceUsage(since, until),
@@ -147,6 +150,8 @@ class GetAdminStatsUseCase(
         const val TIME_ZONE = BackendConstants.STATS_TIME_ZONE
         private val DAY: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.of(TIME_ZONE))
         const val DAYS_SHOWN = 14
+        /** A relay address (turn: or turns:). */
+        const val TURN_SCHEME = "turn"
         const val MOST_REPORTED_LIMIT = 10
         const val SECONDS_PER_MINUTE = 60L
     }

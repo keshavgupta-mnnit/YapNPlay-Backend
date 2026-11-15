@@ -1,6 +1,8 @@
 package com.kglabs28.yapnplay.backend.domain
 
 import com.kglabs28.yapnplay.backend.games.royalludo.engine.RoyalLudoEngine
+import com.kglabs28.yapnplay.backend.games.citybazaar.engine.CityBazaarEngine
+import com.kglabs28.yapnplay.backend.games.citybazaar.utils.CITY_BAZAAR_EIGHT_PLAYERS_RULE
 import com.kglabs28.yapnplay.backend.domain.rooms.LiveMember
 import com.kglabs28.yapnplay.backend.domain.rooms.StartPolicy
 import kotlin.test.Test
@@ -63,5 +65,16 @@ class StartPolicyTest {
         assertEquals(1, policy.plan(five, "lead", ludo, botFill = true, houseRules = emptyMap()).botCount)
         val two = listOf(idle("lead"), ready("a", 1))
         assertEquals(2, policy.plan(two, "lead", ludo, botFill = true, houseRules = emptyMap()).botCount)
+    }
+
+    @Test
+    fun `City Royale seats 6, or 8 with the house rule`() {
+        val city = CityBazaarEngine()
+        val nine = listOf(idle("lead")) + (1..8).map { ready("p$it", it.toLong()) }
+        assertEquals(6, policy.plan(nine, "lead", city, botFill = false, houseRules = emptyMap()).players.size)
+        assertEquals(6, policy.plan(nine, "lead", city, botFill = false, houseRules = mapOf(CITY_BAZAAR_EIGHT_PLAYERS_RULE to false)).players.size)
+        val big = policy.plan(nine, "lead", city, botFill = false, houseRules = mapOf(CITY_BAZAAR_EIGHT_PLAYERS_RULE to true))
+        assertEquals(8, big.players.size)
+        assertEquals(listOf("p8"), big.spectators)
     }
 }

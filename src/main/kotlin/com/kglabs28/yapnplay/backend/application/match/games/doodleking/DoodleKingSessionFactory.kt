@@ -40,10 +40,8 @@ class DoodleKingSessionFactory(
 
     override fun restore(saved: JsonObject): GameSession = session(json.decodeFromJsonElement(DoodleKingSaved.serializer(), saved).engine)
 
-    // The engine reads the test-bots setting; the session follows it.
     private fun session(state: DoodleKingState) = DoodleKingSession(
         game, state, random, json, clock,
-        testBots = { game.cpuFillAllowed },
         extensionRounds = { settings[GameSettings.DK_EXTENSION_ROUNDS] },
         onOffered = recentWords::offered,
     )

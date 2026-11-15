@@ -280,6 +280,6 @@ object GoldenSamples {
         GoldenCase("VoicePeers", VoicePeers.serializer(), VoicePeers(listOf(FRIEND))),
         GoldenCase("VoiceClosed", VoiceClosed.serializer(), VoiceClosed),
         GoldenCase("VoiceRelayUsage", VoiceRelayUsage.serializer(), VoiceRelayUsage(1_048_576)),
-        GoldenCase("VoiceSignal", VoiceSignal.serializer(), VoiceSignal(FRIEND, VoiceSignalKind.OFFER, "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n")),
+        GoldenCase("VoiceSignal", VoiceSignal.serializer(), VoiceSignal(FRIEND, VoiceSignalKind.OFFER, "v=0\r\no=- 1 2 IN IP4 127.0.0.1\r\n", "k3x9q2")),
     )
 }
