@@ -27,7 +27,8 @@ class SeatHandover(
             if (player.presence != SeatPresence.PLAYING) return
             state.awaySince[seat] = deps.clock.nowMillis()
             state.missedTurns[seat] = 0
-            state.setPresence(seat, SeatPresence.AWAY)
+            // Nobody is at the phone: their mic is off until they are back (the app switches it on again).
+            state.update(seat) { copy(presence = SeatPresence.AWAY, micOn = false) }
         } else {
             if (player.presence == SeatPresence.PLAYING) return
             state.awaySince.remove(seat)
@@ -67,11 +68,13 @@ class SeatHandover(
         val leaver = state.seat(seat)
         // Already out of the game (finished, or knocked out): they keep their place, and nobody takes the seat.
         val out = state.session.stillIn.let { it.isNotEmpty() && seat !in it }
-        state.update(seat) { copy(left = true, leftAt = deps.clock.nowMillis(), autoplay = false, presence = SeatPresence.AWAY, outBeforeLeaving = out) }
+        // They walked away from the table: mic off, on the seat and while they are counted as watching
+        // (their app switches it on again if they really come back to watch).
+        state.update(seat) { copy(left = true, leftAt = deps.clock.nowMillis(), autoplay = false, presence = SeatPresence.AWAY, outBeforeLeaving = out, micOn = false) }
         state.idleTurns.remove(seat)
         if (out) {
             if (isRoomMatch) {
-                state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level, leaver.avatarId)
+                state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), micOn = false, level = leaver.level, avatarId = leaver.avatarId)
             }
             publish()
             return
@@ -85,7 +88,7 @@ class SeatHandover(
             return
         }
         if (isRoomMatch) {
-            state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), leaver.micOn, leaver.level, leaver.avatarId)
+            state.spectators[leaver.userId] = MatchSpectator(leaver.userId, leaver.displayName, deps.clock.nowMillis(), micOn = false, level = leaver.level, avatarId = leaver.avatarId)
         }
         val pick = giveTo?.let { state.spectators[it] }?.takeIf { it.userId != leaver.userId }
         if (pick != null && isRoomMatch) offerTo(seat, leaver.displayName, pick, round = 1) else toBot(seat)
@@ -262,7 +265,8 @@ class SeatHandover(
     private fun toBot(seat: Int) {
         state.offer = null
         state.declined.clear()
-        state.setPresence(seat, SeatPresence.BOT)
+        // The bot plays it: no mic on this seat until its owner is back.
+        state.update(seat) { copy(presence = SeatPresence.BOT, micOn = false) }
         endHold()
         publish()
     }

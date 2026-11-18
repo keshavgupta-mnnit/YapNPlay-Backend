@@ -306,6 +306,9 @@ class MatchActor(
         val seat = state.seatOf(userId)
         // The game has them quiet right now (drawing in Doodle King): their mic stays off.
         if (on && seat != null && state.session.silenced(seat.seat)) throw ServiceException(ErrorCode.BAD_REQUEST, BackendStrings.MIC_SILENCED)
+        // The bot plays their seat (they stopped answering: asleep, or walked off with the app open): the mic
+        // stays off, whatever their app asks, until they take the seat back. Their app asks again then.
+        if (on && seat != null && seat.presence == SeatPresence.BOT) return
         when {
             seat != null -> state.update(seat.seat) { copy(micOn = on) }
             userId in state.spectators -> state.spectators[userId] = state.spectators.getValue(userId).copy(micOn = on)
